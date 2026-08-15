@@ -1,10 +1,10 @@
-(function () {
+﻿(function () {
   "use strict";
 
   var root = document.getElementById("chat-root");
   if (!root) return;
 
-  var PLACEHOLDER = "Напишіть повідомлення…";
+  var PLACEHOLDER = "РќР°РїРёС€С–С‚СЊ РїРѕРІС–РґРѕРјР»РµРЅРЅСЏвЂ¦";
   var state = { step: 0, projectType: null, budget: null, name: null, contact: null, input: null, custom: null };
 
   var ICON_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-3.4-.7L3 21l1.8-5.6A8.4 8.4 0 0121 11.5z"/></svg>';
@@ -19,14 +19,14 @@
 
   /* ---------------- render shell ---------------- */
   root.innerHTML =
-    '<button class="chat-fab" id="chat-fab" aria-label="Відкрити AI-чат">' + ICON_CHAT +
+    '<button class="chat-fab" id="chat-fab" aria-label="Р’С–РґРєСЂРёС‚Рё AI-С‡Р°С‚">' + ICON_CHAT +
     '<span class="chat-badge">1</span></button>' +
-    '<div class="chat-panel hidden" id="chat-panel" role="dialog" aria-label="AI-агент VERTEX">' +
+    '<div class="chat-panel hidden" id="chat-panel" role="dialog" aria-label="AI-Р°РіРµРЅС‚ FastStart Digital">' +
     '<div class="chat-head">' +
-    '<div class="chat-avatar">V</div>' +
-    '<div><div class="font-display font-semibold text-white text-sm">NOVA · AI-агент VERTEX</div>' +
-    '<div class="chat-online">online · відповідає миттєво</div></div>' +
-    '<button class="chat-close" id="chat-close" aria-label="Закрити">' + ICON_CLOSE + '</button>' +
+    '<div class="chat-avatar">F</div>' +
+    '<div><div class="font-display font-semibold text-white text-sm">NOVA В· AI-Р°РіРµРЅС‚ FastStart Digital</div>' +
+    '<div class="chat-online">online В· РІС–РґРїРѕРІС–РґР°С” РјРёС‚С‚С”РІРѕ</div></div>' +
+    '<button class="chat-close" id="chat-close" aria-label="Р—Р°РєСЂРёС‚Рё">' + ICON_CLOSE + '</button>' +
     '</div>' +
     '<div class="chat-body" id="chat-body"></div>' +
     '<div class="chat-chips" id="chat-chips"></div>' +
@@ -34,7 +34,7 @@
     '<input id="chat-text" type="text" autocomplete="off" placeholder="' + PLACEHOLDER + '" />' +
     '<button class="chat-send" type="submit">' + ICON_SEND + '</button>' +
     '</form>' +
-    '<div class="chat-note">AI-агент збирає контакти для розрахунку КП · t.me/vertex_engineering</div>' +
+    '<div class="chat-note">AI-Р°РіРµРЅС‚ Р·Р±РёСЂР°С” РєРѕРЅС‚Р°РєС‚Рё РґР»СЏ СЂРѕР·СЂР°С…СѓРЅРєСѓ РљРџ В· t.me/faststart_digital</div>' +
     '</div>';
 
   var fab = document.getElementById("chat-fab");
@@ -84,18 +84,18 @@
 
   /* ---------------- flow ---------------- */
   function budgetGuess(type) {
-    if (type === "Металоконструкція") return "12 000 – 60 000 грн";
-    if (type === "3D / WebAR-візуалізація") return "6 000 – 25 000 грн";
-    if (type === "AI-агент / автоматизація") return "20 000 – 120 000 грн";
-    return "8 000 – 45 000 грн";
+    if (type === "Р’РµР±-СЂРѕР·СЂРѕР±РєР°") return "12 000 вЂ“ 60 000 РіСЂРЅ";
+    if (type === "3D / WebAR-РІС–Р·СѓР°Р»С–Р·Р°С†С–СЏ") return "6 000 вЂ“ 25 000 РіСЂРЅ";
+    if (type === "AI-Р°РіРµРЅС‚ / Р°РІС‚РѕРјР°С‚РёР·Р°С†С–СЏ") return "20 000 вЂ“ 120 000 РіСЂРЅ";
+    return "8 000 вЂ“ 45 000 РіСЂРЅ";
   }
 
   function start() {
     typing(function () {
-      addMsg("Привіт! Я <b>NOVA</b> — AI-агент VERTEX. Допоможу оцінити вартість проєкту та підберу формат за 30 секунд.", "bot");
+      addMsg("РџСЂРёРІС–С‚! РЇ <b>NOVA</b> вЂ” AI-Р°РіРµРЅС‚ FastStart Digital. Р”РѕРїРѕРјРѕР¶Сѓ РѕС†С–РЅРёС‚Рё РІР°СЂС‚С–СЃС‚СЊ РїСЂРѕС”РєС‚Сѓ С‚Р° РїС–РґР±РµСЂСѓ С„РѕСЂРјР°С‚ Р·Р° 30 СЃРµРєСѓРЅРґ.", "bot");
       setTimeout(function () {
-        addMsg("Що вас цікавить?", "bot");
-        setChips(["Металоконструкція", "3D / WebAR-візуалізація", "AI-агент / автоматизація", "Комплексний проєкт"]);
+        addMsg("Р©Рѕ РІР°СЃ С†С–РєР°РІРёС‚СЊ?", "bot");
+        setChips(["Р’РµР±-СЂРѕР·СЂРѕР±РєР°", "3D / WebAR-РІС–Р·СѓР°Р»С–Р·Р°С†С–СЏ", "AI-Р°РіРµРЅС‚ / Р°РІС‚РѕРјР°С‚РёР·Р°С†С–СЏ", "РљРѕРјРїР»РµРєСЃРЅРёР№ РїСЂРѕС”РєС‚"]);
       }, 350);
     });
   }
@@ -110,31 +110,37 @@
 
     if (state.step === 0) {
       var map = [
-        { k: "металоконструкц", v: "Металоконструкція" },
-        { k: "3d", v: "3D / WebAR-візуалізація" },
-        { k: "webar", v: "3D / WebAR-візуалізація" },
-        { k: "візуалізац", v: "3D / WebAR-візуалізація" },
-        { k: "ai", v: "AI-агент / автоматизація" },
-        { k: "агент", v: "AI-агент / автоматизація" },
-        { k: "автоматизац", v: "AI-агент / автоматизація" },
-        { k: "бот", v: "AI-агент / автоматизація" },
-        { k: "комплексн", v: "Комплексний проєкт" }
+        { k: "СЃР°Р№С‚", v: "Р’РµР±-СЂРѕР·СЂРѕР±РєР°" },
+        { k: "Р»РµРЅРґС–РЅРі", v: "Р’РµР±-СЂРѕР·СЂРѕР±РєР°" },
+        { k: "РІРµР±", v: "Р’РµР±-СЂРѕР·СЂРѕР±РєР°" },
+        { k: "РјР°РіР°Р·РёРЅ", v: "Р’РµР±-СЂРѕР·СЂРѕР±РєР°" },
+        { k: "Р·Р°СЃС‚РѕСЃСѓРЅРѕРє", v: "Р’РµР±-СЂРѕР·СЂРѕР±РєР°" },
+        { k: "3d", v: "3D / WebAR-РІС–Р·СѓР°Р»С–Р·Р°С†С–СЏ" },
+        { k: "webar", v: "3D / WebAR-РІС–Р·СѓР°Р»С–Р·Р°С†С–СЏ" },
+        { k: "РІС–Р·СѓР°Р»С–Р·Р°С†", v: "3D / WebAR-РІС–Р·СѓР°Р»С–Р·Р°С†С–СЏ" },
+        { k: "РјРѕРґРµР»", v: "3D / WebAR-РІС–Р·СѓР°Р»С–Р·Р°С†С–СЏ" },
+        { k: "ai", v: "AI-Р°РіРµРЅС‚ / Р°РІС‚РѕРјР°С‚РёР·Р°С†С–СЏ" },
+        { k: "Р°РіРµРЅС‚", v: "AI-Р°РіРµРЅС‚ / Р°РІС‚РѕРјР°С‚РёР·Р°С†С–СЏ" },
+        { k: "Р°РІС‚РѕРјР°С‚РёР·Р°С†", v: "AI-Р°РіРµРЅС‚ / Р°РІС‚РѕРјР°С‚РёР·Р°С†С–СЏ" },
+        { k: "Р±РѕС‚", v: "AI-Р°РіРµРЅС‚ / Р°РІС‚РѕРјР°С‚РёР·Р°С†С–СЏ" },
+        { k: "С‡Р°С‚", v: "AI-Р°РіРµРЅС‚ / Р°РІС‚РѕРјР°С‚РёР·Р°С†С–СЏ" },
+        { k: "РєРѕРјРїР»РµРєСЃРЅ", v: "РљРѕРјРїР»РµРєСЃРЅРёР№ РїСЂРѕС”РєС‚" }
       ];
       var matched = map.find(function (m) { return t.indexOf(m.k) !== -1; });
       if (matched) {
         state.step++;
         state.projectType = matched.v;
         typing(function () {
-          addMsg("Чудово! Тоді середній чек для «" + state.projectType + "» — <b>" + budgetGuess(state.projectType) + "</b> без урахування матеріалів.", "bot");
+          addMsg("Р§СѓРґРѕРІРѕ! РўРѕРґС– СЃРµСЂРµРґРЅС–Р№ С‡РµРє РґР»СЏ В«" + state.projectType + "В» вЂ” <b>" + budgetGuess(state.projectType) + "</b> Р±РµР· СѓСЂР°С…СѓРІР°РЅРЅСЏ РјР°С‚РµСЂС–Р°Р»С–РІ.", "bot");
           setTimeout(function () {
-            addMsg("Який орієнтовний бюджет закладаєте?", "bot");
-            setChips(["до 15 000", "15 000 – 50 000", "50 000 – 150 000", "від 150 000", "Поки не знаю"]);
+            addMsg("РЇРєРёР№ РѕСЂС–С”РЅС‚РѕРІРЅРёР№ Р±СЋРґР¶РµС‚ Р·Р°РєР»Р°РґР°С”С‚Рµ?", "bot");
+            setChips(["РґРѕ 15 000", "15 000 вЂ“ 50 000", "50 000 вЂ“ 150 000", "РІС–Рґ 150 000", "РџРѕРєРё РЅРµ Р·РЅР°СЋ"]);
           }, 350);
         });
       } else {
         typing(function () {
-          addMsg("Розумію: «" + text + "». Опишу ваш кейс у КП — але спершу уточню пару моментів, щоб розрахунок був точним. Що вас цікавить?", "bot");
-          setChips(["Металоконструкція", "3D / WebAR-візуалізація", "AI-агент / автоматизація"]);
+          addMsg("Р РѕР·СѓРјС–СЋ: В«" + text + "В». РћРїРёС€Сѓ РІР°С€ РєРµР№СЃ Сѓ РљРџ вЂ” Р°Р»Рµ СЃРїРµСЂС€Сѓ СѓС‚РѕС‡РЅСЋ РїР°СЂСѓ РјРѕРјРµРЅС‚С–РІ, С‰РѕР± СЂРѕР·СЂР°С…СѓРЅРѕРє Р±СѓРІ С‚РѕС‡РЅРёРј. Р©Рѕ РІР°СЃ С†С–РєР°РІРёС‚СЊ?", "bot");
+          setChips(["Р’РµР±-СЂРѕР·СЂРѕР±РєР°", "3D / WebAR-РІС–Р·СѓР°Р»С–Р·Р°С†С–СЏ", "AI-Р°РіРµРЅС‚ / Р°РІС‚РѕРјР°С‚РёР·Р°С†С–СЏ"]);
         });
       }
       return;
@@ -144,9 +150,9 @@
       state.step++;
       state.budget = text;
       typing(function () {
-        addMsg("Зафіксувала: бюджет <b>" + text + "</b>. Зроблю попередній розрахунок і підготую КП.", "bot");
+        addMsg("Р—Р°С„С–РєСЃСѓРІР°Р»Р°: Р±СЋРґР¶РµС‚ <b>" + text + "</b>. Р—СЂРѕР±Р»СЋ РїРѕРїРµСЂРµРґРЅС–Р№ СЂРѕР·СЂР°С…СѓРЅРѕРє С– РїС–РґРіРѕС‚СѓСЋ РљРџ.", "bot");
         setTimeout(function () {
-          addMsg("Як до вас звертатись?", "bot");
+          addMsg("РЇРє РґРѕ РІР°СЃ Р·РІРµСЂС‚Р°С‚РёСЃСЊ?", "bot");
         }, 350);
       });
       return;
@@ -156,9 +162,9 @@
       state.step++;
       state.name = text;
       typing(function () {
-        addMsg("Приємно познайомитись, <b>" + text + "</b>! Останній крок:", "bot");
+        addMsg("РџСЂРёС”РјРЅРѕ РїРѕР·РЅР°Р№РѕРјРёС‚РёСЃСЊ, <b>" + text + "</b>! РћСЃС‚Р°РЅРЅС–Р№ РєСЂРѕРє:", "bot");
         setTimeout(function () {
-          addMsg("Залиште контакт — Telegram або телефон, щоб інженер надіслав вам КП:", "bot");
+          addMsg("Р—Р°Р»РёС€С‚Рµ РєРѕРЅС‚Р°РєС‚ вЂ” Telegram Р°Р±Рѕ С‚РµР»РµС„РѕРЅ, С‰РѕР± С–РЅР¶РµРЅРµСЂ РЅР°РґС–СЃР»Р°РІ РІР°Рј РљРџ:", "bot");
         }, 350);
       });
       return;
@@ -173,18 +179,18 @@
 
     /* post-completion free chat */
     typing(function () {
-      addMsg("Записала ваше повідомлення. Інженер відповість на нього разом із КП. Є ще питання?", "bot");
-      setChips(["Так, ще питання", "Дякую, чекаю КП"]);
+      addMsg("Р—Р°РїРёСЃР°Р»Р° РІР°С€Рµ РїРѕРІС–РґРѕРјР»РµРЅРЅСЏ. Р†РЅР¶РµРЅРµСЂ РІС–РґРїРѕРІС–СЃС‚СЊ РЅР° РЅСЊРѕРіРѕ СЂР°Р·РѕРј С–Р· РљРџ. Р„ С‰Рµ РїРёС‚Р°РЅРЅСЏ?", "bot");
+      setChips(["РўР°Рє, С‰Рµ РїРёС‚Р°РЅРЅСЏ", "Р”СЏРєСѓСЋ, С‡РµРєР°СЋ РљРџ"]);
     });
     saveLead({ message: text, source: "chat-followup" });
   }
 
   function sendLead() {
     typing(function () {
-      addMsg("Дякую, " + state.name + "! Ваша заявка прийнята. Інженер надішле розрахунок та КП на <b>" + state.contact + "</b> протягом 24 годин.", "bot");
+      addMsg("Р”СЏРєСѓСЋ, " + state.name + "! Р’Р°С€Р° Р·Р°СЏРІРєР° РїСЂРёР№РЅСЏС‚Р°. Р†РЅР¶РµРЅРµСЂ РЅР°РґС–С€Р»Рµ СЂРѕР·СЂР°С…СѓРЅРѕРє С‚Р° РљРџ РЅР° <b>" + state.contact + "</b> РїСЂРѕС‚СЏРіРѕРј 24 РіРѕРґРёРЅ.", "bot");
       setTimeout(function () {
-        addMsg("Поки чекаєте — відкрийте WebAR-галерею вище, щоб побачити, як виглядає проєкт у реальному просторі.", "bot");
-        setChips(["Відкрити AR-галерею", "Почитати про послуги"]);
+        addMsg("РџРѕРєРё С‡РµРєР°С”С‚Рµ вЂ” РІС–РґРєСЂРёР№С‚Рµ WebAR-РіР°Р»РµСЂРµСЋ РІРёС‰Рµ, С‰РѕР± РїРѕР±Р°С‡РёС‚Рё, СЏРє РІРёРіР»СЏРґР°С” РїСЂРѕС”РєС‚ Сѓ СЂРµР°Р»СЊРЅРѕРјСѓ РїСЂРѕСЃС‚РѕСЂС–.", "bot");
+        setChips(["Р’С–РґРєСЂРёС‚Рё AR-РіР°Р»РµСЂРµСЋ", "РџРѕС‡РёС‚Р°С‚Рё РїСЂРѕ РїРѕСЃР»СѓРіРё"]);
       }, 400);
     });
     saveLead({
@@ -207,9 +213,9 @@
     }).catch(function () {
       /* offline fallback: keep in localStorage */
       try {
-        var ls = JSON.parse(localStorage.getItem("vertex_leads") || "[]");
+        var ls = JSON.parse(localStorage.getItem("faststart_leads") || "[]");
         ls.push(payload);
-        localStorage.setItem("vertex_leads", JSON.stringify(ls));
+        localStorage.setItem("faststart_leads", JSON.stringify(ls));
       } catch (e) {}
     });
   }

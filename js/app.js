@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   "use strict";
 
   /* ---------- navbar ---------- */
@@ -43,52 +43,35 @@
     counterObserver.observe(el);
   });
 
-  /* ---------- hero word rotator ---------- */
-  var rotator = document.getElementById("rotator");
-  if (rotator) {
-    var words = ["металоконструкції", "3D/AR-візуалізацію", "AI-агентів", "інтерактивні WebAR-сцени"];
-    var wi = 0, show = true;
-    setInterval(function () {
-      if (!show) {
-        rotator.style.opacity = "0";
-        wi = (wi + 1) % words.length;
-        setTimeout(function () {
-          rotator.textContent = words[wi];
-          rotator.style.opacity = "1";
-        }, 280);
-      }
-    }, 3200);
-  }
-
   /* ---------- AR gallery injection ---------- */
   var AR_ITEMS = [
     {
-      title: "Ангар 18×36",
-      desc: "Каркас із ЛСТК та фахверком",
+      title: "Р†РЅС‚РµСЂР°РєС‚РёРІРЅРёР№ РѕС„С–СЃ 3D",
+      desc: "Р’С–СЂС‚СѓР°Р»СЊРЅРёР№ РїСЂРѕСЃС‚С–СЂ Сѓ СЂРµР°Р»СЊРЅС–Р№ РєС–РјРЅР°С‚С–",
       glb: "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
       usdz: "https://modelviewer.dev/shared-assets/models/Astronaut.usdz",
-      note: "прототип-модель для демонстрації AR"
+      note: "РїСЂРѕС‚РѕС‚РёРї-РјРѕРґРµР»СЊ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†С–С— AR"
     },
     {
-      title: "Модульний павільйон",
-      desc: "Торговий павільйон під ключ",
+      title: "РЁРѕСѓСЂСѓРј РїСЂРѕРґСѓРєС‚Сѓ",
+      desc: "Р”РµРјРѕРЅСЃС‚СЂР°С†С–СЏ С‚РѕРІР°СЂСѓ РЅР° РїРѕР»РёС†С– РєР»С–С”РЅС‚Р°",
       glb: "https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb",
       usdz: "https://modelviewer.dev/shared-assets/models/NeilArmstrong.usdz",
-      note: "прототип-модель для демонстрації AR"
+      note: "РїСЂРѕС‚РѕС‚РёРї-РјРѕРґРµР»СЊ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†С–С— AR"
     },
     {
-      title: "Навіс 6×12",
-      desc: "Однопрогоновий навіс для авто",
+      title: "Р’С–СЂС‚СѓР°Р»СЊРЅРёР№ Р°СЃРёСЃС‚РµРЅС‚",
+      desc: "AI-РїРµСЂСЃРѕРЅР°Р¶, С‰Рѕ СЂРѕР·РїРѕРІС–РґР°С” РїСЂРѕ РїСЂРѕРґСѓРєС‚",
       glb: "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
       usdz: "https://modelviewer.dev/shared-assets/models/RobotExpressive.usdz",
-      note: "прототип-модель для демонстрації AR"
+      note: "РїСЂРѕС‚РѕС‚РёРї-РјРѕРґРµР»СЊ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†С–С— AR"
     },
     {
-      title: "Технічний вузол",
-      desc: "Вузол кріплення ригеля",
+      title: "РўРµС…РЅРѕРґРµРјРѕ-РІСѓР·РѕР»",
+      desc: "Р†РЅС‚РµСЂР°РєС‚РёРІРЅР° С‡Р°СЃС‚РёРЅР° С–РЅС‚РµСЂС„РµР№СЃСѓ",
       glb: "https://modelviewer.dev/shared-assets/models/DamagedHelmet.glb",
       usdz: "https://modelviewer.dev/shared-assets/models/DamagedHelmet.usdz",
-      note: "прототип-модель для демонстрації AR"
+      note: "РїСЂРѕС‚РѕС‚РёРї-РјРѕРґРµР»СЊ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†С–С— AR"
     }
   ];
 
@@ -106,14 +89,14 @@
         '<button slot="ar-button" class="ar-btn">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
         '<path d="M12 2l8.5 4.9v9.8L12 21.6l-8.5-4.9V6.9L12 2zm0 0v9.8m8.5-4.9L12 11.8 3.5 6.9"/></svg> ' +
-        'Дивитись у AR' +
+        'Р”РёРІРёС‚РёСЃСЊ Сѓ AR' +
         '</button>' +
         '</model-viewer>' +
         '</div>' +
         '<div class="ar-info">' +
         '<div class="font-display font-semibold text-white">' + item.title + '</div>' +
         '<div class="text-xs text-slate-400 mt-0.5">' + item.desc + '</div>' +
-        '<div class="ar-note mt-2">' + item.note + ' · .glb / .usdz</div>' +
+        '<div class="ar-note mt-2">' + item.note + ' В· .glb / .usdz</div>' +
         '</div>' +
         '</div>'
       );
@@ -150,7 +133,7 @@
       };
       var btn = leadForm.querySelector("button[type=submit]");
       var original = btn.textContent;
-      btn.textContent = "Відправлення…";
+      btn.textContent = "Р’С–РґРїСЂР°РІР»РµРЅРЅСЏвЂ¦";
 
       fetch("/api/lead", {
         method: "POST",
@@ -163,11 +146,11 @@
             leadSuccess.classList.remove("hidden");
             leadForm.querySelectorAll("input,textarea").forEach(function (i) { i.value = ""; });
           } else {
-            alert("Не вдалося відправити. Напишіть нам у Telegram: t.me/vertex_engineering");
+            alert("РќРµ РІРґР°Р»РѕСЃСЏ РІС–РґРїСЂР°РІРёС‚Рё. РќР°РїРёС€С–С‚СЊ РЅР°Рј Сѓ Telegram: t.me/faststart_digital");
           }
         })
         .catch(function () {
-          alert("Не вдалося відправити. Напишіть нам у Telegram: t.me/vertex_engineering");
+          alert("РќРµ РІРґР°Р»РѕСЃСЏ РІС–РґРїСЂР°РІРёС‚Рё. РќР°РїРёС€С–С‚СЊ РЅР°Рј Сѓ Telegram: t.me/faststart_digital");
         })
         .finally(function () { btn.textContent = original; });
     });

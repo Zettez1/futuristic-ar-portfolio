@@ -1,15 +1,16 @@
-"""VERTEX portfolio backend.
+"""FastStart Digital portfolio backend.
 
 Serves static frontend + JSON APIs:
   POST /api/lead        - lead collection (chat agent + contact form)
   POST /api/chat        - simple rule-based AI agent reply
-  GET  /api/calc/beam   - live steel beam check (ДСТУ 8239 I-beams)
+  GET  /api/calc/quote  - live IT-project quote calculator
 
-Live Python engineering calc for the interactive tools section.
+Live Python quote engine for the interactive tools section.
 """
 from __future__ import annotations
 
 import json
+import math
 import os
 import threading
 from datetime import datetime, timezone
@@ -26,7 +27,7 @@ DATA_DIR.mkdir(exist_ok=True)
 LEADS_FILE = DATA_DIR / "leads.json"
 _lock = threading.Lock()
 
-app = FastAPI(title="VERTEX Portfolio", version="1.0.0")
+app = FastAPI(title="FastStart Digital Portfolio", version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,7 +66,7 @@ def _save_lead(payload: dict) -> None:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "service": "vertex-portfolio", "time": datetime.now(timezone.utc).isoformat()}
+    return {"status": "ok", "service": "faststart-portfolio", "time": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/api/leads")
@@ -91,10 +92,10 @@ class ChatMessage(BaseModel):
 def chat(message: ChatMessage) -> dict:
     """Tiny deterministic agent — replies to the most common asks."""
     text = message.message.lower().strip()
-    if any(k in text for k in ("ангар", "каркас", "навіс", "будівля", "склад")):
-        reply = ("Для металоконструкцій строк КМ/КМД — від 10 робочих днів, "
-                 "розрахунок кошторису — 48 годин. Який об'єкт і розміри?")
-        price_hint = "від 15 000 грн за документацію"
+    if any(k in text for k in ("сайт", "лендінг", "магазин", "застосунок", "веб", "платформ", "crm")):
+        reply = ("Для веб-розробки: ТЗ і прототип — від 5 днів, MVP — від 4 тижнів. "
+                 "Опишіть продукт і функціонал — порахую обсяг робіт.")
+        price_hint = "від 12 000 грн за лендінг/full-stack по ТЗ"
     elif any(k in text for k in ("ar", "3d", "візуалізац", "модел", "usdz", "glb")):
         reply = "3D/WebAR-пакет: модель + інтерактив — від 6 000 грн. Формати: .glb для Android, .usdz для iOS."
         price_hint = "6 000 – 25 000 грн"
@@ -102,89 +103,72 @@ def chat(message: ChatMessage) -> dict:
         reply = "AI-агенти від 20 000 грн: Telegram-боти, парсери, генератори лідів, інтеграції з CRM."
         price_hint = "20 000 – 120 000 грн"
     elif any(k in text for k in ("ціна", "вартість", "бюджет", "кільки кошту", "прайс")):
-        reply = "Орієнтовні чеки: металоконструкції — від 15 000 грн, 3D/WebAR — 6 000–25 000 грн, AI-агенти — від 20 000 грн."
+        reply = "Орієнтовні чеки: лендінг — від 12 000 грн, 3D/WebAR — 6 000–25 000 грн, AI-агенти — від 20 000 грн."
         price_hint = "уточніть ТЗ для точної цифри"
     elif any(k in text for k in ("привіт", "добрий", "hello", "хай", "вітаю")):
-        reply = "Вітаю! Розкажіть про задачу — порахую орієнтовну вартість і передам інженеру."
+        reply = "Вітаю! Розкажіть про задачу — порахую орієнтовну вартість і передам продакт-менеджеру."
         price_hint = None
     else:
-        reply = ("Записала повідомлення: інженер підготує розрахунок у КП. "
-                 "Поки що — який формат вас цікавить: металоконструкції, 3D/AR чи AI-агент?")
+        reply = ("Записала повідомлення: менеджер підготує розрахунок у КП. "
+                 "Поки що — який формат вас цікавить: веб-сайт, 3D/AR чи AI-агент?")
         price_hint = None
     _save_lead({"message": text, "source": "api-chat"})
     return {"ok": True, "reply": reply, "price_hint": price_hint}
 
 
-# ------------------------------------------------------ beam calculator ----
-# ДСТУ/ГОСТ 8239 I-beams: (h_mm, b_mm, s_mm, t_mm, Ix_см4, Wx_см3, mass_kg/m)
-I_BEAMS = {
-    10: (100, 55, 4.5, 7.2, 198, 39.7, 9.46),
-    12: (120, 64, 4.8, 7.3, 350, 58.4, 11.50),
-    14: (140, 73, 4.9, 7.5, 572, 81.7, 13.70),
-    16: (160, 81, 5.0, 7.8, 873, 109.0, 15.90),
-    18: (180, 90, 5.1, 8.1, 1290, 143.0, 18.40),
-    20: (200, 100, 5.2, 8.4, 1840, 184.0, 21.00),
-    22: (220, 110, 5.4, 8.7, 2550, 232.0, 24.00),
-    24: (240, 115, 5.6, 9.5, 3460, 289.0, 27.30),
-    27: (270, 125, 6.0, 9.8, 5010, 371.0, 31.50),
-    30: (300, 135, 6.5, 10.2, 7080, 472.0, 36.50),
-    36: (360, 145, 7.5, 12.3, 13380, 743.0, 48.60),
-    40: (400, 155, 8.3, 13.0, 19062, 953.0, 57.00),
+# ------------------------------------------------------ quote calculator ---
+# Typed base effort (developer-hours) per product type; complexity and team
+# size affect delivery time. Rate: 850 UAH/hour.
+QUOTE_MODEL = {
+    "landing": {"label": "Лендінг",        "hours": 16,  "weeks_min": 1},
+    "site":    {"label": "Сайт",           "hours": 90,  "weeks_min": 2},
+    "app":     {"label": "Веб-застосунок", "hours": 260, "weeks_min": 5},
+    "webar":   {"label": "Web3D/AR",       "hours": 120, "weeks_min": 3},
+    "ai":      {"label": "AI-агент",       "hours": 180, "weeks_min": 4},
 }
+COMPLEXITY_FACTOR = {1: 1.0, 2: 1.55, 3: 2.4}
+COMPLEXITY_LABEL = {1: "базова", 2: "середня", 3: "складна"}
+RATE_UAH_HOUR = 850.0
+HOURS_PER_WEEK = 38.0
 
 
-@app.get("/api/calc/beam")
-def calc_beam(profile: int = 20, length: float = 6.0, load: float = 25.0):
-    """Simply supported steel I-beam under UDL.
+@app.get("/api/calc/quote")
+def calc_quote(ptype: str = "landing", team: int = 1, complexity: int = 1):
+    """Instant IT-project quote: effort, price, timeline, support.
 
-    M = q*L^2/8; sigma = M/W <= R_y(240 MPa); deflection f = 5qL^4/(384EI) <= L/250.
+    price   = hours * rate
+    weeks   = max(weeks_min, ceil(hours * factor / (team * hours_per_week)))
+    support = ~15% of price per month during warranty.
     """
-    if profile not in I_BEAMS:
-        raise HTTPException(400, f"Unknown profile I{profile}, use one of {sorted(I_BEAMS)}")
-    if not (2.0 <= length <= 15.0):
-        raise HTTPException(400, "length must be 2..15 m")
-    if not (1.0 <= load <= 200.0):
-        raise HTTPException(400, "load must be 1..200 kN/m")
+    if ptype not in QUOTE_MODEL:
+        raise HTTPException(400, f"Unknown product type '{ptype}', use one of {sorted(QUOTE_MODEL)}")
+    if not (1 <= team <= 12):
+        raise HTTPException(400, "team must be 1..12 developers")
+    if complexity not in COMPLEXITY_FACTOR:
+        raise HTTPException(400, "complexity must be 1..3")
 
-    h, b, s, t, ix_cm4, wx_cm3, mass = I_BEAMS[profile]
-    ix = ix_cm4 * 1e-8          # m4
-    wx = wx_cm3 * 1e-6          # m3
-    e = 206e9                   # Pa, steel
-    ry = 240e6                  # Pa design yield
-
-    moment = load * length**2 / 8.0          # kN*m
-    stress_pa = moment * 1e3 / wx            # Pa
-    stress = stress_pa / 1e6                 # MPa
-    utilization = stress_pa / ry
-    passed = utilization <= 1.0
-    margin = round((1 - utilization) * -100) if not passed else round((1 - utilization) * 100)
-
-    deflection_m = 5 * load * 1e3 * length**4 / (384 * e * ix)
-    limit_m = length / 250.0
-    deflection_ok = deflection_m <= limit_m
-
-    weight = mass * length
-    price = round(weight * 48)               # ~48 UAH/kg rolled steel
+    base = QUOTE_MODEL[ptype]
+    factor = COMPLEXITY_FACTOR[complexity]
+    hours = round(base["hours"] * factor)
+    cost = round(hours * RATE_UAH_HOUR)
+    weeks = max(base["weeks_min"], math.ceil(hours / max(team, 1) / HOURS_PER_WEEK))
+    support_month = round(cost * 0.15)
 
     return {
         "ok": True,
-        "profile": profile,
-        "geometry": {"h": h, "b": b, "s": s, "t": t},
-        "length_m": length,
-        "load_kNm": load,
-        "moment": round(moment, 2),
-        "stress_mpa": round(stress, 2),
-        "ry_mpa": ry / 1e6,
-        "utilization": round(utilization * 100, 1),
-        "passed": bool(passed and deflection_ok),
-        "strength_ok": bool(passed),
-        "deflection_ok": bool(deflection_ok),
-        "deflection": round(deflection_m, 4),
-        "deflection_limit": round(limit_m, 4),
-        "margin": margin,
-        "weight": round(weight, 1),
-        "price": price,
-        "params": {"E": "206 GPa", "Ry": "240 MPa", "norm": "f <= L/250, sigma <= Ry"},
+        "type": ptype,
+        "type_label": base["label"],
+        "complexity": complexity,
+        "complexity_label": COMPLEXITY_LABEL[complexity],
+        "team": team,
+        "hours": hours,
+        "cost": cost,
+        "weeks": weeks,
+        "support_month": support_month,
+        "rate_uah_hour": RATE_UAH_HOUR,
+        "hours_per_week": HOURS_PER_WEEK,
+        "from_price": cost,
+        "params": {"rate": f"{RATE_UAH_HOUR:g} UAH/h", "norm": "робочий тиждень 38 год"},
     }
 
 

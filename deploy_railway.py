@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-VERTEX Portfolio — autonomous Railway deploy via official GraphQL API v2.
+FastStart Digital portfolio — autonomous Railway deploy via official GraphQL API v2.
 
 Endpoint: https://backboard.railway.com/graphql/v2
 Auth:     Bearer token from $RAILWAY_TOKEN (or --token)
@@ -113,7 +113,7 @@ def github_api(token: str, method: str, path: str, payload: dict | None = None) 
         data=json.dumps(payload).encode() if payload else None,
         method=method,
         headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json",
-                 "User-Agent": "vertex-deploy", "Content-Type": "application/json",
+                 "User-Agent": "faststart-deploy", "Content-Type": "application/json",
                  "X-GitHub-Api-Version": "2022-11-28"},
     )
     try:
@@ -136,14 +136,14 @@ def sync_github_repo(repo: str, token: str, branch: str) -> None:
     if not existing:
         log(f"{DIM}  creating private repo {name}…{RESET}")
         github_api(token, "POST", "/user/repos",
-                   {"name": name, "description": "Futuristic WebAR portfolio (Vertex)", "private": True})
+                   {"name": name, "description": "Futuristic WebAR portfolio (FastStart Digital)", "private": True})
         time.sleep(2)
 
     if not os.path.isdir(".git"):
         log(f"{DIM}  git init…{RESET}")
         run_git(["init", "-b", branch])
-        run_git(["config", "user.email", "deploy@vertex.studio"])
-        run_git(["config", "user.name", "VERTEX Deploy"])
+        run_git(["config", "user.email", "deploy@faststart.digital"])
+        run_git(["config", "user.name", "FastStart Deploy"])
 
     log(f"{DIM}  staging & committing…{RESET}")
     run_git(["add", "-A"])
@@ -258,7 +258,7 @@ def wait_deploy(token: str, deployment_id: str, timeout: int) -> dict:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Deploy VERTEX portfolio to Railway via GraphQL API v2")
+    ap = argparse.ArgumentParser(description="Deploy FastStart Digital portfolio to Railway via GraphQL API v2")
     ap.add_argument("--token", default=os.environ.get("RAILWAY_TOKEN"), help="Railway API token (or $RAILWAY_TOKEN)")
     ap.add_argument("--project", default=DEFAULT_PROJECT, help="Railway project name")
     ap.add_argument("--service", default=DEFAULT_SERVICE, help="Railway service name")
@@ -276,7 +276,7 @@ def main() -> None:
     if not token:
         raise SystemExit(f"{RED}No RAILWAY_TOKEN. Set env RAILWAY_TOKEN or pass --token.{RESET}")
 
-    log(f"{CYAN}VERTEX Railway deploy script{RESET} · {DIM}GraphQL API v2 · backboard.railway.com{RESET}")
+    log(f"{CYAN}FastStart Digital Railway deploy script{RESET} · {DIM}GraphQL API v2 · backboard.railway.com{RESET}")
     log(f"1/8 Authenticating…")
     me = gql(token, "{ me { id email username workspaces { id name } } }")["me"]
     log(f"{GREEN}  OK{RESET} · {me.get('email')} {DIM}(@{me.get('username')}){RESET}")
@@ -299,7 +299,7 @@ def main() -> None:
           projectCreate(input: $input) { id name }
         }""", {"input": {"workspaceId": workspace_id, "name": args.project,
                          "defaultEnvironmentName": "production",
-                         "description": "Futuristic WebAR portfolio (VERTEX)"}})
+                         "description": "Futuristic WebAR portfolio (FastStart Digital)"}})
         project_id = d["projectCreate"]["id"]
         log(f"{GREEN}  created{RESET} {project_id}")
 
