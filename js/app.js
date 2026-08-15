@@ -48,32 +48,32 @@
     {
       title: "Кросівок 1:1",
       desc: "AR-перегляд товару для інтернет-магазину",
-      glb: "/models/sneaker.glb?v=3",
-      usdz: "/models/sneaker.usdz?v=3",
+      glb: "/models/sneaker.glb?v=4",
+      usdz: "/models/sneaker.usdz?v=4",
       note: "кросівки · e-commerce",
       scale: "1 1 1"
     },
     {
       title: "Блюдо для кафе",
       desc: "Страва доповнює сервірування столу",
-      glb: "/models/avocado.glb?v=3",
-      usdz: "/models/avocado.usdz?v=3",
+      glb: "/models/avocado.glb?v=4",
+      usdz: "/models/avocado.usdz?v=4",
       note: "ресторани · доставка їжі",
       scale: "1 1 1"
     },
     {
       title: "Диван для салону",
       desc: "Меблі в реальному масштабі перед покупкою",
-      glb: "/models/sofa.glb?v=3",
-      usdz: "/models/sofa.usdz?v=3",
+      glb: "/models/sofa.glb?v=4",
+      usdz: "/models/sofa.usdz?v=4",
       note: "меблі · інтер'єрні студії",
       scale: "1 1 1"
     },
     {
       title: "Пляшка води",
       desc: "Продукт у реальному розмірі на полиці",
-      glb: "/models/bottle.glb?v=3",
-      usdz: "/models/bottle.usdz?v=3",
+      glb: "/models/bottle.glb?v=4",
+      usdz: "/models/bottle.usdz?v=4",
       note: "напої · FMCG-магазини",
       scale: "1 1 1"
     }
@@ -139,10 +139,10 @@
       }
     }
     if (supportsWebXR()) {
-      showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>Цей браузер підтримує AR-простір: натисніть «Дивитись у AR» вдруге на смартфоні. Нічого встановлювати не потрібно — режим працює прямо в Chrome/Safari.</span>');
+      showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює у браузері: Chrome або Edge на Android, Safari на iPhone. Натисніть «Дивитись у AR» вдруге — нічого встановлювати не потрібно.</span>');
       return;
     }
-    showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює зі смартфона і не потребує встановлення застосунків: відкрийте цей сайт на телефоні в Chrome або Safari та натисніть «Дивитись у AR».</span>');
+    showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює зі смартфона у браузері без встановлення застосунків: Chrome/Edge на Android або Safari на iPhone. Відкрийте цей сайт на телефоні та натисніть «Дивитись у AR».</span>');
   }
 
   function injectArButtons(items) {
@@ -184,11 +184,6 @@ return (
         'scale="' + (item.scale || "1 1 1") + '" ' +
         'shadow-intensity="1.1" environment-image="neutral" tone-mapping="aces" ' +
         'style="width:100%;height:260px" alt="' + item.title + '">' +
-        '<button slot="ar-button" class="ar-btn">' +
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-        '<path d="M12 2l8.5 4.9v9.8L12 21.6l-8.5-4.9V6.9L12 2zm0 0v9.8m8.5-4.9L12 11.8 3.5 6.9"/></svg> ' +
-        'Дивитись у AR' +
-        '</button>' +
         '</model-viewer>' +
         '</div>' +
         '<button type="button" class="ar-cta-btn">' +
