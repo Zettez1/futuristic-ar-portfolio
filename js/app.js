@@ -48,32 +48,32 @@
     {
       title: "Кросівок 1:1",
       desc: "AR-перегляд товару для інтернет-магазину",
-      glb: "/models/sneaker.glb?v=9",
-      usdz: "/models/sneaker.usdz?v=9",
+      glb: "/models/sneaker.glb?v=10",
+      usdz: "/models/sneaker.usdz?v=10",
       note: "кросівки · e-commerce",
       scale: "1 1 1"
     },
     {
       title: "Блюдо для кафе",
       desc: "Страва доповнює сервірування столу",
-      glb: "/models/avocado.glb?v=9",
-      usdz: "/models/avocado.usdz?v=9",
+      glb: "/models/avocado.glb?v=10",
+      usdz: "/models/avocado.usdz?v=10",
       note: "ресторани · доставка їжі",
       scale: "1 1 1"
     },
     {
       title: "Диван для салону",
       desc: "Меблі в реальному масштабі перед покупкою",
-      glb: "/models/sofa.glb?v=9",
-      usdz: "/models/sofa.usdz?v=9",
+      glb: "/models/sofa.glb?v=10",
+      usdz: "/models/sofa.usdz?v=10",
       note: "меблі · інтер'єрні студії",
       scale: "1 1 1"
     },
     {
       title: "Пляшка води",
       desc: "Продукт у реальному розмірі на полиці",
-      glb: "/models/bottle.glb?v=9",
-      usdz: "/models/bottle.usdz?v=9",
+      glb: "/models/bottle.glb?v=10",
+      usdz: "/models/bottle.usdz?v=10",
       note: "напої · FMCG-магазини",
       scale: "1 1 1"
     }
@@ -125,7 +125,7 @@
          so guide the user to Safari instead. */
       if (/iPad|iPhone|iPod/.test(navigator.userAgent) && item.usdz) {
         if (/CriOS|EdgiOS|FxiOS/.test(navigator.userAgent)) {
-          showHint('<svg class="w-5 h-5 text-cyan-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V9.5m-8 7L21 3m0 0h-6m6 0v6"/></svg><span>AR-режим на iPhone працює в Safari: відкрийте цю сторінку у Safari та натисніть «Відкрити в AR» ще раз. Нічого встановлювати не потрібно.</span>');
+          showHint('<svg class="w-5 h-5 text-cyan-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V9.5m-8 7L21 3m0 0h-6m6 0v6"/></svg><span>AR-режим на iPhone працює в Safari: відкрийте цю сторінку у Safari та натисніть «Дивитись у AR» ще раз. Нічого встановлювати не потрібно.</span>');
           return;
         }
         var a = document.createElement("a");
@@ -139,10 +139,10 @@
       }
     }
     if (supportsWebXR()) {
-      showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює у браузері: Chrome або Edge на Android, Safari на iPhone. Натисніть «Дивитись у AR» вдруге — нічого встановлювати не потрібно.</span>');
+      showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює у браузері: Chrome або Edge на Android, Safari на iPhone. Натисніть «Дивитись у AR» ще раз — нічого встановлювати не потрібно.</span>');
       return;
     }
-    showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює зі смартфона у браузері без встановлення застосунків: Chrome/Edge на Android або Safari на iPhone. Відкрийте цей сайт на телефоні та натисніть «Дивитись у AR».</span>');
+    showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює зі смартфона прямо в браузері — нічого встановлювати не потрібно: використовуйте Chrome/Edge на Android, Safari на iPhone. Відкрийте сайт на телефоні та натисніть «Дивитись у AR».</span>');
   }
 
   function injectArButtons(items) {
