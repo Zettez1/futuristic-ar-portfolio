@@ -194,6 +194,8 @@ class ModelStaticFiles(StaticFiles):
         if path.endswith((".usdz", ".glb", ".gltf")):
             response.headers["Cache-Control"] = "no-store, must-revalidate"
             response.headers["Content-Disposition"] = "inline"
+        elif path.endswith((".html", ".js", ".css")):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
         return response
 
 
