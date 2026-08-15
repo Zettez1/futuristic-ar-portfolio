@@ -11,7 +11,8 @@
   --grad: linear-gradient(120deg, #22d3ee 0%, #818cf8 55%, #c084fc 100%);
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
+body { overflow-x: hidden; }
 
 body {
   font-family: "Inter", system-ui, sans-serif;
@@ -63,6 +64,9 @@ body::before {
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
+@media (max-width: 640px) {
+  .glass-nav { width: calc(100vw - 20px); max-width: 100%; }
+}
 .header-scrolled .glass-nav {
   background: rgba(5, 7, 16, 0.85);
   box-shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.8);
@@ -91,6 +95,11 @@ body::before {
   font-weight: 600;
   transition: transform 0.2s, box-shadow 0.25s, background 0.25s, border-color 0.25s;
   white-space: nowrap;
+  max-width: 100%;
+}
+@media (max-width: 420px) {
+  .cta-btn { white-space: normal; }
+  .cta-btn svg { flex: none; }
 }
 .cta-primary {
   color: #04050c;
@@ -295,6 +304,11 @@ body::before {
 #ar-hint .ar-hint-box {
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  text-align: center;
+  max-width: 100%;
+  min-width: 0;
   gap: 10px;
   padding: 12px 20px;
   border-radius: 14px;
@@ -303,9 +317,13 @@ body::before {
   background: rgba(139, 92, 246, 0.12);
   border: 1px solid rgba(139, 92, 246, 0.4);
 }
+@media (max-width: 420px) {
+  #ar-hint .ar-hint-box { gap: 6px; padding: 10px 12px; font-size: 12px; }
+}
 
 .step-chip {
   display: flex; align-items: center; gap: 12px;
+  min-width: 0;
   padding: 14px 18px;
   border-radius: 14px;
   background: rgba(255,255,255,0.04);
@@ -313,6 +331,7 @@ body::before {
   font-weight: 500;
   color: #cfe1f8;
 }
+.step-chip > *:not(.step-num) { min-width: 0; overflow-wrap: break-word; }
 .step-num {
   width: 26px; height: 26px;
   flex: none;
@@ -364,6 +383,7 @@ body::before {
 .field-label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 7px; letter-spacing: 0.04em; }
 .range {
   width: 100%;
+  max-width: 100%;
   appearance: none;
   -webkit-appearance: none;
   height: 6px;
@@ -492,6 +512,9 @@ body::before {
 }
 .field {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
   padding: 12px 15px;
   border-radius: 12px;
   font-size: 14px;

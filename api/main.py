@@ -173,6 +173,12 @@ def calc_quote(ptype: str = "landing", team: int = 1, complexity: int = 1):
 
 
 # ------------------------------------------------------------- frontend ----
+import mimetypes
+
+mimetypes.add_type("model/vnd.usdz+zip", ".usdz")
+mimetypes.add_type("model/gltf-binary", ".glb")
+mimetypes.add_type("model/gltf+json", ".gltf")
+
 STATIC_DIR = BASE_DIR / "static"
 if (BASE_DIR / "index.html").exists():
     STATIC_DIR = BASE_DIR

@@ -100,12 +100,12 @@
       try {
         if (mv.canActivateAR) { mv.activateAR(); return; }
       } catch (e) { /* fall through to platform paths */ }
-      /* platform fallback — native apps only, nothing to install as a 3rd party app */
+      /* iOS fallback: <a rel="ar"> opens AR Quick Look in-place (needs correct usdz MIME) */
       if (/iPad|iPhone|iPod/.test(navigator.userAgent) && item.usdz) {
         var a = document.createElement("a");
         a.href = location.origin + item.usdz;
         a.rel = "ar";
-        a.download = true;
+        a.style.display = "none";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
