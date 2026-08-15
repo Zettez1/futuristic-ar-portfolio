@@ -1,0 +1,19 @@
+# secrets
+.env
+.env.*
+!.env.example
+railway_token.txt
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# runtime data
+data/leads.json
+data/*.json
+
+# misc
+.DS_Store
+Thumbs.db
