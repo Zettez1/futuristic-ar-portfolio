@@ -43,35 +43,35 @@
     counterObserver.observe(el);
   });
 
-  /* ---------- AR gallery (self-hosted models, lazy model-viewer) ---------- */
+  /* ---------- AR gallery (business models, lazy model-viewer) ---------- */
   var AR_ITEMS = [
     {
-      title: "Інтерактивний офіс 3D",
-      desc: "Віртуальний простір у реальній кімнаті",
-      glb: "/models/astronaut.glb",
-      usdz: "/models/astronaut.usdz",
-      note: "прототип-модель для демонстрації AR"
+      title: "Кросівок 1:1",
+      desc: "AR-перегляд товару для інтернет-магазину",
+      glb: "/models/sneaker.glb",
+      usdz: "/models/sneaker.usdz",
+      note: "кросівки · e-commerce"
     },
     {
-      title: "Шоурум продукту",
-      desc: "Демонстрація товару на полиці клієнта",
+      title: "Блюдо для кафе",
+      desc: "Страва доповнює сервірування столу",
+      glb: "/models/avocado.glb",
+      usdz: "/models/avocado.usdz",
+      note: "ресторани · доставка їжі"
+    },
+    {
+      title: "Декор-ліхтар",
+      desc: "Інтер'єрний об'єкт у реальному масштабі",
+      glb: "/models/lantern.glb",
+      usdz: "/models/lantern.usdz",
+      note: "декор · інтер'єрні студії"
+    },
+    {
+      title: "Модель авто",
+      desc: "Демонстрація транспорту та техніки",
       glb: "/models/toycar.glb",
-      usdz: "",
-      note: "прототип-модель для демонстрації AR"
-    },
-    {
-      title: "Віртуальний асистент",
-      desc: "AI-персонаж, що розповідає про продукт",
-      glb: "/models/robot.glb",
-      usdz: "",
-      note: "прототип-модель для демонстрації AR"
-    },
-    {
-      title: "Технодемо-вузол",
-      desc: "Інтерактивна частина інтерфейсу",
-      glb: "/models/helmet.glb",
-      usdz: "",
-      note: "прототип-модель для демонстрації AR"
+      usdz: "/models/toycar.usdz",
+      note: "авто · каталоги техніки"
     }
   ];
 
@@ -80,35 +80,43 @@
     return window.customElements && customElements.get("model-viewer");
   };
 
-  /* AR fallback: always-visible button under each model */
-  function arTargetUrl(item) {
-    var origin = location.origin;
-    if (item.usdz && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
-      return origin + item.usdz;
-    }
-    if (/Android/i.test(navigator.userAgent)) {
-      return "https://arvr.google.com/scene-viewer/1.0?file=" +
-        encodeURIComponent(origin + item.glb) + "&mode=ar_preferred&resizable=false";
-    }
-    return "";
+  /* AR without any app installs: WebXR (Chrome/Edge Android), Quick Look (iPhone) */
+  function supportsWebXR() {
+    return !!(window.navigator && navigator.xr && navigator.xr.isSessionSupported);
   }
 
   function handleArClick(item, mv) {
-    if (mv && mv.canActivateAR) {
-      mv.activateAR();
-      return;
-    }
-    var target = arTargetUrl(item);
-    if (target) {
-      window.open(target, "_blank", "noopener");
-      return;
-    }
     var hint = document.getElementById("ar-hint");
-    if (hint) {
-      hint.classList.remove("hidden");
-      hint.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(function () { hint.classList.add("hidden"); }, 6000);
+    var showHint = function (msg) {
+      var box = hint ? hint.querySelector(".ar-hint-box") : null;
+      if (box && msg) box.innerHTML = msg;
+      if (hint) {
+        hint.classList.remove("hidden");
+        hint.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(function () { hint.classList.add("hidden"); }, 8000);
+      }
+    };
+    if (mv) {
+      try {
+        if (mv.canActivateAR) { mv.activateAR(); return; }
+      } catch (e) { /* fall through to platform paths */ }
+      /* platform fallback — native apps only, nothing to install as a 3rd party app */
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent) && item.usdz) {
+        var a = document.createElement("a");
+        a.href = location.origin + item.usdz;
+        a.rel = "ar";
+        a.download = true;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
     }
+    if (supportsWebXR()) {
+      showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>Цей браузер підтримує AR-простір: натисніть «Дивитись у AR» вдруге на смартфоні. Нічого встановлювати не потрібно — режим працює прямо в Chrome/Safari.</span>');
+      return;
+    }
+    showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює зі смартфона і не потребує встановлення застосунків: відкрийте цей сайт на телефоні в Chrome або Safari та натисніть «Дивитись у AR».</span>');
   }
 
   function injectArButtons(items) {
