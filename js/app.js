@@ -1,4 +1,4 @@
-(function () {
+п»ї(function () {
   "use strict";
 
   /* ---------- navbar ---------- */
@@ -46,35 +46,35 @@
   /* ---------- AR gallery (business models, lazy model-viewer) ---------- */
   var AR_ITEMS = [
     {
-      title: "Кросівок 1:1",
-      desc: "AR-перегляд товару для інтернет-магазину",
+      title: "РљСЂРѕСЃС–РІРѕРє 1:1",
+      desc: "AR-РїРµСЂРµРіР»СЏРґ С‚РѕРІР°СЂСѓ РґР»СЏ С–РЅС‚РµСЂРЅРµС‚-РјР°РіР°Р·РёРЅСѓ",
       glb: "/models/sneaker.glb?v=8",
       usdz: "/models/sneaker.usdz?v=8",
-      note: "кросівки · e-commerce",
+      note: "РєСЂРѕСЃС–РІРєРё В· e-commerce",
       scale: "1 1 1"
     },
     {
-      title: "Блюдо для кафе",
-      desc: "Страва доповнює сервірування столу",
+      title: "Р‘Р»СЋРґРѕ РґР»СЏ РєР°С„Рµ",
+      desc: "РЎС‚СЂР°РІР° РґРѕРїРѕРІРЅСЋС” СЃРµСЂРІС–СЂСѓРІР°РЅРЅСЏ СЃС‚РѕР»Сѓ",
       glb: "/models/avocado.glb?v=8",
       usdz: "/models/avocado.usdz?v=8",
-      note: "ресторани · доставка їжі",
+      note: "СЂРµСЃС‚РѕСЂР°РЅРё В· РґРѕСЃС‚Р°РІРєР° С—Р¶С–",
       scale: "1 1 1"
     },
     {
-      title: "Диван для салону",
-      desc: "Меблі в реальному масштабі перед покупкою",
+      title: "Р”РёРІР°РЅ РґР»СЏ СЃР°Р»РѕРЅСѓ",
+      desc: "РњРµР±Р»С– РІ СЂРµР°Р»СЊРЅРѕРјСѓ РјР°СЃС€С‚Р°Р±С– РїРµСЂРµРґ РїРѕРєСѓРїРєРѕСЋ",
       glb: "/models/sofa.glb?v=8",
       usdz: "/models/sofa.usdz?v=8",
-      note: "меблі · інтер'єрні студії",
+      note: "РјРµР±Р»С– В· С–РЅС‚РµСЂ'С”СЂРЅС– СЃС‚СѓРґС–С—",
       scale: "1 1 1"
     },
     {
-      title: "Пляшка води",
-      desc: "Продукт у реальному розмірі на полиці",
+      title: "РџР»СЏС€РєР° РІРѕРґРё",
+      desc: "РџСЂРѕРґСѓРєС‚ Сѓ СЂРµР°Р»СЊРЅРѕРјСѓ СЂРѕР·РјС–СЂС– РЅР° РїРѕР»РёС†С–",
       glb: "/models/bottle.glb?v=8",
       usdz: "/models/bottle.usdz?v=8",
-      note: "напої · FMCG-магазини",
+      note: "РЅР°РїРѕС— В· FMCG-РјР°РіР°Р·РёРЅРё",
       scale: "1 1 1"
     }
   ];
@@ -121,11 +121,11 @@
         if (mv.canActivateAR) { mv.activateAR(); return; }
       } catch (e) { /* fall through to platform paths */ }
       /* iOS fallback: <a rel="ar"> opens AR Quick Look in-place (needs correct usdz MIME).
-         Chrome/Edge/Firefox on iOS can't Quick Look — they would download the file,
+         Chrome/Edge/Firefox on iOS can't Quick Look вЂ” they would download the file,
          so guide the user to Safari instead. */
       if (/iPad|iPhone|iPod/.test(navigator.userAgent) && item.usdz) {
         if (/CriOS|EdgiOS|FxiOS/.test(navigator.userAgent)) {
-          showHint('<svg class="w-5 h-5 text-cyan-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V9.5m-8 7L21 3m0 0h-6m6 0v6"/></svg><span>AR-режим на iPhone працює в Safari: відкрийте цю сторінку у Safari та натисніть «Відкрити в AR» ще раз. Нічого встановлювати не потрібно.</span>');
+          showHint('<svg class="w-5 h-5 text-cyan-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V9.5m-8 7L21 3m0 0h-6m6 0v6"/></svg><span>AR-СЂРµР¶РёРј РЅР° iPhone РїСЂР°С†СЋС” РІ Safari: РІС–РґРєСЂРёР№С‚Рµ С†СЋ СЃС‚РѕСЂС–РЅРєСѓ Сѓ Safari С‚Р° РЅР°С‚РёСЃРЅС–С‚СЊ В«Р’С–РґРєСЂРёС‚Рё РІ ARВ» С‰Рµ СЂР°Р·. РќС–С‡РѕРіРѕ РІСЃС‚Р°РЅРѕРІР»СЋРІР°С‚Рё РЅРµ РїРѕС‚СЂС–Р±РЅРѕ.</span>');
           return;
         }
         var a = document.createElement("a");
@@ -139,10 +139,10 @@
       }
     }
     if (supportsWebXR()) {
-      showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює у браузері: Chrome або Edge на Android, Safari на iPhone. Натисніть «Дивитись у AR» вдруге — нічого встановлювати не потрібно.</span>');
+      showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-СЂРµР¶РёРј РїСЂР°С†СЋС” Сѓ Р±СЂР°СѓР·РµСЂС–: Chrome Р°Р±Рѕ Edge РЅР° Android, Safari РЅР° iPhone. РќР°С‚РёСЃРЅС–С‚СЊ В«Р”РёРІРёС‚РёСЃСЊ Сѓ ARВ» РІРґСЂСѓРіРµ вЂ” РЅС–С‡РѕРіРѕ РІСЃС‚Р°РЅРѕРІР»СЋРІР°С‚Рё РЅРµ РїРѕС‚СЂС–Р±РЅРѕ.</span>');
       return;
     }
-    showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-режим працює зі смартфона у браузері без встановлення застосунків: Chrome/Edge на Android або Safari на iPhone. Відкрийте цей сайт на телефоні та натисніть «Дивитись у AR».</span>');
+    showHint('<svg class="w-5 h-5 text-violet-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>AR-СЂРµР¶РёРј РїСЂР°С†СЋС” Р·С– СЃРјР°СЂС‚С„РѕРЅР° Сѓ Р±СЂР°СѓР·РµСЂС– Р±РµР· РІСЃС‚Р°РЅРѕРІР»РµРЅРЅСЏ Р·Р°СЃС‚РѕСЃСѓРЅРєС–РІ: Chrome/Edge РЅР° Android Р°Р±Рѕ Safari РЅР° iPhone. Р’С–РґРєСЂРёР№С‚Рµ С†РµР№ СЃР°Р№С‚ РЅР° С‚РµР»РµС„РѕРЅС– С‚Р° РЅР°С‚РёСЃРЅС–С‚СЊ В«Р”РёРІРёС‚РёСЃСЊ Сѓ ARВ».</span>');
   }
 
   function injectArButtons(items) {
@@ -162,7 +162,7 @@
           if (holder) {
             holder.innerHTML = '<div class="ar-model-fallback">' +
               '<div class="font-display text-white text-sm">' + item.title + '</div>' +
-              '<div class="text-xs text-slate-400 mt-1">3D-модель у цьому форматі недоступна. Ми підготуємо вашу власну — замовте Web3D-розробку.</div>' +
+              '<div class="text-xs text-slate-400 mt-1">3D-РјРѕРґРµР»СЊ Сѓ С†СЊРѕРјСѓ С„РѕСЂРјР°С‚С– РЅРµРґРѕСЃС‚СѓРїРЅР°. РњРё РїС–РґРіРѕС‚СѓС”РјРѕ РІР°С€Сѓ РІР»Р°СЃРЅСѓ вЂ” Р·Р°РјРѕРІС‚Рµ Web3D-СЂРѕР·СЂРѕР±РєСѓ.</div>' +
               '</div>';
           }
         });
@@ -189,12 +189,12 @@ return (
         '<button type="button" class="ar-cta-btn">' +
         '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
         '<path d="M12 2l8.5 4.9v9.8L12 21.6l-8.5-4.9V6.9L12 2zm0 0v9.8m8.5-4.9L12 11.8 3.5 6.9"/></svg> ' +
-        'Дивитись у AR' +
+        'Р”РёРІРёС‚РёСЃСЊ Сѓ AR' +
         '</button>' +
         '<div class="ar-info">' +
         '<div class="font-display font-semibold text-white">' + item.title + '</div>' +
         '<div class="text-xs text-slate-400 mt-0.5">' + item.desc + '</div>' +
-        '<div class="ar-note mt-2">' + item.note + ' · ' + formats + '</div>' +
+        '<div class="ar-note mt-2">' + item.note + ' В· ' + formats + '</div>' +
         '</div>' +
         '</div>'
       );
@@ -232,7 +232,7 @@ return (
       }
     };
     s.onerror = function () {
-      if (grid) grid.innerHTML = '<p class="text-sm text-slate-500">3D-модуль не завантажився. Спробуйте пізніше або напишіть нам у Telegram.</p>';
+      if (grid) grid.innerHTML = '<p class="text-sm text-slate-500">3D-РјРѕРґСѓР»СЊ РЅРµ Р·Р°РІР°РЅС‚Р°Р¶РёРІСЃСЏ. РЎРїСЂРѕР±СѓР№С‚Рµ РїС–Р·РЅС–С€Рµ Р°Р±Рѕ РЅР°РїРёС€С–С‚СЊ РЅР°Рј Сѓ Telegram.</p>';
     };
     document.head.appendChild(s);
   }
@@ -272,7 +272,7 @@ return (
       };
       var btn = leadForm.querySelector("button[type=submit]");
       var original = btn.textContent;
-      btn.textContent = "Відправлення…";
+      btn.textContent = "Р’С–РґРїСЂР°РІР»РµРЅРЅСЏвЂ¦";
 
       fetch("/api/lead", {
         method: "POST",
@@ -285,11 +285,11 @@ return (
             leadSuccess.classList.remove("hidden");
             leadForm.querySelectorAll("input,textarea").forEach(function (i) { i.value = ""; });
           } else {
-            showError("Не вдалося відправити. Напишіть нам у Telegram: t.me/faststart_digital");
+            showError("РќРµ РІРґР°Р»РѕСЃСЏ РІС–РґРїСЂР°РІРёС‚Рё. РќР°РїРёС€С–С‚СЊ РЅР°Рј Сѓ Telegram: t.me/faststart_digital");
           }
         })
         .catch(function () {
-          showError("Не вдалося відправити. Спробуйте ще раз або напишіть у Telegram: t.me/faststart_digital");
+          showError("РќРµ РІРґР°Р»РѕСЃСЏ РІС–РґРїСЂР°РІРёС‚Рё. РЎРїСЂРѕР±СѓР№С‚Рµ С‰Рµ СЂР°Р· Р°Р±Рѕ РЅР°РїРёС€С–С‚СЊ Сѓ Telegram: t.me/faststart_digital");
         })
         .finally(function () { btn.textContent = original; });
     });
