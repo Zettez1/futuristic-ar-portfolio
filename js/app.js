@@ -48,32 +48,32 @@
     {
       title: "Кросівок 1:1",
       desc: "AR-перегляд товару для інтернет-магазину",
-      glb: "/models/sneaker.glb?v=6",
-      usdz: "/models/sneaker.usdz?v=6",
+      glb: "/models/sneaker.glb?v=7",
+      usdz: "/models/sneaker.usdz?v=7",
       note: "кросівки · e-commerce",
       scale: "1 1 1"
     },
     {
       title: "Блюдо для кафе",
       desc: "Страва доповнює сервірування столу",
-      glb: "/models/avocado.glb?v=6",
-      usdz: "/models/avocado.usdz?v=6",
+      glb: "/models/avocado.glb?v=7",
+      usdz: "/models/avocado.usdz?v=7",
       note: "ресторани · доставка їжі",
       scale: "1 1 1"
     },
     {
       title: "Диван для салону",
       desc: "Меблі в реальному масштабі перед покупкою",
-      glb: "/models/sofa.glb?v=6",
-      usdz: "/models/sofa.usdz?v=6",
+      glb: "/models/sofa.glb?v=7",
+      usdz: "/models/sofa.usdz?v=7",
       note: "меблі · інтер'єрні студії",
       scale: "1 1 1"
     },
     {
       title: "Пляшка води",
       desc: "Продукт у реальному розмірі на полиці",
-      glb: "/models/bottle.glb?v=6",
-      usdz: "/models/bottle.usdz?v=6",
+      glb: "/models/bottle.glb?v=7",
+      usdz: "/models/bottle.usdz?v=7",
       note: "напої · FMCG-магазини",
       scale: "1 1 1"
     }
