@@ -50,28 +50,32 @@
       desc: "AR-перегляд товару для інтернет-магазину",
       glb: "/models/sneaker.glb?v=2",
       usdz: "/models/sneaker.usdz?v=2",
-      note: "кросівки · e-commerce"
+      note: "кросівки · e-commerce",
+      scale: "1 1 1"
     },
     {
       title: "Блюдо для кафе",
       desc: "Страва доповнює сервірування столу",
       glb: "/models/avocado.glb?v=2",
       usdz: "/models/avocado.usdz?v=2",
-      note: "ресторани · доставка їжі"
+      note: "ресторани · доставка їжі",
+      scale: "3.2 3.2 3.2"
     },
     {
-      title: "Декор-ліхтар",
-      desc: "Інтер'єрний об'єкт у реальному масштабі",
-      glb: "/models/lantern.glb?v=2",
-      usdz: "/models/lantern.usdz?v=2",
-      note: "декор · інтер'єрні студії"
+      title: "Диван для салону",
+      desc: "Меблі в реальному масштабі перед покупкою",
+      glb: "/models/sofa.glb?v=2",
+      usdz: "/models/sofa.usdz?v=2",
+      note: "меблі · інтер'єрні студії",
+      scale: "0.9 0.9 0.9"
     },
     {
-      title: "Модель авто",
-      desc: "Демонстрація транспорту та техніки",
-      glb: "/models/toycar.glb?v=2",
-      usdz: "/models/toycar.usdz?v=2",
-      note: "авто · каталоги техніки"
+      title: "Пляшка води",
+      desc: "Продукт у реальному розмірі на полиці",
+      glb: "/models/bottle.glb?v=2",
+      usdz: "/models/bottle.usdz?v=2",
+      note: "напої · FMCG-магазини",
+      scale: "1 1 1"
     }
   ];
 
@@ -83,6 +87,22 @@
   /* AR without any app installs: WebXR (Chrome/Edge Android), Quick Look (iPhone) */
   function supportsWebXR() {
     return !!(window.navigator && navigator.xr && navigator.xr.isSessionSupported);
+  }
+
+  /* Scanner models are often fully metallic (metallic=1) and look gray/black
+     in AR with neutral lighting. Flatten them to matte so colors show. */
+  function flattenMaterials(mv) {
+    try {
+      var mats = mv.model && mv.model.materials;
+      if (!mats) return;
+      for (var i = 0; i < mats.length; i++) {
+        var p = mats[i].pbrMetallicRoughness;
+        if (p) {
+          p.setMetallicFactor(0.15);
+          p.setRoughnessFactor(0.85);
+        }
+      }
+    } catch (e) { /* best effort */ }
   }
 
   function handleArClick(item, mv) {
@@ -136,6 +156,7 @@
         handleArClick(item, mv);
       });
       if (mv) {
+        mv.addEventListener("load", function () { flattenMaterials(mv); });
         mv.addEventListener("error", function () {
           var holder = card.querySelector(".ar-model-holder");
           if (holder) {
@@ -155,11 +176,12 @@
       var states = ["", "d1", "d2", "d3"];
       var ios = item.usdz ? ' ios-src="' + item.usdz + '"' : "";
       var formats = item.usdz ? ".glb / .usdz" : ".glb";
-      return (
-        '<div class="ar-card reveal ' + states[i % 4] + '">' +
+return (
+        '<div class="ar-card reveal ' + states[i % states.length] + '">' +
         '<div class="ar-model-holder" style="position:relative">' +
         '<model-viewer src="' + item.glb + '"' + ios + ' ar ' +
         'ar-modes="webxr scene-viewer quick-look" camera-controls auto-rotate ' +
+        'scale="' + (item.scale || "1 1 1") + '" ' +
         'shadow-intensity="1.1" environment-image="neutral" tone-mapping="aces" ' +
         'style="width:100%;height:260px" alt="' + item.title + '">' +
         '<button slot="ar-button" class="ar-btn">' +
