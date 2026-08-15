@@ -188,9 +188,9 @@ def find_project(token: str, name: str, workspace_id: str) -> str | None:
 
 def find_environment(token: str, project_id: str) -> str | None:
     d = gql(token, """query($pid: String!) {
-      project(id: $pid) { environments { id name } }
+      project(id: $pid) { environments { edges { node { id name } } } }
     }""", {"pid": project_id})
-    envs = ((d.get("project") or {}).get("environments")) or []
+    envs = [e["node"] for e in (((d.get("project") or {}).get("environments")) or {}).get("edges") or []]
     for e in envs:
         if e["name"] == "production":
             return e["id"]
@@ -199,9 +199,9 @@ def find_environment(token: str, project_id: str) -> str | None:
 
 def find_service(token: str, project_id: str, name: str) -> str | None:
     d = gql(token, """query($pid: String!) {
-      project(id: $pid) { services { id name } }
+      project(id: $pid) { services { edges { node { id name } } } }
     }""", {"pid": project_id})
-    for s in (d.get("project") or {}).get("services") or []:
+    for s in [e["node"] for e in (((d.get("project") or {}).get("services")) or {}).get("edges") or []]:
         if s["name"] == name:
             return s["id"]
     return None
@@ -309,7 +309,7 @@ def main() -> None:
         raise SystemExit(f"{RED}No environment in project.{RESET}")
     log(f"{GREEN}  OK{RESET} {environment_id}")
 
-    log(f"4/8 Service '{args.service}' ← {args.repo}…")
+    log(f"4/8 Service '{args.service}' <- {args.repo}…")
     service_id = find_service(token, project_id, args.service)
     if service_id:
         log(f"{GREEN}  reuse{RESET} {service_id}")
