@@ -3,7 +3,7 @@
 
   var ids = ["quote-team", "quote-complexity", "quote-team-val", "quote-complexity-val",
              "quote-type", "quote-svg", "res-cost", "res-weeks", "res-hours",
-             "res-support", "res-price", "quote-status"];
+             "res-support", "res-price", "quote-status", "res-breakdown"];
   var els = {};
   ids.forEach(function (id) { els[id] = document.getElementById(id); });
   if (!els["quote-svg"]) return;
@@ -102,6 +102,14 @@
         els["res-support"].textContent = d.support_month.toLocaleString("uk-UA") + " грн";
         els["res-price"].textContent = "від " + d.from_price.toLocaleString("uk-UA") + " грн";
         setStatus(d.type_label + " · " + d.complexity_label + " · готово до релізу", "status-ok");
+        if (els["res-breakdown"]) {
+          var rate = 850;
+          els["res-breakdown"].textContent =
+            d.hours.toLocaleString("uk-UA") + " год × " + rate + " грн/год = " +
+            d.cost.toLocaleString("uk-UA") + " грн · команда " + team +
+            " · " + d.weeks + " тиж · підтримка " +
+            d.support_month.toLocaleString("uk-UA") + " грн/міс";
+        }
       })
       .catch(function () {
         if (id !== requestId) return;

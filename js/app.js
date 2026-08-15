@@ -43,46 +43,53 @@
     counterObserver.observe(el);
   });
 
-  /* ---------- AR gallery injection ---------- */
+  /* ---------- AR gallery (self-hosted models, lazy model-viewer) ---------- */
   var AR_ITEMS = [
     {
       title: "Інтерактивний офіс 3D",
       desc: "Віртуальний простір у реальній кімнаті",
-      glb: "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
-      usdz: "https://modelviewer.dev/shared-assets/models/Astronaut.usdz",
+      glb: "/models/astronaut.glb",
+      usdz: "/models/astronaut.usdz",
       note: "прототип-модель для демонстрації AR"
     },
     {
       title: "Шоурум продукту",
       desc: "Демонстрація товару на полиці клієнта",
-      glb: "https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb",
-      usdz: "https://modelviewer.dev/shared-assets/models/NeilArmstrong.usdz",
+      glb: "/models/toycar.glb",
+      usdz: "",
       note: "прототип-модель для демонстрації AR"
     },
     {
       title: "Віртуальний асистент",
       desc: "AI-персонаж, що розповідає про продукт",
-      glb: "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
-      usdz: "https://modelviewer.dev/shared-assets/models/RobotExpressive.usdz",
+      glb: "/models/robot.glb",
+      usdz: "",
       note: "прототип-модель для демонстрації AR"
     },
     {
       title: "Технодемо-вузол",
       desc: "Інтерактивна частина інтерфейсу",
-      glb: "https://modelviewer.dev/shared-assets/models/DamagedHelmet.glb",
-      usdz: "https://modelviewer.dev/shared-assets/models/DamagedHelmet.usdz",
+      glb: "/models/helmet.glb",
+      usdz: "",
       note: "прототип-модель для демонстрації AR"
     }
   ];
 
   var grid = document.getElementById("ar-grid");
-  if (grid && window.customElements && customElements.get("model-viewer")) {
+  var mvReady = function () {
+    return window.customElements && customElements.get("model-viewer");
+  };
+
+  function renderARGrid() {
+    if (!grid || grid.childElementCount) return;
     grid.innerHTML = AR_ITEMS.map(function (item, i) {
       var states = ["", "d1", "d2", "d3"];
+      var ios = item.usdz ? ' ios-src="' + item.usdz + '"' : "";
+      var formats = item.usdz ? ".glb / .usdz" : ".glb";
       return (
         '<div class="ar-card reveal ' + states[i % 4] + '">' +
         '<div style="position:relative">' +
-        '<model-viewer src="' + item.glb + '" ios-src="' + item.usdz + '" ar ' +
+        '<model-viewer src="' + item.glb + '"' + ios + ' ar ' +
         'ar-modes="webxr scene-viewer quick-look" camera-controls auto-rotate ' +
         'shadow-intensity="1.1" environment-image="neutral" tone-mapping="aces" ' +
         'style="width:100%;height:260px" alt="' + item.title + '">' +
@@ -96,30 +103,70 @@
         '<div class="ar-info">' +
         '<div class="font-display font-semibold text-white">' + item.title + '</div>' +
         '<div class="text-xs text-slate-400 mt-0.5">' + item.desc + '</div>' +
-        '<div class="ar-note mt-2">' + item.note + ' · .glb / .usdz</div>' +
+        '<div class="ar-note mt-2">' + item.note + ' · ' + formats + '</div>' +
         '</div>' +
         '</div>'
       );
     }).join("");
-    grid.querySelectorAll(".reveal").forEach(function (el) { revealObserver.observe(el); });
-  }
 
-  /* model-viewer lazy-load: load when visible */
-  if (window.customElements && customElements.get("model-viewer")) {
     var mvObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (e.isIntersecting) { e.target.load && e.target.load(); mvObserver.unobserve(e.target); }
       });
     }, { rootMargin: "300px" });
-    document.querySelectorAll("model-viewer").forEach(function (el) { mvObserver.observe(el); });
+    grid.querySelectorAll("model-viewer").forEach(function (el) { mvObserver.observe(el); });
+    grid.querySelectorAll(".reveal").forEach(function (el) { revealObserver.observe(el); });
   }
+
+  /* lazy-load model-viewer (~150KB) only when AR section is near viewport */
+  var MV_URL = "https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js";
+  var arSection = document.getElementById("ar");
+  var mvLoaded = false;
+  function ensureModelViewer() {
+    if (mvReady()) {
+      renderARGrid();
+      return;
+    }
+    if (mvLoaded) return;
+    mvLoaded = true;
+    var s = document.createElement("script");
+    s.type = "module";
+    s.src = MV_URL;
+    s.onload = function () {
+      if (customElements && customElements.whenDefined) {
+        customElements.whenDefined("model-viewer").then(renderARGrid);
+      } else {
+        renderARGrid();
+      }
+    };
+    s.onerror = function () {
+      if (grid) grid.innerHTML = '<p class="text-sm text-slate-500">3D-модуль не завантажився. Спробуйте пізніше або напишіть нам у Telegram.</p>';
+    };
+    document.head.appendChild(s);
+  }
+  if (arSection) {
+    var arObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { ensureModelViewer(); arObserver.unobserve(e.target); }
+      });
+    }, { rootMargin: "400px" });
+    arObserver.observe(arSection);
+  }
+  if (mvReady()) renderARGrid();
 
   /* ---------- lead form ---------- */
   var leadForm = document.getElementById("lead-form");
   var leadSuccess = document.getElementById("lead-success");
+  var leadError = document.getElementById("lead-error");
   if (leadForm) {
+    function showError(msg) {
+      if (!leadError) return;
+      leadError.textContent = msg;
+      leadError.classList.remove("hidden");
+    }
     leadForm.addEventListener("submit", function (e) {
       e.preventDefault();
+      leadError && leadError.classList.add("hidden");
       var fd = new FormData(leadForm);
       var payload = {
         name: fd.get("name"),
@@ -146,11 +193,11 @@
             leadSuccess.classList.remove("hidden");
             leadForm.querySelectorAll("input,textarea").forEach(function (i) { i.value = ""; });
           } else {
-            alert("Не вдалося відправити. Напишіть нам у Telegram: t.me/faststart_digital");
+            showError("Не вдалося відправити. Напишіть нам у Telegram: t.me/faststart_digital");
           }
         })
         .catch(function () {
-          alert("Не вдалося відправити. Напишіть нам у Telegram: t.me/faststart_digital");
+          showError("Не вдалося відправити. Спробуйте ще раз або напишіть у Telegram: t.me/faststart_digital");
         })
         .finally(function () { btn.textContent = original; });
     });

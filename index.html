@@ -12,7 +12,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
   <link rel="stylesheet" href="/css/style.css" />
-  <script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js" defer></script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="canonical" href="https://faststart.digital/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="FastStart Digital" />
+  <meta property="og:title" content="FastStart Digital — Веб-розробка · Web3D/WebAR · AI-Агенти" />
+  <meta property="og:description" content="Перетворюємо ідеї на інтерактивний та цифровий код: швидкі веб-сайти, Web3D/WebAR-візуалізація у 1 клік, AI-агенти та Python-автоматизація для бізнесу. Розрахунок вартості 24/7." />
+  <meta property="og:image" content="https://faststart.digital/og-image.png" />
+  <meta property="og:url" content="https://faststart.digital/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="FastStart Digital — Веб-розробка · Web3D/WebAR · AI-Агенти" />
+  <meta name="twitter:description" content="Швидкі веб-сайти, Web3D/WebAR-візуалізація, AI-агенти та Python-автоматизація для бізнесу. Розрахунок вартості 24/7." />
+  <meta name="twitter:image" content="https://faststart.digital/og-image.png" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.min.js" defer></script>
   <script src="/js/hero3d.js" defer></script>
   <script src="/js/app.js" defer></script>
@@ -99,7 +110,7 @@
   </section>
 
   <!-- ============ MARQUEE ============ -->
-  <div class="marquee relative border-y border-white/5 bg-[#05070f] py-4 overflow-hidden">
+  <div class="marquee relative border-y border-white/5 bg-[#05070f] py-4 overflow-hidden" aria-hidden="true">
     <div class="marquee-track flex gap-10 whitespace-nowrap font-mono text-xs tracking-[0.25em] text-slate-500">
       <span>ВЕБ-РОЗРОБКА FULL-STACK</span><span class="text-cyan-500">//</span>
       <span>WEB3D ІНТЕРАКТИВНІ ІНТЕРФЕЙСИ</span><span class="text-cyan-500">//</span>
@@ -271,6 +282,7 @@
                 <div class="font-display text-xl text-white" id="res-price">—</div>
               </div>
             </div>
+            <div class="mt-3 text-xs text-slate-500 font-mono leading-relaxed" id="res-breakdown">—</div>
           </div>
         </div>
 
@@ -460,7 +472,8 @@
               <textarea class="field" name="message" rows="3" placeholder="Інтернет-магазин, лендінг із WebAR-візуалізацією товару, AI-чат для підтримки…"></textarea>
             </div>
             <button type="submit" class="cta-btn cta-primary w-full cta-xl">Отримати розрахунок і КП</button>
-            <p class="text-xs text-slate-500 text-center">Натискаючи кнопку, ви погоджуєтесь з обробкою даних. Відповідь — протягом 24 год.</p>
+            <p class="text-xs text-slate-500 text-center">Натискаючи кнопку, ви погоджуєтесь з <a href="/privacy.html" class="underline text-slate-400 hover:text-cyan-300">обробкою даних</a>. Відповідь — протягом 24 год.</p>
+            <div id="lead-error" class="hidden error-box" role="alert"></div>
             <div id="lead-success" class="hidden success-box">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
               Заявку прийнято. Інженер зв'яжеться з вами протягом 24 годин.
@@ -490,7 +503,7 @@
         </div>
       </div>
       <div class="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between gap-3 text-xs text-slate-600">
-        <span>© 2026 FastStart Digital. Всі права захищено.</span>
+        <span>© 2026 FastStart Digital. Всі права захищено. <a href="/privacy.html" class="underline hover:text-slate-400">Політика конфіденційності</a></span>
         <span class="font-mono">Deployed on Railway · GraphQL API v2 · 99.9% uptime</span>
       </div>
     </div>
