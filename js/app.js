@@ -48,29 +48,29 @@
     {
       title: "Кросівок 1:1",
       desc: "AR-перегляд товару для інтернет-магазину",
-      glb: "/models/sneaker.glb",
-      usdz: "/models/sneaker.usdz",
+      glb: "/models/sneaker.glb?v=2",
+      usdz: "/models/sneaker.usdz?v=2",
       note: "кросівки · e-commerce"
     },
     {
       title: "Блюдо для кафе",
       desc: "Страва доповнює сервірування столу",
-      glb: "/models/avocado.glb",
-      usdz: "/models/avocado.usdz",
+      glb: "/models/avocado.glb?v=2",
+      usdz: "/models/avocado.usdz?v=2",
       note: "ресторани · доставка їжі"
     },
     {
       title: "Декор-ліхтар",
       desc: "Інтер'єрний об'єкт у реальному масштабі",
-      glb: "/models/lantern.glb",
-      usdz: "/models/lantern.usdz",
+      glb: "/models/lantern.glb?v=2",
+      usdz: "/models/lantern.usdz?v=2",
       note: "декор · інтер'єрні студії"
     },
     {
       title: "Модель авто",
       desc: "Демонстрація транспорту та техніки",
-      glb: "/models/toycar.glb",
-      usdz: "/models/toycar.usdz",
+      glb: "/models/toycar.glb?v=2",
+      usdz: "/models/toycar.usdz?v=2",
       note: "авто · каталоги техніки"
     }
   ];
@@ -100,8 +100,14 @@
       try {
         if (mv.canActivateAR) { mv.activateAR(); return; }
       } catch (e) { /* fall through to platform paths */ }
-      /* iOS fallback: <a rel="ar"> opens AR Quick Look in-place (needs correct usdz MIME) */
+      /* iOS fallback: <a rel="ar"> opens AR Quick Look in-place (needs correct usdz MIME).
+         Chrome/Edge/Firefox on iOS can't Quick Look — they would download the file,
+         so guide the user to Safari instead. */
       if (/iPad|iPhone|iPod/.test(navigator.userAgent) && item.usdz) {
+        if (/CriOS|EdgiOS|FxiOS/.test(navigator.userAgent)) {
+          showHint('<svg class="w-5 h-5 text-cyan-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2V9.5m-8 7L21 3m0 0h-6m6 0v6"/></svg><span>AR-режим на iPhone працює в Safari: відкрийте цю сторінку у Safari та натисніть «Відкрити в AR» ще раз. Нічого встановлювати не потрібно.</span>');
+          return;
+        }
         var a = document.createElement("a");
         a.href = location.origin + item.usdz;
         a.rel = "ar";

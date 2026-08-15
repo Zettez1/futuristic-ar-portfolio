@@ -183,9 +183,23 @@ STATIC_DIR = BASE_DIR / "static"
 if (BASE_DIR / "index.html").exists():
     STATIC_DIR = BASE_DIR
 
+
+class ModelStaticFiles(StaticFiles):
+    """Models must never be cached: stale 304 replies keep old
+    'application/octet-stream' content-type and break AR Quick Look."""
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        path = str(full_path).lower()
+        if path.endswith((".usdz", ".glb", ".gltf")):
+            response.headers["Cache-Control"] = "no-store, must-revalidate"
+            response.headers["Content-Disposition"] = "inline"
+        return response
+
+
 app.mount(
     "/",
-    StaticFiles(directory=str(STATIC_DIR), html=True),
+    ModelStaticFiles(directory=str(STATIC_DIR), html=True),
     name="frontend",
 )
 
