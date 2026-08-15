@@ -223,6 +223,15 @@ def create_domain(token: str, service_id: str, environment_id: str, target_port:
     }""", {"input": inp})["serviceDomainCreate"]["domain"]
 
 
+def list_domains(token: str, project_id: str, service_id: str, environment_id: str) -> list[dict]:
+    q = gql(token, """query($projectId: String!, $serviceId: String!, $environmentId: String!) {
+      domains(projectId: $projectId, serviceId: $serviceId, environmentId: $environmentId) {
+        serviceDomains { id domain createdAt }
+      }
+    }""", {"projectId": project_id, "serviceId": service_id, "environmentId": environment_id})
+    return (q.get("domains") or {}).get("serviceDomains") or []
+
+
 def create_trigger(token: str, project_id: str, service_id: str, environment_id: str,
                    repo: str, branch: str) -> None:
     gql(token, """mutation($input: DeploymentTriggerCreateInput!) {
@@ -328,11 +337,16 @@ def main() -> None:
     domain = None
     if not args.no_domain:
         log("6/8 Public domain…")
-        try:
-            domain = create_domain(token, service_id, environment_id, args.port)
-            log(f"{GREEN}  OK{RESET} https://{domain}")
-        except SystemExit:
-            log(f"{YELLOW}  domain already exists, skipping{RESET}")
+        existing = list_domains(token, project_id, service_id, environment_id)
+        if existing:
+            domain = existing[0]["domain"]
+            log(f"{DIM}  reuse{RESET} https://{domain} ({len(existing)} total)")
+        else:
+            try:
+                domain = create_domain(token, service_id, environment_id, args.port)
+                log(f"{GREEN}  OK{RESET} https://{domain}")
+            except SystemExit:
+                log(f"{YELLOW}  domain create failed, skipping{RESET}")
 
     log(f"7/8 Deploy…")
     deployment_id = trigger_deploy(token, service_id, environment_id)

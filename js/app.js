@@ -80,6 +80,61 @@
     return window.customElements && customElements.get("model-viewer");
   };
 
+  /* AR fallback: always-visible button under each model */
+  function arTargetUrl(item) {
+    var origin = location.origin;
+    if (item.usdz && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      return origin + item.usdz;
+    }
+    if (/Android/i.test(navigator.userAgent)) {
+      return "https://arvr.google.com/scene-viewer/1.0?file=" +
+        encodeURIComponent(origin + item.glb) + "&mode=ar_preferred&resizable=false";
+    }
+    return "";
+  }
+
+  function handleArClick(item, mv) {
+    if (mv && mv.canActivateAR) {
+      mv.activateAR();
+      return;
+    }
+    var target = arTargetUrl(item);
+    if (target) {
+      window.open(target, "_blank", "noopener");
+      return;
+    }
+    var hint = document.getElementById("ar-hint");
+    if (hint) {
+      hint.classList.remove("hidden");
+      hint.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(function () { hint.classList.add("hidden"); }, 6000);
+    }
+  }
+
+  function injectArButtons(items) {
+    grid.querySelectorAll(".ar-card").forEach(function (card, i) {
+      var item = items[i];
+      if (!item) return;
+      var btn = card.querySelector(".ar-cta-btn");
+      var mv = card.querySelector("model-viewer");
+      if (!btn) return;
+      btn.addEventListener("click", function () {
+        handleArClick(item, mv);
+      });
+      if (mv) {
+        mv.addEventListener("error", function () {
+          var holder = card.querySelector(".ar-model-holder");
+          if (holder) {
+            holder.innerHTML = '<div class="ar-model-fallback">' +
+              '<div class="font-display text-white text-sm">' + item.title + '</div>' +
+              '<div class="text-xs text-slate-400 mt-1">3D-модель у цьому форматі недоступна. Ми підготуємо вашу власну — замовте Web3D-розробку.</div>' +
+              '</div>';
+          }
+        });
+      }
+    });
+  }
+
   function renderARGrid() {
     if (!grid || grid.childElementCount) return;
     grid.innerHTML = AR_ITEMS.map(function (item, i) {
@@ -88,7 +143,7 @@
       var formats = item.usdz ? ".glb / .usdz" : ".glb";
       return (
         '<div class="ar-card reveal ' + states[i % 4] + '">' +
-        '<div style="position:relative">' +
+        '<div class="ar-model-holder" style="position:relative">' +
         '<model-viewer src="' + item.glb + '"' + ios + ' ar ' +
         'ar-modes="webxr scene-viewer quick-look" camera-controls auto-rotate ' +
         'shadow-intensity="1.1" environment-image="neutral" tone-mapping="aces" ' +
@@ -100,6 +155,11 @@
         '</button>' +
         '</model-viewer>' +
         '</div>' +
+        '<button type="button" class="ar-cta-btn">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+        '<path d="M12 2l8.5 4.9v9.8L12 21.6l-8.5-4.9V6.9L12 2zm0 0v9.8m8.5-4.9L12 11.8 3.5 6.9"/></svg> ' +
+        'Дивитись у AR' +
+        '</button>' +
         '<div class="ar-info">' +
         '<div class="font-display font-semibold text-white">' + item.title + '</div>' +
         '<div class="text-xs text-slate-400 mt-0.5">' + item.desc + '</div>' +
@@ -116,6 +176,7 @@
     }, { rootMargin: "300px" });
     grid.querySelectorAll("model-viewer").forEach(function (el) { mvObserver.observe(el); });
     grid.querySelectorAll(".reveal").forEach(function (el) { revealObserver.observe(el); });
+    injectArButtons(AR_ITEMS);
   }
 
   /* lazy-load model-viewer (~150KB) only when AR section is near viewport */

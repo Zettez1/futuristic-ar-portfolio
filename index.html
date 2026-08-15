@@ -10,20 +10,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+  <link rel="stylesheet" href="/css/tailwind.css" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="canonical" href="https://faststart.digital/" />
+  <link rel="canonical" href="https://web-frontend-production-78d2.up.railway.app/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="FastStart Digital" />
   <meta property="og:title" content="FastStart Digital — Веб-розробка · Web3D/WebAR · AI-Агенти" />
   <meta property="og:description" content="Перетворюємо ідеї на інтерактивний та цифровий код: швидкі веб-сайти, Web3D/WebAR-візуалізація у 1 клік, AI-агенти та Python-автоматизація для бізнесу. Розрахунок вартості 24/7." />
-  <meta property="og:image" content="https://faststart.digital/og-image.png" />
-  <meta property="og:url" content="https://faststart.digital/" />
+  <meta property="og:image" content="https://web-frontend-production-78d2.up.railway.app/og-image.png" />
+  <meta property="og:url" content="https://web-frontend-production-78d2.up.railway.app/" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="FastStart Digital — Веб-розробка · Web3D/WebAR · AI-Агенти" />
   <meta name="twitter:description" content="Швидкі веб-сайти, Web3D/WebAR-візуалізація, AI-агенти та Python-автоматизація для бізнесу. Розрахунок вартості 24/7." />
-  <meta name="twitter:image" content="https://faststart.digital/og-image.png" />
+  <meta name="twitter:image" content="https://web-frontend-production-78d2.up.railway.app/og-image.png" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.min.js" defer></script>
   <script src="/js/hero3d.js" defer></script>
   <script src="/js/app.js" defer></script>
@@ -59,10 +59,10 @@
   </header>
 
   <!-- ============ HERO ============ -->
-  <section id="top" class="relative min-h-screen flex items-center overflow-hidden">
+  <section id="top" class="hero-min-h relative min-h-screen flex items-center overflow-hidden">
     <canvas id="hero-canvas" class="absolute inset-0 w-full h-full"></canvas>
     <div class="hero-glow absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full blur-[140px] opacity-40"></div>
-    <div class="relative z-10 max-w-7xl mx-auto px-5 lg:px-8 pt-32 pb-24 w-full">
+    <div class="hero-pad relative z-10 max-w-7xl mx-auto px-5 lg:px-8 pt-32 pb-24 w-full">
       <div class="max-w-4xl">
         <div class="reveal mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-xs font-mono tracking-wider text-cyan-300">
           <span class="hologram h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
@@ -200,6 +200,13 @@
 
       <div class="mt-12 grid md:grid-cols-2 xl:grid-cols-4 gap-6" id="ar-grid">
         <!-- items injected by js/config -->
+      </div>
+
+      <div id="ar-hint" class="mt-6 hidden">
+        <div class="ar-hint-box">
+          <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+          AR-режим працює зі смартфона: відкрийте цей сайт на телефоні та натисніть «Дивитись у AR». На iPhone — AR Quick Look (.usdz), на Android — Scene Viewer (.glb).
+        </div>
       </div>
 
       <div class="reveal mt-14 grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto text-sm">

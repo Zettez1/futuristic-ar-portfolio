@@ -255,6 +255,54 @@ body::before {
 .ar-btn:hover { transform: translateX(-50%) translateY(-2px); }
 .ar-card .ar-info { padding: 14px 16px; }
 .ar-note { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); }
+.ar-cta-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: calc(100% - 24px);
+  margin: 0 auto 4px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dbe6fb;
+  background: rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, border-color 0.2s;
+}
+.ar-cta-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(34, 211, 238, 0.16);
+  border-color: rgba(34, 211, 238, 0.65);
+}
+.ar-model-fallback {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  width: 100%;
+  height: 260px;
+  padding: 20px;
+  background:
+    radial-gradient(340px 180px at 50% 40%, rgba(99, 102, 241, 0.16), transparent 70%),
+    #05070f;
+}
+#ar-hint {
+  display: flex;
+  justify-content: center;
+}
+#ar-hint .ar-hint-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-size: 13px;
+  color: #eef4ff;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+}
 
 .step-chip {
   display: flex; align-items: center; gap: 12px;
@@ -658,4 +706,34 @@ select.field option { background: #0a0d1c; color: #eef4ff; }
   .cta-xl { padding: 13px 20px; font-size: 14px; }
   .chat-panel { right: 12px; bottom: 88px; width: calc(100vw - 24px); height: calc(100vh - 120px); }
   #chat-root { right: 14px; bottom: 14px; }
+  .glass-nav { margin-top: 6px; }
+  nav { height: 60px; }
+  .logo-mark { width: 34px; height: 34px; }
+  header .font-display.text-lg { font-size: 15px; }
+  .hero-min-h { min-height: 92vh; }
+  header .cta-btn.text-sm { padding: 9px 12px; font-size: 12.5px; }
+  .section-head h2 { word-break: break-word; }
+  .metric-k { font-size: 14px; }
+  .field { font-size: 15px; }
+  #quote-svg { min-height: 150px; }
+  .price-card { padding: 20px; }
+  .step-chip { padding: 12px 14px; gap: 10px; }
+  .ar-card model-viewer, .ar-model-holder model-viewer { height: 220px; }
+  .ar-model-fallback { height: 220px; }
+  .chat-avatar { width: 36px; height: 36px; }
+}
+
+@media (max-width: 420px) {
+  header .font-display.text-lg { font-size: 13.5px; }
+  header .cta-primary.text-sm { padding: 9px 10px; }
+  .hero-pad { padding-top: 96px; }
+  .ar-hint-box { font-size: 12px; padding: 10px 14px; }
+}
+
+@media (max-width: 470px) {
+  .marquee-track { gap: 24px; }
+}
+
+@media (min-width: 641px) {
+  .chat-fab { display: grid; }
 }
