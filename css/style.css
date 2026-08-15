@@ -515,6 +515,7 @@ select.field option { background: #0a0d1c; color: #eef4ff; }
   background: #f43f5e;
   border: 2px solid #04050c;
 }
+.chat-panel.hidden { display: none; }
 .chat-panel {
   position: fixed;
   right: 22px; bottom: 96px;

@@ -46,32 +46,32 @@
   /* ---------- AR gallery injection ---------- */
   var AR_ITEMS = [
     {
-      title: "Р†РЅС‚РµСЂР°РєС‚РёРІРЅРёР№ РѕС„С–СЃ 3D",
-      desc: "Р’С–СЂС‚СѓР°Р»СЊРЅРёР№ РїСЂРѕСЃС‚С–СЂ Сѓ СЂРµР°Р»СЊРЅС–Р№ РєС–РјРЅР°С‚С–",
+      title: "Інтерактивний офіс 3D",
+      desc: "Віртуальний простір у реальній кімнаті",
       glb: "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
       usdz: "https://modelviewer.dev/shared-assets/models/Astronaut.usdz",
-      note: "РїСЂРѕС‚РѕС‚РёРї-РјРѕРґРµР»СЊ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†С–С— AR"
+      note: "прототип-модель для демонстрації AR"
     },
     {
-      title: "РЁРѕСѓСЂСѓРј РїСЂРѕРґСѓРєС‚Сѓ",
-      desc: "Р”РµРјРѕРЅСЃС‚СЂР°С†С–СЏ С‚РѕРІР°СЂСѓ РЅР° РїРѕР»РёС†С– РєР»С–С”РЅС‚Р°",
+      title: "Шоурум продукту",
+      desc: "Демонстрація товару на полиці клієнта",
       glb: "https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb",
       usdz: "https://modelviewer.dev/shared-assets/models/NeilArmstrong.usdz",
-      note: "РїСЂРѕС‚РѕС‚РёРї-РјРѕРґРµР»СЊ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†С–С— AR"
+      note: "прототип-модель для демонстрації AR"
     },
     {
-      title: "Р’С–СЂС‚СѓР°Р»СЊРЅРёР№ Р°СЃРёСЃС‚РµРЅС‚",
-      desc: "AI-РїРµСЂСЃРѕРЅР°Р¶, С‰Рѕ СЂРѕР·РїРѕРІС–РґР°С” РїСЂРѕ РїСЂРѕРґСѓРєС‚",
+      title: "Віртуальний асистент",
+      desc: "AI-персонаж, що розповідає про продукт",
       glb: "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
       usdz: "https://modelviewer.dev/shared-assets/models/RobotExpressive.usdz",
-      note: "РїСЂРѕС‚РѕС‚РёРї-РјРѕРґРµР»СЊ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†С–С— AR"
+      note: "прототип-модель для демонстрації AR"
     },
     {
-      title: "РўРµС…РЅРѕРґРµРјРѕ-РІСѓР·РѕР»",
-      desc: "Р†РЅС‚РµСЂР°РєС‚РёРІРЅР° С‡Р°СЃС‚РёРЅР° С–РЅС‚РµСЂС„РµР№СЃСѓ",
+      title: "Технодемо-вузол",
+      desc: "Інтерактивна частина інтерфейсу",
       glb: "https://modelviewer.dev/shared-assets/models/DamagedHelmet.glb",
       usdz: "https://modelviewer.dev/shared-assets/models/DamagedHelmet.usdz",
-      note: "РїСЂРѕС‚РѕС‚РёРї-РјРѕРґРµР»СЊ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†С–С— AR"
+      note: "прототип-модель для демонстрації AR"
     }
   ];
 
@@ -89,14 +89,14 @@
         '<button slot="ar-button" class="ar-btn">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
         '<path d="M12 2l8.5 4.9v9.8L12 21.6l-8.5-4.9V6.9L12 2zm0 0v9.8m8.5-4.9L12 11.8 3.5 6.9"/></svg> ' +
-        'Р”РёРІРёС‚РёСЃСЊ Сѓ AR' +
+        'Дивитись у AR' +
         '</button>' +
         '</model-viewer>' +
         '</div>' +
         '<div class="ar-info">' +
         '<div class="font-display font-semibold text-white">' + item.title + '</div>' +
         '<div class="text-xs text-slate-400 mt-0.5">' + item.desc + '</div>' +
-        '<div class="ar-note mt-2">' + item.note + ' В· .glb / .usdz</div>' +
+        '<div class="ar-note mt-2">' + item.note + ' · .glb / .usdz</div>' +
         '</div>' +
         '</div>'
       );
@@ -133,7 +133,7 @@
       };
       var btn = leadForm.querySelector("button[type=submit]");
       var original = btn.textContent;
-      btn.textContent = "Р’С–РґРїСЂР°РІР»РµРЅРЅСЏвЂ¦";
+      btn.textContent = "Відправлення…";
 
       fetch("/api/lead", {
         method: "POST",
@@ -146,11 +146,11 @@
             leadSuccess.classList.remove("hidden");
             leadForm.querySelectorAll("input,textarea").forEach(function (i) { i.value = ""; });
           } else {
-            alert("РќРµ РІРґР°Р»РѕСЃСЏ РІС–РґРїСЂР°РІРёС‚Рё. РќР°РїРёС€С–С‚СЊ РЅР°Рј Сѓ Telegram: t.me/faststart_digital");
+            alert("Не вдалося відправити. Напишіть нам у Telegram: t.me/faststart_digital");
           }
         })
         .catch(function () {
-          alert("РќРµ РІРґР°Р»РѕСЃСЏ РІС–РґРїСЂР°РІРёС‚Рё. РќР°РїРёС€С–С‚СЊ РЅР°Рј Сѓ Telegram: t.me/faststart_digital");
+          alert("Не вдалося відправити. Напишіть нам у Telegram: t.me/faststart_digital");
         })
         .finally(function () { btn.textContent = original; });
     });
