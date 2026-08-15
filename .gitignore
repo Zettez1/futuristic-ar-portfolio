@@ -17,3 +17,6 @@ data/*.json
 # misc
 .DS_Store
 Thumbs.db
+# converter build artifacts
+models/tmp_payload.usda
+models/usdz_textures/
