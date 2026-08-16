@@ -301,17 +301,20 @@ def _try_provider(url, key, model, text, lang, timeout=25):
 
 def llm_reply(text: str) -> str | None:
     lang = client_lang(text)
+    qwen_last = None
     if CHAT_QWEN_KEY:
-        reply = _try_provider(
+        qwen_last = _try_provider(
             "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
             CHAT_QWEN_KEY, "qwen-plus", text, lang)
-        if reply:
-            return reply
+        if qwen_last and not _has_drift(qwen_last, lang):
+            return qwen_last
     if CHAT_NVIDIA_KEY:
-        return _try_provider(
+        reply = _try_provider(
             "https://integrate.api.nvidia.com/v1/chat/completions",
             CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, lang, timeout=30)
-    return None
+        if reply:
+            return reply
+    return qwen_last
 
 
 # ----------------------------------------------------------------- chat ----
