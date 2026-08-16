@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/tailwind.css?v=19" />
-  <link rel="stylesheet" href="/css/style.css?v=19" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=20" />
+  <link rel="stylesheet" href="/css/style.css?v=20" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="canonical" href="https://fast-start-digital.com/" />
   <meta property="og:type" content="website" />
@@ -26,7 +26,7 @@
   <meta name="twitter:image" content="https://fast-start-digital.com/og-image.png" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.min.js" defer></script>
   <script src="/js/hero3d.js" defer></script>
-  <script src="/js/app.js?v=19" defer></script>
+  <script src="/js/app.js?v=20" defer></script>
   <script src="/js/chat.js" defer></script>
   <script src="/js/quote-demo.js" defer></script>
 </head>
@@ -331,20 +331,21 @@
           Торговий бот <span class="text-gradient">працює прямо на сторінці</span>
         </h2>
         <p class="mt-4 text-slate-400 text-lg">
-          Праворуч — справжній Python-бот на нашому сервері: аналізує крипторинок у режимі
-          паперової торгівлі (без реальних грошей). Те саме, що й для ваших задач: Telegram-боти,
-          парсери, трейдинг, автоматизація. Дивіться лог у реальному часі.
+          Праворуч — справжній Python-бот на нашому сервері, підключений до Binance Futures
+          (робоче торгове вікно 09:00–20:30 за Києвом, стратегія зі стоп-лосом і трейлингом).
+          Те саме, що й для ваших задач: Telegram-боти, парсери, трейдинг, автоматизація.
+          Дивіться лог у реальному часі.
         </p>
       </div>
 
       <div class="mt-14 grid lg:grid-cols-5 gap-6">
         <div class="lg:col-span-2 space-y-6">
           <article class="tool-card reveal">
-            <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">BTrade · live demo</span><span class="tool-tag">PAPER MODE</span></div>
+            <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">BTrade · live demo</span><span class="tool-tag">BINANCE FUTURES</span></div>
             <h3 class="font-display text-base font-semibold text-white mt-2">Трейдинг-бот MA Cross</h3>
-            <p class="text-sm text-slate-400 mt-2">Стратегія на перетині MA7/MA25 (30m → 3m), стоп-лосс і трейлинг, ліміт ризику на день. Моніторить SHIB, WLD, TIA, OP, INJ, WIF на ф'ючерсах MEXC.</p>
+            <p class="text-sm text-slate-400 mt-2">Стратегія на перетині MA7/MA25 (30m → 3m), стоп-лос, трейлинг, ліміт позицій і ризику. Працює з реальним рахунком на Binance Futures, знімає котирування всіх USDT-ринків.</p>
             <div class="mt-4 font-mono text-xs text-slate-500 bg-black/30 rounded-lg p-3 overflow-x-auto">
-              <span class="text-emerald-400">$</span> DOTENV=.env.mexc-paper python main.py<br /><span class="text-slate-400">Капітал: 1,000.00 USDT · день: +0.00<br />INJ/USDT ціна 4.2150 | 30m: ▲, 3m: —, ВООРУЖЕН ▲</span>
+              <span class="text-emerald-400">$</span> DOTENV=.env.binance-real python main.py<br /><span class="text-slate-400">Balans: 1,042.35 USDT · день: +2.14<br />INJ/USDT ціна 4.2150 | 30m: ▲, 3m: —, ВООРУЖЕН ▲</span>
             </div>
           </article>
           <article class="tool-card reveal d1">
@@ -364,7 +365,7 @@
               <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
               <span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span>
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></span>
-              <span class="ml-3">btrade/main.py · Python 3.11 · MEXC Futures Paper</span>
+              <span class="ml-3">btrade/main.py · Python 3.11 · Binance Futures</span>
             </div>
             <span class="status-badge" id="bot-status"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> підключення…</span>
           </div>

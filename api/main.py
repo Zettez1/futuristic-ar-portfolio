@@ -209,8 +209,15 @@ def _bot_append(text: str) -> None:
 
 
 def _bot_worker() -> None:
+    dotenv = os.getenv("BOT_DOTENV", ".env.mexc-paper")
     env = os.environ.copy()
-    env.update({"DOTENV": ".env.mexc-paper", "SCHEDULE_ENABLED": "0", "PYTHONUNBUFFERED": "1"})
+    env.update({"DOTENV": dotenv, "PYTHONUNBUFFERED": "1"})
+    schedule = os.getenv("BOT_SCHEDULE")
+    if schedule:
+        env["SCHEDULE_ENABLED"] = schedule
+    elif "mexc" in dotenv:
+        env["SCHEDULE_ENABLED"] = "0"
+    mode = "PAPER" if "mexc" in dotenv else "REAL"
     while not _bot_stop.is_set():
         try:
             proc = subprocess.Popen(
@@ -229,7 +236,7 @@ def _bot_worker() -> None:
         with _bot_lock:
             _bot_state.update({"running": True, "pid": proc.pid,
                                "started_at": time.time(), "last_error": None})
-        _bot_append(f"[supervisor] BTrade запущен (pid={proc.pid}, PAPER-MODE)")
+        _bot_append(f"[supervisor] BTrade запущен (pid={proc.pid}, {mode}-MODE, {dotenv})")
         stream = io.TextIOWrapper(proc.stdout, encoding="utf-8", errors="replace")
         while True:
             line = stream.readline()
