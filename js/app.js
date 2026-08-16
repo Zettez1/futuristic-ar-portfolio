@@ -56,24 +56,24 @@
     {
       title: "Яблуко для кафе",
       desc: "Фрукт у реальному розмірі, доповнює сервірування столу",
-      glb: "/models/apple.glb?v=17",
-      usdz: "/models/apple.usdz?v=17",
+      glb: "/models/apple.glb?v=18",
+      usdz: "/models/apple.usdz?v=18",
       note: "ресторани · доставка їжі",
       scale: "1 1 1"
     },
     {
-      title: "Лофт-інтер'єр",
-      desc: "Приміщення в реальному масштабі — зайдіть усередину",
-      glb: "/models/sofa.glb?v=17",
-      usdz: "/models/sofa.usdz?v=17",
-      note: "інтер'єри · архітектурні студії",
+      title: "Диван для салону",
+      desc: "Меблі в реальному розмірі — підберіть у своїй кімнаті",
+      glb: "/models/sofa.glb?v=18",
+      usdz: "/models/sofa.usdz?v=18",
+      note: "меблі · салони інтер'єру",
       scale: "1 1 1"
     },
     {
       title: "Пляшка води",
       desc: "Продукт у реальному розмірі на полиці",
-      glb: "/models/bottle.glb?v=14",
-      usdz: "/models/bottle.usdz?v=14",
+      glb: "/models/bottle.glb?v=18",
+      usdz: "/models/bottle.usdz?v=18",
       note: "напої · FMCG-магазини",
       scale: "1 1 1"
     }
