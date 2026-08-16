@@ -69,9 +69,11 @@ class Dashboard:
         sys.stdout.flush()
 
     def sleep_splash(self, wake_dt, cfg):
-        """Статичная «заставка сна»: большая мордочка + расписание на 3 языках."""
-        if not self.enabled:
-            return
+        """Статичная «заставка сна»: большая мордочка + расписание на 3 языках.
+
+        Если терминала нет (сервер) — возвращает plain-строки без ANSI,
+        чтобы их можно было залогировать и показать в веб-терминале.
+        """
         if hasattr(cfg, "schedule_weekdays_only") and cfg.schedule_weekdays_only:
             wake_label = f"{wake_dt:%d.%m} {wake_dt.strftime('%A')}"
             uk_suffix = " | закриття позицій на сон СБ та НД"
@@ -90,6 +92,20 @@ class Dashboard:
             art = [line for line in art for _ in (0, 1)]
         art_w = max(len(line) for line in art)
         pad = max((term_w - art_w - 4) // 2, 4)
+        plain = [f"{'=' * 44}",
+                 f"   БОТ СПИТ · проснётся {wake_label}",
+                 f"{'=' * 44}"]
+        plain.extend(" " * pad + line for line in art)
+        plain += ["",
+                  f"РОЗКЛАД РОБОТИ: {cfg.schedule_wake} – {cfg.schedule_sleep} "
+                  f"({cfg.schedule_zone}){uk_suffix}",
+                  f"PRACOVNÝ ČAS: {cfg.schedule_wake} – {cfg.schedule_sleep} "
+                  f"({cfg.schedule_zone}){sk_suffix}",
+                  f"WORK SCHEDULE: {cfg.schedule_wake} – {cfg.schedule_sleep} "
+                  f"({cfg.schedule_zone}){en_suffix}",
+                  " новые входы не ищутся до пробуждения"]
+        if not self.enabled:
+            return plain
         lines = [f"{C_BOLD}{'═' * 44}{C_RESET}",
                  f"{C_BOLD}   БОТ СПИТ · проснётся {wake_label}{C_RESET}",
                  f"{C_BOLD}{'═' * 44}{C_RESET}"]
@@ -105,6 +121,7 @@ class Dashboard:
         sys.stdout.write("\x1b[2J\x1b[H")
         sys.stdout.write("\n".join(lines) + "\n")
         sys.stdout.flush()
+        return None
 
     def render(self, scan_no: int, risk, engine):
         if not self.enabled:

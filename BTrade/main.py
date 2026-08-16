@@ -503,7 +503,9 @@ class TradingBot:
                                 log.info(f"Бот спит (вне окна работы), проснусь "
                                          f"{sleep_until:%d.%m %H:%M} ({self.cfg.schedule_zone})")
                                 self._schedule_sleep_logged = True
-                                self.dashboard.sleep_splash(sleep_until, self.cfg)
+                                splash = self.dashboard.sleep_splash(sleep_until, self.cfg)
+                                if splash:
+                                    log.info("\n" + "\n".join(splash))
                             while True:
                                 now = datetime.now(tz).replace(tzinfo=None)
                                 active, sleep_until = schedule_state(
