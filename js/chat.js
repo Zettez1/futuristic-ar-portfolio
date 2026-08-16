@@ -152,7 +152,7 @@
 
   function start() {
     typing(function () {
-      addMsg("Привіт! Я <b>NOVA</b> — AI-агент FastStart Digital. Допоможу оцінити вартість проєкту та підберу формат за 30 секунд.", "bot");
+      addMsg("Привіт! Я NOVA — консультант FastStart Digital. Допоможу підібрати оптимальний варіант під вашу задачу — за 30 секунд.", "bot");
       setTimeout(function () {
         addMsg("Що вас цікавить?", "bot");
         setChips(["Веб-розробка", "3D / WebAR-візуалізація", "AI-агент / автоматизація", "Комплексний проєкт"]);
