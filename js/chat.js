@@ -86,6 +86,27 @@
     return "Записала ваше повідомлення — інженер підготує розрахунок і відповість разом із КП.";
   }
 
+  /* Human-like guard: if the user asks a live question instead of
+     filling the funnel field, NOVA answers and repeats the question. */
+  var QUESTION_WORDS = ["як ", "що ", "скільки", "коли", "де ", "чому", "хто", "чи ", "зв'язат", "звязат", "контакт", "телефон", "привіт", "добрий", "hello", "можна"];
+  function looksLikeQuestion(t) {
+    if (t.indexOf("?") !== -1) return true;
+    if (t.length > 28) return true;
+    for (var i = 0; i < QUESTION_WORDS.length; i++) {
+      if (t.indexOf(QUESTION_WORDS[i]) !== -1) return true;
+    }
+    return false;
+  }
+  function isBudget(t) {
+    if (/поки не знаю|не знаю|поки що|не визнач/.test(t)) return true;
+    if (!/\d/.test(t)) return false;
+    var rest = t.replace(/^(від|до)\s+/, "").replace(/[\d\s,.\u20ac€$kгрнтисяч]+/g, "");
+    return rest.trim() === "";
+  }
+  function isContact(t) {
+    return /[@]|\d|t\.me|telegram|tg|email|пошта|viber|whatsapp|wa\.me|skype/.test(t);
+  }
+
   /* Show typing dots, keep them until the "done" callback fires with the text */
   function botThink(done) {
     var t = el('<div class="msg msg-bot msg-typing"><span></span><span></span><span></span></div>');
@@ -176,6 +197,16 @@
     }
 
     if (state.step === 1) {
+      if (!isBudget(t) && looksLikeQuestion(t)) {
+        botThink(function (done) {
+          askNova(text, function (reply) {
+            done(reply);
+            addMsg("Який орієнтовний бюджет закладаєте?", "bot");
+            setChips(["до 15 000", "15 000 – 50 000", "50 000 – 150 000", "від 150 000", "Поки не знаю"]);
+          });
+        });
+        return;
+      }
       state.step++;
       state.budget = text;
       typing(function () {
@@ -188,6 +219,15 @@
     }
 
     if (state.step === 2) {
+      if (looksLikeQuestion(t)) {
+        botThink(function (done) {
+          askNova(text, function (reply) {
+            done(reply);
+            addMsg("Як до вас звертатись?", "bot");
+          });
+        });
+        return;
+      }
       state.step++;
       state.name = text;
       typing(function () {
@@ -200,6 +240,15 @@
     }
 
     if (state.step === 3) {
+      if (looksLikeQuestion(t) && !isContact(t)) {
+        botThink(function (done) {
+          askNova(text, function (reply) {
+            done(reply);
+            addMsg("Залиште контакт — Telegram або телефон, щоб інженер надіслав вам КП:", "bot");
+          });
+        });
+        return;
+      }
       state.contact = text;
       state.step++;
       sendLead();
