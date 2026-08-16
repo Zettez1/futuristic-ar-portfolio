@@ -132,10 +132,23 @@ LLM_SYSTEM = (
 )
 
 
-def _llm_call(url, key, model, text, timeout=25):
+def client_lang(text: str) -> str:
+    if any(ch in text for ch in "іїєґІЇЄҐ"):
+        return "uk"
+    if any(ch in text for ch in "ыэъёЫЭЪЁ"):
+        return "ru"
+    return "uk"
+
+
+def _llm_call(url, key, model, text, timeout=25, lang=None):
+    prompt = text[:2000]
+    if lang == "ru":
+        prompt += "\n\nНапиши ответ полностью на русском языке."
+    elif lang == "uk":
+        prompt += "\n\nНапиши відповідь повністю українською мовою."
     return _post_chat(url, key, model, [
         {"role": "system", "content": LLM_SYSTEM},
-        {"role": "user", "content": text[:2000]},
+        {"role": "user", "content": prompt},
     ], 300, timeout)
 
 
@@ -167,16 +180,17 @@ def _llm_raw(url, key, model, prompt, max_tokens=5, timeout=25):
 
 
 def llm_reply(text: str) -> str | None:
+    lang = client_lang(text)
     if CHAT_QWEN_KEY:
         reply = _llm_call(
             "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
-            CHAT_QWEN_KEY, "qwen-plus", text)
+            CHAT_QWEN_KEY, "qwen-plus", text, lang=lang)
         if reply:
             return reply
     if CHAT_NVIDIA_KEY:
         return _llm_call(
             "https://integrate.api.nvidia.com/v1/chat/completions",
-            CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, timeout=30)
+            CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, timeout=30, lang=lang)
     return None
 
 
