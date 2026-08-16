@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 !BTrade/.env.mexc-paper
+!BTrade/.env.binance-real
 railway_token.txt
 
 # python
