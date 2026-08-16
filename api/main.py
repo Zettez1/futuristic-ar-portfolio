@@ -142,23 +142,83 @@ _UK_WORDS = ("скільки", "буде", "коштує", "треба", "мож
              "хочу", "чекаю", "дякую", "вітаю")
 
 
+_LANG_SCRIPTS = (
+    (("\u4e00", "\u9fff"), "zh"),
+    (("\u3040", "\u30ff"), "ja"),
+    (("\uac00", "\ud7af"), "ko"),
+    (("\u0600", "\u06ff"), "ar"),
+    (("\u0590", "\u05ff"), "he"),
+    (("\u0900", "\u097f"), "hi"),
+    (("\u0e00", "\u0e7f"), "th"),
+)
+
+_LANG_WORDS = {
+    "en": ("the", "and", "you", "how", "much", "what", "price", "cost", "with", "for", "want",
+           "need", "please", "thank", "can", "help", "send", "table", "website", "shop", "your",
+           "would", "give", "get", "create", "make"),
+    "es": ("el", "la", "los", "las", "que", "por", "para", "con", "cuanto", "cuesta", "precio",
+           "hola", "gracias", "quiero", "necesito", "como", "puedo", "es", "un", "una", "sitio"),
+    "fr": ("le", "la", "les", "est", "pour", "avec", "combien", "coûte", "cout", "prix",
+           "bonjour", "merci", "je", "veux", "besoin", "site", "un", "une", "nous", "vous"),
+    "de": ("der", "die", "das", "und", "ist", "für", "mit", "wie", "viel", "kostet", "preis",
+           "hallo", "danke", "ich", "will", "brauche", "einen", "eine", "sie", "wir"),
+    "it": ("il", "lo", "gli", "che", "è", "per", "con", "quanto", "costa", "prezzo", "ciao",
+           "grazie", "voglio", "ho", "bisogno", "un", "una", "sito", "mi"),
+    "pt": ("o", "a", "que", "é", "para", "com", "quanto", "custa", "preço", "olá", "obrigado",
+           "quero", "preciso", "um", "uma", "não", "você", "site", "loja"),
+    "pl": ("i", "w", "jest", "na", "za", "z", "ile", "cena", "dzień", "dziękuję", "witam",
+           "chcę", "potrzebuję", "strona", "bot", "można", "proszę", "kosztuj"),
+    "nl": ("de", "het", "en", "is", "voor", "met", "hoeveel", "prijs", "hallo", "dank", "ik",
+           "wil", "nodig", "een", "website", "u", "we", "onze"),
+}
+
+_LANG_INS = {
+    "uk": "\n\nНапиши відповідь повністю українською мовою.",
+    "ru": "\n\nНапиши ответ полностью на русском языке.",
+    "en": "\n\nReply entirely in English.",
+    "es": "\n\nResponde enteramente en español.",
+    "fr": "\n\nRéponds entièrement en français.",
+    "de": "\n\nAntworte vollständig auf Deutsch.",
+    "it": "\n\nRispondi interamente in italiano.",
+    "pt": "\n\nResponda inteiramente em português.",
+    "pl": "\n\nOdpowiedz w całości po polsku.",
+    "nl": "\n\nAntwoord volledig in het Nederlands.",
+    "zh": "\n\n请用中文完整回答。",
+    "ja": "\n\nすべて日本語で回答してください。",
+    "ko": "\n\n전부 한국어로 답변해 주세요.",
+    "ar": "\n\nأجب بالكامل باللغة العربية.",
+    "he": "\n\nענה את כל התשובה בעברית.",
+    "hi": "\n\nपूरी तरह हिंदी में उत्तर दें।",
+    "th": "\n\nตอบเป็นภาษาไทยทั้งหมด",
+    "": "\n\nReply entirely in the same language the client used.",
+}
+
+
 def client_lang(text: str) -> str:
     low = text.lower()
     if any(ch in text for ch in "іїєґІЇЄҐ"):
         return "uk"
     if any(ch in text for ch in "ыэъёЫЭЪЁ"):
         return "ru"
-    ru = sum(1 for w in _RU_WORDS if w in low)
-    uk = sum(1 for w in _UK_WORDS if w in low)
-    return "ru" if ru > uk else "uk"
+    for (lo, hi), code in _LANG_SCRIPTS:
+        if any(lo <= ch <= hi for ch in text):
+            return code
+    if any("\u0400" <= ch <= "\u04ff" for ch in text):
+        ru = sum(1 for w in _RU_WORDS if w in low)
+        uk = sum(1 for w in _UK_WORDS if w in low)
+        return "ru" if ru > uk else "uk"
+    tokens = re.findall(r"[a-z\u00c0-\u024f]+", low)
+    scores = {code: 0 for code in _LANG_WORDS}
+    for tok in tokens:
+        for code, words in _LANG_WORDS.items():
+            if tok in words:
+                scores[code] += 1
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else "en"
 
 
 def _llm_call(url, key, model, text, timeout=25, lang=None):
-    prompt = text[:2000]
-    if lang == "ru":
-        prompt += "\n\nНапиши ответ полностью на русском языке."
-    elif lang == "uk":
-        prompt += "\n\nНапиши відповідь повністю українською мовою."
+    prompt = text[:2000] + _LANG_INS.get(lang, _LANG_INS[""])
     return _post_chat(url, key, model, [
         {"role": "system", "content": LLM_SYSTEM},
         {"role": "user", "content": prompt},
