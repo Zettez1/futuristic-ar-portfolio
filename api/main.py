@@ -9,10 +9,16 @@ Live Python quote engine for the interactive tools section.
 """
 from __future__ import annotations
 
+import io
 import json
 import math
 import os
+import subprocess
+import sys
 import threading
+import time
+from collections import deque
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -27,7 +33,14 @@ DATA_DIR.mkdir(exist_ok=True)
 LEADS_FILE = DATA_DIR / "leads.json"
 _lock = threading.Lock()
 
-app = FastAPI(title="FastStart Digital Portfolio", version="1.1.0")
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    _start_bot()
+    yield
+    _stop_bot()
+
+
+app = FastAPI(title="FastStart Digital Portfolio", version="1.1.0", lifespan=_lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -99,8 +112,9 @@ def chat(message: ChatMessage) -> dict:
     elif any(k in text for k in ("ar", "3d", "візуалізац", "модел", "usdz", "glb")):
         reply = "3D/WebAR-пакет: модель + інтерактив — від 6 000 грн. Формати: .glb для Android, .usdz для iOS."
         price_hint = "6 000 – 25 000 грн"
-    elif any(k in text for k in ("бот", "ai", "агент", "чат", "автоматиз", "парсер")):
-        reply = "AI-агенти від 20 000 грн: Telegram-боти, парсери, генератори лідів, інтеграції з CRM."
+    elif any(k in text for k in ("бот", "ai", "агент", "чат", "автоматиз", "парсер", "трейдинг", "торгов", "крипто", "crypto", "trade")):
+        reply = ("Розробка ботів від 20 000 грн: Telegram-боти, парсери, трейдинг-алгоритми (на сторінці — "
+                 "живий трейдинг-бот у терміналі), AI-агенти та генератори лідів. Деплой на хмару безкоштовно.")
         price_hint = "20 000 – 120 000 грн"
     elif any(k in text for k in ("ціна", "вартість", "бюджет", "кільки кошту", "прайс")):
         reply = "Орієнтовні чеки: лендінг — від 12 000 грн, 3D/WebAR — 6 000–25 000 грн, AI-агенти — від 20 000 грн."
@@ -170,6 +184,103 @@ def calc_quote(ptype: str = "landing", team: int = 1, complexity: int = 1):
         "from_price": cost,
         "params": {"rate": f"{RATE_UAH_HOUR:g} UAH/h", "norm": "робочий тиждень 38 год"},
     }
+
+
+# ------------------------------------------------------------ bot demo ----
+# BTrade — live trading-bot demo. A supervised child process streams its
+# console lines into an in-memory ring buffer; the site renders them in a
+# terminal widget. Runs in PAPER mode (MEXC paper API, no real orders).
+BOT_DIR = BASE_DIR / "BTrade"
+BOT_ENABLED = os.getenv("BOT_ENABLED", "1") == "1"
+
+_bot_lines: deque[dict] = deque(maxlen=800)  # {"n": int, "ts": float, "text": str}
+_bot_lock = threading.Lock()
+_bot_state: dict = {
+    "running": False, "pid": None, "started_at": None, "restarts": 0,
+    "last_exit": None, "last_error": None, "line_no": 0,
+}
+_bot_stop = threading.Event()
+
+
+def _bot_append(text: str) -> None:
+    with _bot_lock:
+        _bot_state["line_no"] += 1
+        _bot_lines.append({"n": _bot_state["line_no"], "ts": time.time(), "text": text})
+
+
+def _bot_worker() -> None:
+    env = os.environ.copy()
+    env.update({"DOTENV": ".env.mexc-paper", "SCHEDULE_ENABLED": "0", "PYTHONUNBUFFERED": "1"})
+    while not _bot_stop.is_set():
+        try:
+            proc = subprocess.Popen(
+                [sys.executable, "main.py"],
+                cwd=str(BOT_DIR),
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+        except Exception as exc:
+            with _bot_lock:
+                _bot_state["running"] = False
+                _bot_state["last_error"] = repr(exc)
+            time.sleep(10)
+            continue
+        with _bot_lock:
+            _bot_state.update({"running": True, "pid": proc.pid,
+                               "started_at": time.time(), "last_error": None})
+        _bot_append(f"[supervisor] BTrade запущен (pid={proc.pid}, PAPER-MODE)")
+        stream = io.TextIOWrapper(proc.stdout, encoding="utf-8", errors="replace")
+        while True:
+            line = stream.readline()
+            if not line:
+                break
+            _bot_append(line.rstrip("\r\n"))
+        proc.wait()
+        stream.close()
+        with _bot_lock:
+            _bot_state["running"] = False
+            _bot_state["last_exit"] = proc.returncode
+        if _bot_stop.is_set():
+            break
+        _bot_state["restarts"] += 1
+        _bot_append(f"[supervisor] бот завершился (код {proc.returncode}), перезапуск через 5 c…")
+        time.sleep(5)
+
+
+def _start_bot() -> None:
+    if not BOT_ENABLED or BOT_DIR.joinpath("main.py").exists() is False:
+        return
+    if _bot_state.get("running"):
+        return
+    _bot_stop.clear()
+    threading.Thread(target=_bot_worker, name="btrade", daemon=True).start()
+
+
+def _stop_bot() -> None:
+    _bot_stop.set()
+
+
+# ------------------------------------------------------------- frontend ----
+@app.get("/api/bot/status")
+def bot_status() -> dict:
+    with _bot_lock:
+        state = dict(_bot_state)
+    state["enabled"] = BOT_ENABLED
+    state["buffer_lines"] = len(_bot_lines)
+    if state.get("started_at"):
+        state["uptime_s"] = round(time.time() - state["started_at"], 1)
+    return {"ok": True, "bot": state}
+
+
+@app.get("/api/bot/logs")
+def bot_logs(after: int = 0, limit: int = 300) -> dict:
+    limit = max(1, min(limit, 500))
+    with _bot_lock:
+        lines = [line for line in _bot_lines if line["n"] > after][-limit:]
+        last_no = _bot_state["line_no"]
+        running = _bot_state["running"]
+    return {"ok": True, "seq": last_no, "running": running, "lines": lines}
 
 
 # ------------------------------------------------------------- frontend ----

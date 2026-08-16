@@ -368,6 +368,35 @@ body::before {
   border: 1px solid rgba(255, 255, 255, 0.09);
   transition: border-color 0.3s;
 }
+
+/* ---------- live bot terminal ---------- */
+.bot-term {
+  height: 420px;
+  overflow-y: auto;
+  background: #02050a;
+  padding: 16px 18px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(52, 211, 153, 0.35) transparent;
+}
+.bot-term::-webkit-scrollbar { width: 8px; }
+.bot-term::-webkit-scrollbar-thumb { background: rgba(52, 211, 153, 0.3); border-radius: 4px; }
+#bot-term.bot-online::after {
+  content: "▊";
+  color: #34d399;
+  animation: bot-blink 1s steps(1) infinite;
+  margin-left: 2px;
+}
+@keyframes bot-blink { 50% { opacity: 0; } }
+.bot-term-line { white-space: pre-wrap; word-break: break-word; color: #a7f3d0; }
+.bot-term-dim { color: #475569; }
+.bot-term .t-ok   { color: #34d399; }
+.bot-term .t-warn { color: #fbbf24; }
+.bot-term .t-err  { color: #f87171; }
+.bot-term .t-cyan { color: #22d3ee; }
+.bot-term .t-bold { color: #e2e8f0; font-weight: 600; }
 .tool-card:hover { border-color: rgba(34, 211, 238, 0.3); }
 .tool-card-head { display: flex; align-items: center; justify-content: space-between; }
 .tool-tag {

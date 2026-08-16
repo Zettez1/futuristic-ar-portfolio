@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/tailwind.css?v=18" />
-  <link rel="stylesheet" href="/css/style.css?v=18" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=19" />
+  <link rel="stylesheet" href="/css/style.css?v=19" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="canonical" href="https://fast-start-digital.com/" />
   <meta property="og:type" content="website" />
@@ -26,7 +26,7 @@
   <meta name="twitter:image" content="https://fast-start-digital.com/og-image.png" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.min.js" defer></script>
   <script src="/js/hero3d.js" defer></script>
-  <script src="/js/app.js?v=18" defer></script>
+  <script src="/js/app.js?v=19" defer></script>
   <script src="/js/chat.js" defer></script>
   <script src="/js/quote-demo.js" defer></script>
 </head>
@@ -44,6 +44,7 @@
           <a href="#services" class="nav-link">Послуги</a>
           <a href="#ar" class="nav-link">AR-галерея</a>
           <a href="#pytools" class="nav-link">Python-інструменти</a>
+          <a href="#bots" class="nav-link">Боти</a>
           <a href="#process" class="nav-link">Етапи</a>
           <a href="#contacts" class="nav-link">Контакти</a>
         </div>
@@ -316,6 +317,69 @@
             <h3 class="font-display text-base font-semibold text-white mt-2">AI-агент продажів</h3>
             <p class="text-sm text-slate-400 mt-2">Цей самий агент, з яким ви спілкуєтесь у чаті: рахує вартість і збирає контакти автоматично.</p>
           </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BOTS ============ -->
+  <section id="bots" class="relative py-28 bg-[#05070f] border-y border-white/5">
+    <div class="max-w-7xl mx-auto px-5 lg:px-8">
+      <div class="section-head reveal max-w-2xl">
+        <div class="eyebrow">04 · РОЗРОБКА БОТІВ</div>
+        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
+          Торговий бот <span class="text-gradient">працює прямо на сторінці</span>
+        </h2>
+        <p class="mt-4 text-slate-400 text-lg">
+          Праворуч — справжній Python-бот на нашому сервері: аналізує крипторинок у режимі
+          паперової торгівлі (без реальних грошей). Те саме, що й для ваших задач: Telegram-боти,
+          парсери, трейдинг, автоматизація. Дивіться лог у реальному часі.
+        </p>
+      </div>
+
+      <div class="mt-14 grid lg:grid-cols-5 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <article class="tool-card reveal">
+            <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">BTrade · live demo</span><span class="tool-tag">PAPER MODE</span></div>
+            <h3 class="font-display text-base font-semibold text-white mt-2">Трейдинг-бот MA Cross</h3>
+            <p class="text-sm text-slate-400 mt-2">Стратегія на перетині MA7/MA25 (30m → 3m), стоп-лосс і трейлинг, ліміт ризику на день. Моніторить SHIB, WLD, TIA, OP, INJ, WIF на ф'ючерсах MEXC.</p>
+            <div class="mt-4 font-mono text-xs text-slate-500 bg-black/30 rounded-lg p-3 overflow-x-auto">
+              <span class="text-emerald-400">$</span> DOTENV=.env.mexc-paper python main.py<br /><span class="text-slate-400">Капітал: 1,000.00 USDT · день: +0.00<br />INJ/USDT ціна 4.2150 | 30m: ▲, 3m: —, ВООРУЖЕН ▲</span>
+            </div>
+          </article>
+          <article class="tool-card reveal d1">
+            <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">для вашого бізнесу</span><span class="tool-tag">від 20 000 грн</span></div>
+            <h3 class="font-display text-base font-semibold text-white mt-2">Бот під ваше ТЗ</h3>
+            <p class="text-sm text-slate-400 mt-2">Telegram-магазини, парсери ринку, AI-агенти, трейдинг-алгоритми, інтеграції з CRM і банками. Деплой на хмару та підтримка 24/7.</p>
+            <a href="#lead" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">
+              Обговорити бота
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </article>
+        </div>
+
+        <div class="lg:col-span-3 tool-panel reveal d1">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-white/5">
+            <div class="flex items-center gap-2 font-mono text-xs text-slate-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></span>
+              <span class="ml-3">btrade/main.py · Python 3.11 · MEXC Futures Paper</span>
+            </div>
+            <span class="status-badge" id="bot-status"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> підключення…</span>
+          </div>
+
+          <div class="bot-term" id="bot-term">
+            <div class="bot-term-line bot-term-dim">[supervisor] BTrade terminal: очікуємо лог бота…</div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-t border-white/5 font-mono text-xs text-slate-500">
+            <div class="flex items-center gap-4">
+              <span id="bot-uptime">—</span>
+              <span id="bot-restarts">—</span>
+            </div>
+            <span class="text-emerald-400/90" id="bot-live">лог у реальному часі • оновлення 2 с</span>
+          </div>
         </div>
       </div>
     </div>

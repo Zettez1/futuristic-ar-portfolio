@@ -294,4 +294,94 @@ return (
         .finally(function () { btn.textContent = original; });
     });
   }
+
+  /* ---------- live bot terminal (BTrade on the server) ---------- */
+  var botTerm = document.getElementById("bot-term");
+  if (botTerm) {
+    var botStatusEl = document.getElementById("bot-status");
+    var botUptime = document.getElementById("bot-uptime");
+    var botRestarts = document.getElementById("bot-restarts");
+    var botLive = document.getElementById("bot-live");
+    var cursor = document.createElement("span");
+    cursor.className = "t-ok";
+    cursor.textContent = "▊";
+    var botSeq = 0;
+    var botCount = 0;
+    var escRe = /\u001b\[[0-9;?]*[a-zA-Z]/g;
+
+    function botLineClass(text) {
+      if (text.indexOf("супервизор") >= 0) return "bot-term-dim";
+      if (/(ERROR|Ошибк)/.test(text)) return "t-err";
+      if (/(WARN|предупреж)/.test(text)) return "t-warn";
+      if (/(ВХОД|ПОЗИЦ|закрыт|стоп-лосс|Стоп-лосс|ПРИБЫЛЬ|УБЫТ)/.test(text)) return "t-cyan";
+      if (/(СКАН|Капитал|Капітал)/.test(text)) return "t-bold";
+      return "";
+    }
+
+    function botAppend(text) {
+      text = text.replace(escRe, "");
+      var cls = botLineClass(text);
+      var line = document.createElement("div");
+      line.className = "bot-term-line";
+      var safe = String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      if (cls === "bot-term-dim") {
+        line.classList.add("bot-term-dim");
+        line.textContent = text;
+      } else if (cls) {
+        line.innerHTML = '<span class="' + cls + '">' + safe + "</span>";
+      } else {
+        line.textContent = text;
+      }
+      botTerm.insertBefore(line, cursor);
+      botCount++;
+      while (botCount > 400 && botTerm.firstChild !== cursor) {
+        botTerm.removeChild(botTerm.firstChild);
+        botCount--;
+      }
+      botTerm.scrollTop = botTerm.scrollHeight;
+    }
+
+    function botPoll() {
+      fetch("/api/bot/logs?after=" + botSeq + "&limit=300", { cache: "no-store" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.lines) return;
+          for (var i = 0; i < d.lines.length; i++) botAppend(d.lines[i].text);
+          botSeq = d.seq || botSeq;
+          if (botStatusEl) {
+            if (d.running) {
+              botStatusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> бот онлайн';
+            } else {
+              botStatusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> бот перезапускається…';
+            }
+          }
+        })
+        .catch(function () {
+          if (botStatusEl) botStatusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-500/80"></span> термінал недоступний';
+        });
+      fetch("/api/bot/status", { cache: "no-store" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var b = (d && d.bot) || {};
+          if (botUptime && b.running && b.uptime_s) {
+            var sec = Math.floor(b.uptime_s);
+            var hh = Math.floor(sec / 3600), mm = Math.floor((sec % 3600) / 60);
+            botUptime.textContent = "аптайм " + (hh > 0 ? hh + " год " : "") + mm + " хв";
+          }
+          if (botRestarts) botRestarts.textContent = "перезапусків: " + (b.restarts || 0);
+        })
+        .catch(function () {});
+    }
+
+    botTerm.appendChild(cursor);
+    botTerm.classList.add("bot-online");
+    var botT = setInterval(botPoll, 2000);
+    botPoll();
+    var botObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) botPoll();
+      });
+    }, { rootMargin: "200px" });
+    botObserver.observe(botTerm);
+  }
 })();
