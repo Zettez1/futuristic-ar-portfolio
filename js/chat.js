@@ -71,6 +71,33 @@
     setTimeout(function () { t.remove(); cb(); }, 650 + Math.random() * 450);
   }
 
+  /* Live LLM answer (Qwen -> NVIDIA → fallbackReply) */
+  function askNova(text, cb) {
+    fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    }).then(function (r) { return r.json(); })
+      .then(function (d) { cb(d && d.reply ? d.reply : fallbackReply()); })
+      .catch(function () { cb(fallbackReply()); });
+  }
+
+  function fallbackReply() {
+    return "Записала ваше повідомлення — інженер підготує розрахунок і відповість разом із КП.";
+  }
+
+  /* Show typing dots, keep them until the "done" callback fires with the text */
+  function botThink(done) {
+    var t = el('<div class="msg msg-bot msg-typing"><span></span><span></span><span></span></div>');
+    body.appendChild(t);
+    body.scrollTop = body.scrollHeight;
+    done(function (text) {
+      t.remove();
+      addMsg(text, "bot");
+      body.scrollTop = body.scrollHeight;
+    });
+  }
+
   function setChips(items) {
     chips.innerHTML = "";
     items.forEach(function (label) {
@@ -138,9 +165,11 @@
           }, 350);
         });
       } else {
-        typing(function () {
-          addMsg("Розумію: «" + text + "». Опишу ваш кейс у КП — але спершу уточню пару моментів, щоб розрахунок був точним. Що вас цікавить?", "bot");
-          setChips(["Веб-розробка", "3D / WebAR-візуалізація", "AI-агент / автоматизація"]);
+        botThink(function (done) {
+          askNova(text, function (reply) {
+            done(reply);
+            setChips(["Веб-розробка", "3D / WebAR-візуалізація", "AI-агент / автоматизація"]);
+          });
         });
       }
       return;
@@ -177,10 +206,12 @@
       return;
     }
 
-    /* post-completion free chat */
-    typing(function () {
-      addMsg("Записала ваше повідомлення. Інженер відповість на нього разом із КП. Є ще питання?", "bot");
-      setChips(["Так, ще питання", "Дякую, чекаю КП"]);
+    /* post-completion free chat — NOVA (LLM) */
+    botThink(function (done) {
+      askNova(text, function (reply) {
+        done(reply);
+        setChips(["Так, ще питання", "Дякую, чекаю КП"]);
+      });
     });
     saveLead({ message: text, source: "chat-followup" });
   }

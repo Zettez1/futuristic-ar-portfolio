@@ -17,6 +17,8 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 from collections import deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -96,6 +98,73 @@ def create_lead(lead: Lead) -> dict:
     return {"ok": True, "accepted": True}
 
 
+# ----------------------------------------------------------------- chat LLM ----
+# NOVA answers live questions via Qwen (fast) with NVIDIA as fallback,
+# then deterministic rules as last resort. Keys come from Railway secrets.
+CHAT_QWEN_KEY = os.getenv("CHAT_QWEN_KEY", "")
+CHAT_NVIDIA_KEY = os.getenv("CHAT_NVIDIA_KEY", "")
+
+LLM_SYSTEM = (
+    "Ти NOVA — AI-агент студії FastStart Digital (Україна). Пиши українською, коротко "
+    "(до 3 речень), дружелюбно, без зайвого маркетингу. Тарифна сітка FastStart Digital (фікс-прайс, €):\n"
+    "1) Чат-боти (Telegram/Instagram/Facebook): Start Bot — візитка, меню, FAQ, збір заявок: 150–250 €. "
+    "Pro Bot — автоворонка, розсилки, запис, Google Таблиці/CRM: 300–500 €. "
+    "Custom Bot — оплата (LiqPay/Stripe/PayPal), кабінет, AI-інтеграції, WebApp: 600–1200 €+.\n"
+    "2) Сайти: Landing Page Express — односторінковий, форма, аналітика: 250–400 €. "
+    "Business Web — 5–7 сторінок + адмінка: 500–850 €. E-Commerce/Каталог — магазин, фільтри, "
+    "кошик, оплата: 900–1500 €+.\n"
+    "3) Комбо «Швидкий старт»: FastStart Light (лендінг + бот-візитка) — 350 €. "
+    "FastStart Pro (сайт + розумний бот з автоворонкою + CRM) — 650 €.\n"
+    "Умови: в тариф входить до 3 етапів правок, додаткові функції розраховуються окремо. "
+    "Оплата: 50% перед початком, 50% після демо на тестовому сервері. "
+    "Супровід: 30–50 €/міс (правки, перевірка роботи, хостинг).\n"
+    "Наприкінці м'яко запропонуй залишити контакт (Telegram) для підготовки КП. "
+    "Якщо питання поза послугами — чесно скажи."
+)
+
+
+def _llm_call(url: str, key: str, model: str, text: str, timeout: int) -> str | None:
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": LLM_SYSTEM},
+            {"role": "user", "content": text[:2000]},
+        ],
+        "max_tokens": 300,
+        "temperature": 0.5,
+    }
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = json.loads(resp.read().decode("utf-8", "replace"))
+        reply = body["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return None
+    if not reply:
+        return None
+    # innerHTML-safe: escape tags, keep line breaks
+    return reply.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")[:600]
+
+
+def llm_reply(text: str) -> str | None:
+    if CHAT_QWEN_KEY:
+        reply = _llm_call(
+            "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
+            CHAT_QWEN_KEY, "qwen-plus", text, timeout=25)
+        if reply:
+            return reply
+    if CHAT_NVIDIA_KEY:
+        return _llm_call(
+            "https://integrate.api.nvidia.com/v1/chat/completions",
+            CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, timeout=30)
+    return None
+
+
 # ----------------------------------------------------------------- chat ----
 class ChatMessage(BaseModel):
     message: str
@@ -103,8 +172,13 @@ class ChatMessage(BaseModel):
 
 @app.post("/api/chat")
 def chat(message: ChatMessage) -> dict:
-    """Tiny deterministic agent — replies to the most common asks."""
+    """NOVA agent: Qwen -> NVIDIA -> deterministic rules."""
     text = message.message.lower().strip()
+    llm = llm_reply(message.message)
+    if llm:
+        source = "qwen" if CHAT_QWEN_KEY else "nvidia"
+        _save_lead({"message": text, "source": "api-chat-llm"})
+        return {"ok": True, "reply": llm, "price_hint": None, "llm": source}
     if any(k in text for k in ("сайт", "лендінг", "магазин", "застосунок", "веб", "платформ", "crm")):
         reply = ("Для веб-розробки: ТЗ і прототип — від 5 днів, MVP — від 4 тижнів. "
                  "Опишіть продукт і функціонал — порахую обсяг робіт.")
