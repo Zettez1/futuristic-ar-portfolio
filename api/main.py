@@ -194,6 +194,26 @@ _LANG_INS = {
 }
 
 
+_LANG_STAY = {
+    "en": "Do not switch to any other language at all.",
+    "es": "No cambies a ningún otro idioma en absoluto.",
+    "fr": "Ne passe jamais à une autre langue.",
+    "de": "Wechsle niemals in eine andere Sprache.",
+    "it": "Non passare mai a un'altra lingua.",
+    "pt": "Nunca mude para outro idioma.",
+    "pl": "Nie przechodź do żadnego innego języka.",
+    "nl": "Ga nooit over naar een andere taal.",
+    "zh": "不要切换到其他任何语言。",
+    "ja": "他の言語に切り替えないでください。",
+    "ko": "절대 다른 언어로 바꾸지 마세요.",
+    "ar": "لا تنتقل إلى أي لغة أخرى على الإطلاق.",
+    "he": "אל תעבור בכלל לשפה אחרת.",
+    "hi": "आप किसी अन्य भाषा में बिल्कुल न जाएं।",
+    "th": "ห้ามเปลี่ยนไปเป็นภาษาอื่นเด็ดขาด",
+    "": "Reply in one language only: the language the client used.",
+}
+
+
 def client_lang(text: str) -> str:
     low = text.lower()
     if any(ch in text for ch in "іїєґІЇЄҐ"):
@@ -217,8 +237,19 @@ def client_lang(text: str) -> str:
     return best if scores[best] > 0 else "en"
 
 
-def _llm_call(url, key, model, text, timeout=25, lang=None):
+def _has_drift(reply: str, lang: str) -> bool:
+    if not reply or lang in ("ru", "uk"):
+        return False
+    for (lo, hi), code in _LANG_SCRIPTS:
+        if code == lang:
+            return not any(lo <= ch <= hi for ch in reply)
+    return any("\u0400" <= ch <= "\u04ff" for ch in reply)
+
+
+def _llm_call(url, key, model, text, timeout=25, lang=None, reinforce=None):
     prompt = text[:2000] + _LANG_INS.get(lang, _LANG_INS[""])
+    if reinforce:
+        prompt += "\n\n" + reinforce
     return _post_chat(url, key, model, [
         {"role": "system", "content": LLM_SYSTEM},
         {"role": "user", "content": prompt},
@@ -258,12 +289,28 @@ def llm_reply(text: str) -> str | None:
         reply = _llm_call(
             "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
             CHAT_QWEN_KEY, "qwen-plus", text, lang=lang)
+        if reply and _has_drift(reply, lang):
+            reply2 = _llm_call(
+                "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
+                CHAT_QWEN_KEY, "qwen-plus", text, lang=lang,
+                reinforce=_LANG_STAY.get(lang, _LANG_STAY[""]))
+            if reply2:
+                reply = reply2
         if reply:
             return reply
     if CHAT_NVIDIA_KEY:
-        return _llm_call(
+        reply = _llm_call(
             "https://integrate.api.nvidia.com/v1/chat/completions",
             CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, timeout=30, lang=lang)
+        if reply and _has_drift(reply, lang):
+            reply2 = _llm_call(
+                "https://integrate.api.nvidia.com/v1/chat/completions",
+                CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, timeout=30, lang=lang,
+                reinforce=_LANG_STAY.get(lang, _LANG_STAY[""]))
+            if reply2:
+                reply = reply2
+        if reply:
+            return reply
     return None
 
 
