@@ -88,7 +88,7 @@
 
   /* Human-like guard: if the user asks a live question instead of
      filling the funnel field, NOVA answers and repeats the question. */
-  var QUESTION_WORDS = ["як ", "що ", "скільки", "коли", "де ", "чому", "хто", "чи ", "зв'язат", "звязат", "контакт", "телефон", "привіт", "добрий", "hello", "можна"];
+  var QUESTION_WORDS = ["як ", "що ", "скільки", "коли", "де ", "чому", "хто", "чи ", "зв'язат", "звязат", "контакт", "телефон", "привіт", "добрий", "hello", "можна", "как", "связат", "сколько", "какие", "какая", "какой", "стоит", "стоимост", "цена", "прайс", "тариф", "вартост", "вартiст", "можно", "привет", "здравств", "доллар", "евро", "euro"];
   function looksLikeQuestion(t) {
     if (t.indexOf("?") !== -1) return true;
     if (t.length > 28) return true;
@@ -132,10 +132,11 @@
 
   /* ---------------- flow ---------------- */
   function budgetGuess(type) {
-    if (type === "Веб-розробка") return "12 000 – 60 000 грн";
+    if (type === "Веб-розробка") return "250 – 1 500 €";
     if (type === "3D / WebAR-візуалізація") return "6 000 – 25 000 грн";
-    if (type === "AI-агент / автоматизація") return "20 000 – 120 000 грн";
-    return "8 000 – 45 000 грн";
+    if (type === "AI-агент / автоматизація") return "150 – 1 200 €";
+    if (type === "Комплексний проєкт") return "350 – 650 €";
+    return "250 – 1 500 €";
   }
 
   function start() {
@@ -157,6 +158,15 @@
     var t = text.trim().toLowerCase();
 
     if (state.step === 0) {
+      if (looksLikeQuestion(t)) {
+        botThink(function (done) {
+          askNova(text, function (reply) {
+            done(reply);
+            setChips(["Веб-розробка", "3D / WebAR-візуалізація", "AI-агент / автоматизація", "Комплексний проєкт"]);
+          });
+        });
+        return;
+      }
       var map = [
         { k: "сайт", v: "Веб-розробка" },
         { k: "лендінг", v: "Веб-розробка" },
