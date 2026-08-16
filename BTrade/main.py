@@ -118,9 +118,18 @@ def parse_hhmm(s: str):
         return 9, 0
 
 
-def schedule_state(now, wake: str = "09:00", sleep: str = "20:30"):
+def _next_weekday(day, h, m):
+    """Ближайший будний день (пн-пт) в h:m после day."""
+    nxt = (day + timedelta(days=1)).replace(hour=h, minute=m)
+    while nxt.weekday() >= 5:
+        nxt += timedelta(days=1)
+    return nxt
+
+
+def schedule_state(now, wake: str = "09:00", sleep: str = "20:30", weekdays_only: bool = True):
     """Торговое окно: wake <= now < sleep (локальное «наивное» время).
 
+    При weekdays_only=True в субботу/воскресенье бот спит до понедельника wake.
     Возвращает (active, sleep_until): active — торговать ли сейчас,
     sleep_until — datetime, когда надо проснуться (None, если окно активное).
     """
@@ -129,11 +138,15 @@ def schedule_state(now, wake: str = "09:00", sleep: str = "20:30"):
     day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     w = day.replace(hour=wh, minute=wm)
     s = day.replace(hour=sh, minute=sm)
+    if weekdays_only and now.weekday() >= 5:
+        return False, _next_weekday(day, wh, wm)
     if w <= now < s:
         return True, None
     if now < w:
         return False, w
-    return False, w + timedelta(days=1)
+    if not weekdays_only:
+        return False, w + timedelta(days=1)
+    return False, _next_weekday(day, wh, wm)
 
 
 def disable_quickedit():
@@ -472,13 +485,14 @@ class TradingBot:
                         except Exception:
                             tz = ZoneInfo("Europe/Kyiv")
                         now = datetime.now(tz).replace(tzinfo=None)
-                        active, sleep_until = schedule_state(now, self.cfg.schedule_wake,
-                                                             self.cfg.schedule_sleep)
+                        active, sleep_until = schedule_state(
+                            now, self.cfg.schedule_wake, self.cfg.schedule_sleep,
+                            self.cfg.schedule_weekdays_only)
                         if not active:
                             if self._schedule_active and self.cfg.schedule_close_positions:
                                 open_n = len([p for p in self.engine.positions.values()
                                               if p.status == "open"])
-                                log.info(f"Бот засыпает до {sleep_until:%H:%M} ({self.cfg.schedule_zone}): "
+                                log.info(f"Бот засыпает до {sleep_until:%d.%m %H:%M} ({self.cfg.schedule_zone}): "
                                          f"закрываю открытые позиции ({open_n})")
                                 prices = self.engine.prices
                                 self.engine.close_all(prices, "сон бота: закрытие в 20:30")

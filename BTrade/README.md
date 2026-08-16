@@ -35,8 +35,8 @@ MA(7)/MA(25) (`strategies/ma_cross.py`). Никаких стаканов, лен
    блокирует разворот.
 6. **Расписание (`SCHEDULE_ENABLED=1`)** — работа с `SCHEDULE_WAKE` (09:00) до
    `SCHEDULE_SLEEP` (20:30) по `SCHEDULE_ZONE` (Europe/Kyiv); в 20:30 при
-   `SCHEDULE_CLOSE_POSITIONS=1` все позиции закрываются по рынку, до 09:00
-   входы не ищутся.
+   `SCHEDULE_CLOSE_POSITIONS=1` все позиции закрываются по рынку. Выходные
+   (`SCHEDULE_WEEKDAYS_ONLY=1`): с пятницы 20:30 бот спит до понедельника 09:00.
 7. **Риск** — риск на сделку, дневной лимит убытка, лимит позиций
    (`MAX_POSITIONS=1`), защитные стоп-ордера на бирже (только SL).
 8. **Journal** — SQLite `db/trades.db`: сделки, сигналы, исходы.

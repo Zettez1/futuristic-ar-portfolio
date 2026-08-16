@@ -91,6 +91,7 @@ class Config:
     schedule_wake: str = field(default_factory=lambda: _env("SCHEDULE_WAKE", "09:00"))
     schedule_sleep: str = field(default_factory=lambda: _env("SCHEDULE_SLEEP", "20:30"))
     schedule_close_positions: bool = field(default_factory=lambda: _flag("SCHEDULE_CLOSE_POSITIONS", "1"))
+    schedule_weekdays_only: bool = field(default_factory=lambda: _flag("SCHEDULE_WEEKDAYS_ONLY", "1"))
     min_6h_volatility: float = field(default_factory=lambda: float(_env("MIN_6H_VOLATILITY", "0")))
     min_24h_volume_usd: float = field(default_factory=lambda: float(_env("MIN_24H_VOLUME_USD", "10")))
     flow_liq_enabled: bool = field(default_factory=lambda: _flag("FLOW_LIQ_ENABLED", "1"))

@@ -1,8 +1,6 @@
 .env
 __pycache__/
 *.pyc
-.pytest_cache/
-bot_smoke*
 db/
 logs/
 models/
