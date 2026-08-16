@@ -113,6 +113,9 @@ LLM_SYSTEM = (
     "не перебільшуєш, не вигадуєш знижок. Наприкінці м'яко запропонуй залишити контакт (Telegram) "
     "для КП — раз, без напору. ВАЖЛИВО: відповідай мовою останнього повідомлення клієнта — "
     "написав російською, значить вся відповідь російською; написав українською — українською. "
+    "МОВНЕ ПРАВИЛО: вся відповідь — виключно мовою клієнта, без жодного слова іншою мовою; "
+    "назви тарифів, функцій і категорій теж перекладай мовою відповіді (E-Commerce/Каталог → "
+    "E-Commerce/Catalog тощо). "
     "Зазвичай відповідай коротко — 2–3 речення; якщо просять деталі або таблицю — давай повну інформацію.\n"
     "Тарифна сітка FastStart Digital (фікс-прайс, €):\n"
     "1) Чат-боти (Telegram/Instagram/Facebook): Start Bot — візитка, меню, FAQ, збір заявок: 150–250 €. "
@@ -283,34 +286,31 @@ def _llm_raw(url, key, model, prompt, max_tokens=5, timeout=25):
     return (reply or "").strip().lower()
 
 
+def _try_provider(url, key, model, text, lang, timeout=25):
+    reply = _llm_call(url, key, model, text, timeout=timeout, lang=lang)
+    if reply and _has_drift(reply, lang):
+        reply2 = reply
+        for _ in range(2):
+            reply2 = _llm_call(url, key, model, text, timeout=timeout, lang=lang,
+                               reinforce=_LANG_STAY.get(lang, _LANG_STAY[""]))
+            if reply2 and not _has_drift(reply2, lang):
+                return reply2
+        return reply2 or reply
+    return reply
+
+
 def llm_reply(text: str) -> str | None:
     lang = client_lang(text)
     if CHAT_QWEN_KEY:
-        reply = _llm_call(
+        reply = _try_provider(
             "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
-            CHAT_QWEN_KEY, "qwen-plus", text, lang=lang)
-        if reply and _has_drift(reply, lang):
-            reply2 = _llm_call(
-                "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
-                CHAT_QWEN_KEY, "qwen-plus", text, lang=lang,
-                reinforce=_LANG_STAY.get(lang, _LANG_STAY[""]))
-            if reply2:
-                reply = reply2
+            CHAT_QWEN_KEY, "qwen-plus", text, lang)
         if reply:
             return reply
     if CHAT_NVIDIA_KEY:
-        reply = _llm_call(
+        return _try_provider(
             "https://integrate.api.nvidia.com/v1/chat/completions",
-            CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, timeout=30, lang=lang)
-        if reply and _has_drift(reply, lang):
-            reply2 = _llm_call(
-                "https://integrate.api.nvidia.com/v1/chat/completions",
-                CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, timeout=30, lang=lang,
-                reinforce=_LANG_STAY.get(lang, _LANG_STAY[""]))
-            if reply2:
-                reply = reply2
-        if reply:
-            return reply
+            CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", text, lang, timeout=30)
     return None
 
 
