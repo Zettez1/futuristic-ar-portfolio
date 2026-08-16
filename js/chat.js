@@ -86,9 +86,20 @@
     return "Записала ваше повідомлення — інженер підготує розрахунок і відповість разом із КП.";
   }
 
+  /* LLM classifier: is the funnel answer a real contact or a question? */
+  function classify(text, done) {
+    fetch("/api/classify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    }).then(function (r) { return r.json(); })
+      .then(function (d) { done(d && d.kind ? d.kind : "other"); })
+      .catch(function () { done("other"); });
+  }
+
   /* Human-like guard: if the user asks a live question instead of
      filling the funnel field, NOVA answers and repeats the question. */
-  var QUESTION_WORDS = ["як ", "що ", "скільки", "коли", "де ", "чому", "хто", "чи ", "зв'язат", "звязат", "контакт", "телефон", "привіт", "добрий", "hello", "можна", "как", "связат", "сколько", "какие", "какая", "какой", "стоит", "стоимост", "цена", "прайс", "тариф", "вартост", "вартiст", "можно", "привет", "здравств", "доллар", "евро", "euro"];
+  var QUESTION_WORDS = ["як ", "що ", "скільки", "коли", "де ", "чому", "хто", "чи ", "зв'язат", "звязат", "контакт", "телефон", "привіт", "добрий", "hello", "можна", "как", "связат", "сколько", "какие", "какая", "какой", "стоит", "стоимост", "цена", "прайс", "тариф", "вартост", "вартiст", "можно", "привет", "здравств", "доллар", "евро", "euro", "дай", "пришли", "покажи", "скинь", "отправь", "таблиц", "пример", "счет", "квита", "смет", "каталог", "расскажи", "подскажи", "надо", "хочу", "нужно", "узнать", "узнат"];
   function looksLikeQuestion(t) {
     if (t.indexOf("?") !== -1) return true;
     if (t.length > 28) return true;
@@ -250,7 +261,13 @@
     }
 
     if (state.step === 3) {
-      if (looksLikeQuestion(t) && !isContact(t)) {
+      if (isContact(t)) {
+        state.contact = text;
+        state.step++;
+        sendLead();
+        return;
+      }
+      if (looksLikeQuestion(t)) {
         botThink(function (done) {
           askNova(text, function (reply) {
             done(reply);
@@ -259,9 +276,21 @@
         });
         return;
       }
-      state.contact = text;
-      state.step++;
-      sendLead();
+      botThink(function (done) {
+        classify(text, function (kind) {
+          if (kind === "contact") {
+            state.contact = text;
+            state.step++;
+            done("Дякую — зафіксувала ваш контакт!");
+            setTimeout(sendLead, 350);
+          } else {
+            askNova(text, function (reply) {
+              done(reply);
+              addMsg("Залиште контакт — Telegram або телефон, щоб інженер надіслав вам КП:", "bot");
+            });
+          }
+        });
+      });
       return;
     }
 

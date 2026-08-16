@@ -13,6 +13,7 @@ import io
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -124,15 +125,19 @@ LLM_SYSTEM = (
 )
 
 
-def _llm_call(url: str, key: str, model: str, text: str, timeout: int) -> str | None:
+def _llm_call(url, key, model, text, timeout=25):
+    return _post_chat(url, key, model, [
+        {"role": "system", "content": LLM_SYSTEM},
+        {"role": "user", "content": text[:2000]},
+    ], 300, timeout)
+
+
+def _post_chat(url, key, model, messages, max_tokens, timeout):
     payload = {
         "model": model,
-        "messages": [
-            {"role": "system", "content": LLM_SYSTEM},
-            {"role": "user", "content": text[:2000]},
-        ],
-        "max_tokens": 300,
-        "temperature": 0.5,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": 0,
     }
     req = urllib.request.Request(
         url,
@@ -146,17 +151,19 @@ def _llm_call(url: str, key: str, model: str, text: str, timeout: int) -> str | 
         reply = body["choices"][0]["message"]["content"].strip()
     except Exception:
         return None
-    if not reply:
-        return None
-    # innerHTML-safe: escape tags, keep line breaks
-    return reply.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")[:600]
+    return reply or None
+
+
+def _llm_raw(url, key, model, prompt, max_tokens=5, timeout=25):
+    reply = _post_chat(url, key, model, [{"role": "user", "content": prompt}], max_tokens, timeout)
+    return (reply or "").strip().lower()
 
 
 def llm_reply(text: str) -> str | None:
     if CHAT_QWEN_KEY:
         reply = _llm_call(
             "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
-            CHAT_QWEN_KEY, "qwen-plus", text, timeout=25)
+            CHAT_QWEN_KEY, "qwen-plus", text)
         if reply:
             return reply
     if CHAT_NVIDIA_KEY:
@@ -177,6 +184,8 @@ def chat(message: ChatMessage) -> dict:
     text = message.message.lower().strip()
     llm = llm_reply(message.message)
     if llm:
+        # innerHTML-safe: escape tags, keep line breaks
+        llm = llm.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")[:600]
         source = "qwen" if CHAT_QWEN_KEY else "nvidia"
         _save_lead({"message": text, "source": "api-chat-llm"})
         return {"ok": True, "reply": llm, "price_hint": None, "llm": source}
@@ -203,6 +212,37 @@ def chat(message: ChatMessage) -> dict:
         price_hint = None
     _save_lead({"message": text, "source": "api-chat"})
     return {"ok": True, "reply": reply, "price_hint": price_hint}
+
+
+@app.post("/api/classify")
+def classify(message: ChatMessage) -> dict:
+    """Is the user's funnel answer a real contact, or a question/request?
+    Fast regex first, then LLM (Qwen -> NVIDIA) so NOVA never saves
+    garbage like "дай мне таблицу" as a phone number."""
+    text = message.message.strip()
+    low = text.lower()
+    if re.search(r"[@]|\d{5,}|t\.me|telegram|viber|whatsapp|wa\.me|skype|email|пошта|е-мейл", low):
+        return {"kind": "contact"}
+    prompt = (
+        "В чате продаж клиенту задали вопрос, и он ответил. Определи тип ответа одним словом:\n"
+        "'contact' — контакт: имя, ник, телефон, email, telegram, ссылка.\n"
+        "'question' — вопрос или просьба: спросить про цены/тарифы/сроки, "
+        "попросить таблицу, прайс, примеры, КП, спросить как связаться и т.п.\n"
+        "'other' — всё остальное (мусор, опечатки, пустота).\n"
+        f'Ответ клиента: "{text[:300]}"\n'
+        "Ответь ТОЛЬКО одним словом: contact, question или other."
+    )
+    if CHAT_QWEN_KEY:
+        r = _llm_raw("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
+                     CHAT_QWEN_KEY, "qwen-plus", prompt)
+        if r in ("contact", "question", "other"):
+            return {"kind": r}
+    if CHAT_NVIDIA_KEY:
+        r = _llm_raw("https://integrate.api.nvidia.com/v1/chat/completions",
+                     CHAT_NVIDIA_KEY, "meta/llama-3.3-70b-instruct", prompt, timeout=30)
+        if r in ("contact", "question", "other"):
+            return {"kind": r}
+    return {"kind": "question" if "?" in low else "other"}
 
 
 # ------------------------------------------------------ quote calculator ---
