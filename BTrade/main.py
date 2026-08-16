@@ -184,6 +184,7 @@ class TradingBot:
         self.journal = TradeJournal()
         self.scan_cursor = 0
         self._schedule_active = False
+        self._schedule_sleep_logged = False
 
         self.engine = ExecutionEngine(
             self.client,
@@ -498,11 +499,24 @@ class TradingBot:
                                 self.engine.close_all(prices, "сон бота: закрытие в 20:30")
                                 self.journal.update_signal_outcomes(prices)
                             self._schedule_active = False
-                            secs = (sleep_until - now).total_seconds()
-                            await asyncio.sleep(min(max(secs, 0.0), 300.0))
+                            if not self._schedule_sleep_logged:
+                                log.info(f"Бот спит (вне окна работы), проснусь "
+                                         f"{sleep_until:%d.%m %H:%M} ({self.cfg.schedule_zone})")
+                                self._schedule_sleep_logged = True
+                                self.dashboard.sleep_splash(sleep_until, self.cfg)
+                            while True:
+                                now = datetime.now(tz).replace(tzinfo=None)
+                                active, sleep_until = schedule_state(
+                                    now, self.cfg.schedule_wake, self.cfg.schedule_sleep,
+                                    self.cfg.schedule_weekdays_only)
+                                if active:
+                                    break
+                                secs = (sleep_until - now).total_seconds()
+                                await asyncio.sleep(min(max(secs, 0.0), 300.0))
                             await asyncio.sleep(self.cfg.scan_interval)
                             continue
                         self._schedule_active = True
+                        self._schedule_sleep_logged = False
                     scan_started = time.monotonic()
                     self.kline_cache = {
                         key: value for key, value in self.kline_cache.items()

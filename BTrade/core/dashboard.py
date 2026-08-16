@@ -32,6 +32,30 @@ def _color(value, positive_is_green=True):
     return f"{value:+.2f}"
 
 
+SLEEP_ART = [
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⡀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⠤⠤⠤⣤⠀⠀⠀⠀⡼⠁⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢤⡄⠀⢀⡤⠔⠊⠁⠀⠀⠀⣰⠃⠀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣤⣤⣤⣤⣤⣀⣀⣀⠀⠀⠀⠚⠂⠀⠉⠒⠢⠤⠤⠄⠀⡰⠃⠀⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⣶⠿⠟⠛⠛⠋⠉⠉⠉⠉⠉⠉⠛⠛⠛⠷⢷⣦⣤⣀⡀⠀⠀⠀⠀⠀⠀⠙⠛⠓⠓⠒⠒⠀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣴⣶⣶⣾⠟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠻⣿⣿⣶⣶⣶⣤⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⣴⣿⠟⠉⠀⠀⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠟⠀⠀⠀⠉⠙⢿⣦⠀⠀⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⣠⣿⡟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢦⣽⣿⡄⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⣰⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣷⠀⠀⠀⠀⠀",
+    "⠀⠀⢰⣿⡏⣤⠀⠀⠀⠀⠀⢀⡼⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡀⠀⠀⢤⢠⣼⡇⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⢿⣿⠁⠀⠀⠀⠀⣴⡾⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣇⠀⠀⠈⣇⣿⣿⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⢸⣿⠀⡀⣀⠀⢠⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⠀⢠⣠⣿⣿⠇⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⠈⢿⣷⣇⣽⠀⢈⡏⠀⠀⠀⠀⣀⣤⣤⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⣴⣦⣤⠀⠀⠀⠀⠀⣿⣿⣧⣾⣿⠇⠀⠀⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⠈⠛⠿⣿⣧⣾⣿⡄⠀⠀⠀⠙⠿⠿⠿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠛⠛⠛⠋⠀⠀⠀⠀⠀⢸⣿⡿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⣿⡇⣴⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⢶⣼⣿⣀⣠⣤⣤⣤⣀⠀⠀⠀⠀⠀",
+    "⠀⠀⣠⣶⣾⠿⠛⠛⠻⢷⣿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⡿⠋⠉⠉⠉⠛⢿⣦⡀⠀⠀",
+    "⢀⣾⡿⠋⠀⠀⠀⠀⠀⠀⠙⣿⡆⢀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣤⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⡇⠀",
+    "⣼⡿⠁⠀⠀⠀⠀⠀⠀⠀⠀⣸⣷⣿⣷⣧⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣄⠀⢠⡾⣠⣇⣠⣿⣿⣿⡇⠀⢀⠀⠀⠀⢀⠀⠀⢹⣷⠀",
+    "⣿⣷⡀⠀⣷⠀⠀⠀⣼⣦⣴⣿⠏⠙⠻⠿⣷⡿⠷⣶⣶⡾⠿⠿⠷⢶⣶⣦⣤⣾⣿⣷⣿⣿⠿⠿⠛⠛⠙⠻⣿⣤⣾⣇⠀⢀⣸⡇⠀⠀⠀⠀",
+    "⠘⢿⣿⣾⣿⣷⣴⣾⡿⠟⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠛⠛⠛⠋⠀",
+]
+
+
 class Dashboard:
     def __init__(self, enabled: bool = None):
         if enabled is None:
@@ -42,6 +66,44 @@ class Dashboard:
         if not self.enabled:
             return
         sys.stdout.write("\x1b[r\x1b[0J\x1b[H")
+        sys.stdout.flush()
+
+    def sleep_splash(self, wake_dt, cfg):
+        """Статичная «заставка сна»: большая мордочка + расписание на 3 языках."""
+        if not self.enabled:
+            return
+        if hasattr(cfg, "schedule_weekdays_only") and cfg.schedule_weekdays_only:
+            wake_label = f"{wake_dt:%d.%m} {wake_dt.strftime('%A')}"
+            uk_suffix = " | закриття позицій на сон СБ та НД"
+            sk_suffix = " | zatváranie pozícií na spánok SO a NE"
+            en_suffix = " | closing positions for sleep Sat & Sun"
+        else:
+            wake_label = f"{wake_dt:%d.%m} {wake_dt:%H:%M}"
+            uk_suffix = sk_suffix = en_suffix = ""
+        art = [line.rstrip() for line in SLEEP_ART]
+        try:
+            term_w = os.get_terminal_size().columns
+        except Exception:
+            term_w = 120
+        if term_w >= max(len(line) for line in art) * 2 + 12:
+            art = ["".join(ch * 2 for ch in line) for line in art]
+            art = [line for line in art for _ in (0, 1)]
+        art_w = max(len(line) for line in art)
+        pad = max((term_w - art_w - 4) // 2, 4)
+        lines = [f"{C_BOLD}{'═' * 44}{C_RESET}",
+                 f"{C_BOLD}   БОТ СПИТ · проснётся {wake_label}{C_RESET}",
+                 f"{C_BOLD}{'═' * 44}{C_RESET}"]
+        lines.extend(" " * pad + line for line in art)
+        lines += ["",
+                  f"{C_CYAN}РОЗКЛАД РОБОТИ: {cfg.schedule_wake} – {cfg.schedule_sleep} "
+                  f"({cfg.schedule_zone}){uk_suffix}{C_RESET}",
+                  f"{C_CYAN}PRACOVNÝ ČAS: {cfg.schedule_wake} – {cfg.schedule_sleep} "
+                  f"({cfg.schedule_zone}){sk_suffix}{C_RESET}",
+                  f"{C_CYAN}WORK SCHEDULE: {cfg.schedule_wake} – {cfg.schedule_sleep} "
+                  f"({cfg.schedule_zone}){en_suffix}{C_RESET}",
+                  f" {C_YELLOW}новые входы не ищутся до пробуждения{C_RESET}"]
+        sys.stdout.write("\x1b[2J\x1b[H")
+        sys.stdout.write("\n".join(lines) + "\n")
         sys.stdout.flush()
 
     def render(self, scan_no: int, risk, engine):
