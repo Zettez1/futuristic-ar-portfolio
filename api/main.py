@@ -245,7 +245,8 @@ def _has_drift(reply: str, lang: str) -> bool:
         return False
     for (lo, hi), code in _LANG_SCRIPTS:
         if code == lang:
-            return not any(lo <= ch <= hi for ch in reply)
+            return (not any(lo <= ch <= hi for ch in reply)
+                    or any("\u0400" <= ch <= "\u04ff" for ch in reply))
     return any("\u0400" <= ch <= "\u04ff" for ch in reply)
 
 
