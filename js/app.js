@@ -54,18 +54,18 @@
       scale: "1 1 1"
     },
     {
-      title: "Блюдо для кафе",
-      desc: "Страва доповнює сервірування столу",
-      glb: "/models/avocado.glb?v=14",
-      usdz: "/models/avocado.usdz?v=14",
+      title: "Яблуко для кафе",
+      desc: "Фрукт у реальному розмірі, доповнює сервірування столу",
+      glb: "/models/apple.glb?v=17",
+      usdz: "/models/apple.usdz?v=17",
       note: "ресторани · доставка їжі",
       scale: "1 1 1"
     },
     {
       title: "Лофт-інтер'єр",
       desc: "Приміщення в реальному масштабі — зайдіть усередину",
-      glb: "/models/sofa.glb?v=15",
-      usdz: "/models/sofa.usdz?v=15",
+      glb: "/models/sofa.glb?v=17",
+      usdz: "/models/sofa.usdz?v=17",
       note: "інтер'єри · архітектурні студії",
       scale: "1 1 1"
     },
