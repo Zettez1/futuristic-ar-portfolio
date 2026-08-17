@@ -12,6 +12,7 @@ from __future__ import annotations
 import io
 import json
 import math
+import mimetypes
 import os
 import re
 import subprocess
@@ -39,8 +40,10 @@ _lock = threading.Lock()
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     _start_bot()
+    _tg_start()
     yield
     _stop_bot()
+    _tg_stop()
 
 
 app = FastAPI(title="FastStart Digital Portfolio", version="1.1.0", lifespan=_lifespan)
@@ -78,6 +81,7 @@ def _save_lead(payload: dict) -> None:
         rows.append(payload)
         LEADS_FILE.write_text(json.dumps(rows, ensure_ascii=False, indent=2), "utf-8")
     print(f"[LEAD] {payload.get('type','?')} | {payload.get('name','?')} | {payload.get('contact','?')} | {payload.get('budget','?')}")
+    threading.Thread(target=_tg_notify_lead, args=(payload,), daemon=True).start()
 
 
 @app.get("/api/health")
@@ -553,8 +557,189 @@ def bot_logs(after: int = 0, limit: int = 300) -> dict:
 
 
 # ------------------------------------------------------------- frontend ----
-import mimetypes
+# ------------------------------------------------------------- telegram ----
+# Lead-accepting bot: visitors who message the bot get their application
+# saved as a lead, and every site lead is forwarded to the owner chat.
+# Owner chat id is captured automatically from the first /start message.
+TG_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+TG_SUPPORT = os.getenv("TELEGRAM_SUPPORT", "faststart_digital_support").strip()
+TG_OWNER_FILE = DATA_DIR / "telegram_owner.json"
+TG_API = "https://api.telegram.org/bot"
+TG_POLL_TIMEOUT = 25
 
+_tg_lock = threading.Lock()
+_tg_stop = threading.Event()
+_tg_state = {
+    "running": False, "me": None, "owner": None, "last_error": None,
+    "updates": 0, "sent": 0, "last_update": None,
+}
+
+
+def _tg_call(method: str, payload: dict | None = None, timeout: int = 40) -> dict | None:
+    if not TG_TOKEN:
+        return None
+    req = urllib.request.Request(
+        f"{TG_API}{TG_TOKEN}/{method}",
+        data=json.dumps(payload or {}).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception as exc:
+        with _tg_lock:
+            _tg_state["last_error"] = f"{method}: {exc}"
+        return None
+
+
+def _tg_send(chat_id, text: str) -> None:
+    res = _tg_call("sendMessage", {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    })
+    if res and res.get("ok"):
+        with _tg_lock:
+            _tg_state["sent"] += 1
+
+
+def _tg_owner() -> dict | None:
+    with _tg_lock:
+        if TG_OWNER_FILE.exists():
+            try:
+                return json.loads(TG_OWNER_FILE.read_text("utf-8"))
+            except json.JSONDecodeError:
+                return None
+    return None
+
+
+def _tg_set_owner(info: dict) -> None:
+    with _tg_lock:
+        _tg_state["owner"] = info
+        TG_OWNER_FILE.write_text(json.dumps(info, ensure_ascii=False, indent=2), "utf-8")
+        _tg_state["last_error"] = None
+
+
+def _tg_lead_text(p: dict) -> str:
+    lines = ["🆕 <b>НОВА ЗАЯВКА НА РОЗРОБКУ</b>"]
+    labels = [
+        ("type", "Тип"), ("budget", "Бюджет"), ("name", "Ім'я"),
+        ("contact", "Контакт"), ("message", "Повідомлення"), ("page", "Сторінка"),
+    ]
+    for key, label in labels:
+        if p.get(key):
+            lines.append(f"<b>{label}:</b> {p[key]}")
+    lines.append(f"<i>Джерело: {p.get('source', 'site')} · {p.get('ts', '')}</i>")
+    return "\n".join(lines)
+
+
+def _tg_notify_lead(p: dict) -> None:
+    owner = _tg_owner()
+    if not owner:
+        print("[TG] owner chat not set yet — /start the bot first")
+        return
+    _tg_send(owner["chat_id"], _tg_lead_text(p))
+
+
+def _tg_worker() -> None:
+    with _tg_lock:
+        _tg_state["running"] = True
+    me = _tg_call("getMe")
+    if me and me.get("ok"):
+        with _tg_lock:
+            _tg_state["me"] = me["result"]
+        print(f"[TG] bot @{me['result'].get('username')} online")
+    owner = _tg_owner()
+    if owner:
+        _tg_send(owner["chat_id"], "🟢 FastStart Digital: бот-приймач заявок перезапущено.")
+
+    offset = None
+    while not _tg_stop.is_set():
+        res = _tg_call("getUpdates", {
+            "offset": offset,
+            "timeout": TG_POLL_TIMEOUT,
+            "allowed_updates": ["message"],
+        }, timeout=60)
+        if not res or not res.get("ok"):
+            time.sleep(4)
+            continue
+        for upd in res.get("result", []):
+            offset = upd["update_id"] + 1
+            msg = upd.get("message") or {}
+            chat = msg.get("chat") or {}
+            text = (msg.get("text") or "").strip()
+            with _tg_lock:
+                _tg_state["updates"] += 1
+                _tg_state["last_update"] = time.time()
+            if not chat.get("id"):
+                continue
+
+            if text == "/start":
+                info = {
+                    "chat_id": chat["id"],
+                    "name": chat.get("first_name") or chat.get("title") or "owner",
+                    "username": chat.get("username") or "",
+                    "ts": datetime.now(timezone.utc).isoformat(),
+                }
+                existed = _tg_owner() is not None
+                _tg_set_owner(info)
+                if existed:
+                    reply = "✅ Новий власник!\nСюди будуть приходити заявки на розробку.\nТехпідтримка: t.me/" + TG_SUPPORT
+                else:
+                    reply = "✅ Бота підключено!\nЗ цього часу всі заявки на розробку з сайту приходитимуть сюди.\nТехпідтримка: t.me/" + TG_SUPPORT
+                _tg_send(chat["id"], reply)
+            elif text.startswith("/"):
+                _tg_send(chat["id"], "ℹ️ Команди: /start — підключити прийом заявок.\nТехпідтримка: t.me/" + TG_SUPPORT)
+            else:
+                uname = chat.get("username")
+                contact = "@" + uname if uname else f"tg {chat['id']}"
+                _save_lead({
+                    "name": chat.get("first_name") or chat.get("title") or "Telegram",
+                    "contact": contact,
+                    "message": text,
+                    "source": "telegram-bot",
+                })
+                _tg_send(chat["id"],
+                    "✅ <b>Заявку прийнято!</b>\n"
+                    "Інженер FastStart Digital зв'яжеться з вами протягом 24 годин і підготує прорахунок.\n"
+                    "Техпідтримка: t.me/" + TG_SUPPORT)
+
+
+def _tg_start() -> None:
+    if not TG_TOKEN:
+        return
+    if _tg_state.get("running"):
+        return
+    _tg_stop.clear()
+    threading.Thread(target=_tg_worker, name="tg-leads", daemon=True).start()
+
+
+def _tg_stop() -> None:
+    _tg_stop.set()
+
+
+@app.get("/api/tg/status")
+def tg_status() -> dict:
+    owner = _tg_owner()
+    with _tg_lock:
+        st = dict(_tg_state)
+    return {
+        "ok": True,
+        "enabled": bool(TG_TOKEN),
+        "me": st.get("me"),
+        "owner": owner,
+        "updates": st["updates"],
+        "sent": st["sent"],
+        "last_error": st.get("last_error"),
+        "last_update": st.get("last_update"),
+        "running": st["running"],
+        "support": "t.me/" + TG_SUPPORT,
+    }
+
+
+# ------------------------------------------------------------- frontend ----
 mimetypes.add_type("model/vnd.usdz+zip", ".usdz")
 mimetypes.add_type("model/gltf-binary", ".glb")
 mimetypes.add_type("model/gltf+json", ".gltf")
