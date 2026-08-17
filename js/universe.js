@@ -113,7 +113,7 @@
       x[k] = march(bot, a, 130) / 130;
     }
     var bestF = -1, bd = 1e9;
-    for (i = 0; i < food.length; i++) {
+    for (var i = 0; i < food.length; i++) {
       var dx = food[i].x - bot.x, dy = food[i].y - bot.y;
       var d = Math.sqrt(dx * dx + dy * dy);
       if (d < bd) { bd = d; bestF = i; }
@@ -259,7 +259,7 @@
       x[k] = march(lifeBot, a, 130) / 130;
     }
     var bestF = -1, bd = 1e9;
-    for (i = 0; i < lifeFood.length; i++) {
+    for (var i = 0; i < lifeFood.length; i++) {
       var dx = lifeFood[i].x - lifeBot.x, dy = lifeFood[i].y - lifeBot.y;
       var d = Math.sqrt(dx * dx + dy * dy);
       if (d < bd) { bd = d; bestF = i; }
@@ -313,7 +313,7 @@
     for (var gx = 0; gx <= W; gx += 40) { ctx.beginPath(); ctx.moveTo(gx + 0.5, 0); ctx.lineTo(gx + 0.5, HH); ctx.stroke(); }
     for (var gy = 0; gy <= HH; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy + 0.5); ctx.lineTo(W, gy + 0.5); ctx.stroke(); }
     ctx.fillStyle = "rgba(139,92,246,0.55)";
-    for (i = 0; i < WALLS.length; i++) ctx.fillRect(WALLS[i].x, WALLS[i].y, WALLS[i].w, WALLS[i].h);
+    for (var i = 0; i < WALLS.length; i++) ctx.fillRect(WALLS[i].x, WALLS[i].y, WALLS[i].w, WALLS[i].h);
     ctx.save();
     ctx.shadowColor = "rgba(52,211,153,0.8)"; ctx.shadowBlur = 6;
     ctx.fillStyle = "#34d399";
