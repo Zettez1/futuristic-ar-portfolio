@@ -14,6 +14,15 @@
 html { scroll-behavior: smooth; overflow-x: hidden; }
 body { overflow-x: hidden; }
 
+/* navbar logo: press-drag rotates (x→rotateY, y→translateZ), click scrolls to top */
+.logo-cube {
+  touch-action: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  will-change: transform;
+}
+.logo-cube.logo-dragging { cursor: grabbing; }
+
 body {
   font-family: "Inter", system-ui, sans-serif;
   background:
