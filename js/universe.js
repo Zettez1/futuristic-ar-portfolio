@@ -127,7 +127,7 @@
     return x;
   }
 
-  var POP = 56, STEPS = 3200, ELITE = 6;
+  var POP = 56, STEPS = 5000, ELITE = 6, MOTOR = 110;
   var bots = [], gen = 1, step = 0;
   var histMax = [], histAvg = [];
   var champion = newBrain(), champFit = -1, champGen = 0;
@@ -136,7 +136,7 @@
     var p = freeSpot();
     return {
       brain: newBrain(), x: p.x, y: p.y, a: Math.random() * Math.PI * 2,
-      fit: 0, eaten: 0, dist: 0, wallT: 0, hunger: 0,
+      fit: 0, eaten: 0, dist: 0, wallT: 0, hunger: 0, lastFoodD: 1e9,
       cover: new Uint8Array(24 * 16)
     };
   }
@@ -144,7 +144,7 @@
     var p = freeSpot();
     b.brain = brain; b.x = p.x; b.y = p.y;
     b.a = Math.random() * Math.PI * 2;
-    b.fit = 0; b.eaten = 0; b.dist = 0; b.wallT = 0; b.hunger = 0;
+    b.fit = 0; b.eaten = 0; b.dist = 0; b.wallT = 0; b.hunger = 0; b.lastFoodD = 1e9;
     b.cover = new Uint8Array(24 * 16);
   }
   function resetEvolution() {
@@ -158,7 +158,7 @@
   }
   function stepBot(b, dt) {
     var o = forward(b.brain, sense(b));
-    var L = (o[0] + 1) * 60, R = (o[1] + 1) * 60;
+    var L = (o[0] + 1) * MOTOR, R = (o[1] + 1) * MOTOR;
     var vx = Math.cos(b.a) * (L + R) / 2, vy = Math.sin(b.a) * (L + R) / 2;
     var nx = b.x + vx * dt, ny = b.y + vy * dt;
     b.a += (R - L) * dt / 30;
@@ -171,19 +171,29 @@
       b.fit -= 1.5;
     }
     b.dist += sp * dt;
-    b.fit += sp * dt * 0.02;
-    if (sp < 7) b.fit -= 2.0;
+    b.fit += sp * dt * 0.04;
+    if (sp < 7) b.fit -= 1.0;
     b.hunger++;
-    b.fit -= 0.2;
+    b.fit -= 0.06;
     var cx = Math.max(0, Math.min(23, (b.x / W * 24) | 0));
     var cy = Math.max(0, Math.min(15, (b.y / HH * 16) | 0));
     if (!b.cover[cx + cy * 24]) { b.cover[cx + cy * 24] = 1; b.fit += 1.5; }
+    var bf = -1, bd = 1e9;
+    for (var fi = 0; fi < food.length; fi++) {
+      var fdx = food[fi].x - b.x, fdy = food[fi].y - b.y;
+      var fd = Math.sqrt(fdx * fdx + fdy * fdy);
+      if (fd < bd) { bd = fd; bf = fi; }
+    }
+    if (bd < b.lastFoodD - 2) b.fit += 1.2;
+    else if (bd > b.lastFoodD + 2) b.fit -= 0.6;
+    b.lastFoodD = bd;
     for (var i = 0; i < food.length; i++) {
       var dx = food[i].x - b.x, dy = food[i].y - b.y;
       if (dx * dx + dy * dy < 110) {
         food.splice(i, 1);
         b.eaten++; b.fit += 90;
         b.hunger = 0;
+        b.lastFoodD = 1e9;
         spawnOneFood();
         break;
       }
@@ -195,12 +205,10 @@
     for (var i = 0; i < POP; i++) sum += bots[i].fit;
     histMax.push(maxF); histAvg.push(sum / POP);
     if (histMax.length > 200) { histMax.shift(); histAvg.shift(); }
-    if (bots[0].fit > champFit) {
-      champFit = bots[0].fit;
-      champion = cloneBrain(bots[0].brain);
-      champGen = gen;
-      lifeReset(false);
-    }
+    if (bots[0].fit > champFit) champFit = bots[0].fit;
+    champion = cloneBrain(bots[0].brain);
+    champGen = gen;
+    lifeReset(false);
     var elite = [];
     for (i = 0; i < ELITE; i++) respawnBot(bots[i], cloneBrain(bots[i].brain));
     function tournament() {
@@ -215,20 +223,64 @@
       var p1 = tournament(), p2 = tournament();
       respawnBot(bots[i], crossover(p1.brain, p2.brain));
     }
+    for (i = POP - 2; i < POP; i++) {
+      respawnBot(bots[i], newBrain());
+    }
     step = 0; gen++;
     resetFood();
   }
 
   var lifeBot = null, lifeSteps = 0, lifeEaten = 0, lifeWallT = 0, lifeDist = 0;
   var lifeFood = [], lifePath = [], lifeCover = new Uint8Array(24 * 16), lifeCovered = 0;
+  function probeStart(brain) {
+    for (var t = 0; t < 14; t++) {
+      var p = freeSpot();
+      var tb = { brain: brain, x: p.x, y: p.y, a: Math.random() * Math.PI * 2 };
+      var a0 = tb.a, x0 = tb.x, y0 = tb.y;
+      for (var s = 0; s < 30; s++) {
+        var o = forward(tb.brain, senseLifeFor(tb));
+        var L = (o[0] + 1) * MOTOR, R = (o[1] + 1) * MOTOR;
+        var vx = Math.cos(tb.a) * (L + R) / 2, vy = Math.sin(tb.a) * (L + R) / 2;
+        var nx = tb.x + vx * 0.016, ny = tb.y + vy * 0.016;
+        tb.a += (R - L) * 0.016 / 30;
+        if (!inWall(nx, ny, 5)) { tb.x = nx; tb.y = ny; }
+      }
+      var moved = Math.sqrt((tb.x - x0) * (tb.x - x0) + (tb.y - y0) * (tb.y - y0));
+      if (moved > 24) return { x: p.x, y: p.y, a: a0 };
+    }
+    return null;
+  }
+  function senseLifeFor(bot) {
+    var x = new Float32Array(IN);
+    var s0 = -64, span = 128;
+    for (var k = 0; k < 8; k++) {
+      var a = bot.a + (s0 + span * k / 7) * Math.PI / 180;
+      x[k] = march(bot, a, 130) / 130;
+    }
+    var bf = -1, bd = 1e9;
+    for (var i = 0; i < lifeFood.length; i++) {
+      var dx = lifeFood[i].x - bot.x, dy = lifeFood[i].y - bot.y;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < bd) { bd = d; bf = i; }
+    }
+    x[8] = Math.min(1, bd / 420);
+    if (bf >= 0) {
+      var da = Math.atan2(lifeFood[bf].y - bot.y, lifeFood[bf].x - bot.x) - bot.a;
+      x[9] = Math.cos(da); x[10] = Math.sin(da);
+    }
+    x[11] = 1;
+    return x;
+  }
   function lifeReset(isFirst) {
-    var p = freeSpot();
-    lifeBot = { brain: cloneBrain(champion), x: p.x, y: p.y, a: Math.random() * Math.PI * 2 };
     lifeFood = [];
     for (var i = 0; i < 10; i++) {
       var q = freeSpot();
       lifeFood.push({ x: q.x, y: q.y, r: 5 + Math.random() * 2 });
     }
+    var brain = cloneBrain(champion);
+    var st = probeStart(brain);
+    if (!st) st = { x: W / 2, y: HH / 2, a: 0 };
+    lifeBot = { brain: brain, x: st.x, y: st.y, a: st.a };
     lifeSteps = 0; lifeEaten = 0; lifeWallT = 0; lifeDist = 0;
     lifePath = []; lifeCover = new Uint8Array(24 * 16); lifeCovered = 0;
     document.getElementById("uni-life-gen").textContent = champGen || "—";
@@ -238,7 +290,7 @@
   }
   function lifeStep(dt) {
     var o = forward(lifeBot.brain, senseLife());
-    var L = (o[0] + 1) * 60, R = (o[1] + 1) * 60;
+    var L = (o[0] + 1) * MOTOR, R = (o[1] + 1) * MOTOR;
     var vx = Math.cos(lifeBot.a) * (L + R) / 2, vy = Math.sin(lifeBot.a) * (L + R) / 2;
     var nx = lifeBot.x + vx * dt, ny = lifeBot.y + vy * dt;
     lifeBot.a += (R - L) * dt / 30;
