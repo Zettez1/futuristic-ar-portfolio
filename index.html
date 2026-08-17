@@ -431,7 +431,8 @@
           Торговий бот <span class="text-gradient">працює прямо на сторінці</span>
         </h2>
         <p class="mt-4 text-slate-400 text-lg">
-          Праворуч — справжній Python-бот на нашому сервері, підключений до Binance Futures
+          Праворуч — справжній Python-бот на нашому сервері, підключений до котирувань Binance Futures
+          у бумажному режимі: торгує віртуальним капіталом, без реальних грошей
           (робоче торгове вікно 09:00–20:30 за Києвом, стратегія зі стоп-лосом і трейлингом).
           Те саме, що й для ваших задач: Telegram-боти, парсери, трейдинг, автоматизація.
           Дивіться лог у реальному часі.
@@ -443,9 +444,9 @@
           <article class="tool-card reveal">
             <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">BTrade · live demo</span><span class="tool-tag">BINANCE FUTURES</span></div>
             <h3 class="font-display text-base font-semibold text-white mt-2">Трейдинг-бот MA Cross</h3>
-            <p class="text-sm text-slate-400 mt-2">Стратегія на перетині MA7/MA25 (30m → 3m), стоп-лос, трейлинг, ліміт позицій і ризику. Працює з реальним рахунком на Binance Futures, знімає котирування всіх USDT-ринків.</p>
+            <p class="text-sm text-slate-400 mt-2">Стратегія на перетині MA7/MA25 (30m → 3m), стоп-лос, трейлинг, ліміт позицій і ризику. Працює в бумажному режимі (симуляція, віртуальний капітал) на ринкових даних Binance Futures, знімає котирування всіх USDT-ринків.</p>
             <div class="mt-4 font-mono text-xs text-slate-500 bg-black/30 rounded-lg p-3 overflow-x-auto">
-              <span class="text-emerald-400">$</span> DOTENV=.env.binance-real python main.py<br /><span class="text-slate-400">Balans: 1,042.35 USDT · день: +2.14<br />INJ/USDT ціна 4.2150 | 30m: ▲, 3m: —, ВООРУЖЕН ▲</span>
+              <span class="text-emerald-400">$</span> PAPER_TRADING=1 python main.py<br /><span class="text-slate-400">Баланс (віртуальний): 1,042.35 USDT · день: +2.14<br />INJ/USDT ціна 4.2150 | 30m: ▲, 3m: —, ВООРУЖЕН ▲</span>
             </div>
           </article>
           <article class="tool-card reveal d1">

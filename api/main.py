@@ -449,7 +449,7 @@ def calc_quote(ptype: str = "landing", team: int = 1, complexity: int = 1):
 # ------------------------------------------------------------ bot demo ----
 # BTrade — live trading-bot demo. A supervised child process streams its
 # console lines into an in-memory ring buffer; the site renders them in a
-# terminal widget. Runs in PAPER mode (MEXC paper API, no real orders).
+# terminal widget. Runs in PAPER mode (simulated fills, no real orders).
 BOT_DIR = BASE_DIR / "BTrade"
 BOT_ENABLED = os.getenv("BOT_ENABLED", "1") == "1"
 
@@ -475,9 +475,8 @@ def _bot_worker() -> None:
     schedule = os.getenv("BOT_SCHEDULE")
     if schedule:
         env["SCHEDULE_ENABLED"] = schedule
-    elif "mexc" in dotenv:
-        env["SCHEDULE_ENABLED"] = "0"
-    mode = "PAPER" if "mexc" in dotenv else "REAL"
+    paper = os.getenv("PAPER_TRADING", "1") == "1"
+    mode = "PAPER" if paper else "REAL"
     while not _bot_stop.is_set():
         try:
             proc = subprocess.Popen(
