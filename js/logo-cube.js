@@ -46,12 +46,20 @@
     if (!dragging) return;
     var dx = e.clientX - startX;
     var dy = e.clientY - startY;
+    if (e.pointerType === 'touch') {
+      if (Math.abs(dx) > Math.abs(dy)) {
+        moved = true;
+        applyTransform(dx * 0.8, 0);
+      }
+      return;
+    }
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
     applyTransform(dx * 0.8, Math.max(-70, Math.min(70, dy * 0.8)));
   });
 
   function endDrag(e) {
     if (!dragging) return;
+    var wasUp = e.type === 'pointerup';
     dragging = false;
     logo.classList.remove('logo-dragging');
     logo.style.transition = 'transform .5s cubic-bezier(.22,1,.36,1)';
@@ -59,7 +67,7 @@
     setTimeout(function () {
       logo.style.transition = '';
     }, 520);
-    if (!moved) {
+    if (wasUp && !moved) {
       e.preventDefault();
       scrollTop(e);
     }

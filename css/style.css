@@ -14,11 +14,12 @@
 html { scroll-behavior: smooth; overflow-x: hidden; }
 body { overflow-x: hidden; }
 
-/* navbar logo: press-drag rotates (x→rotateY, y→translateZ), click scrolls to top */
+/* navbar logo: horizontal drag rotates (x→rotateY), tap scrolls to top */
 .logo-cube {
-  touch-action: none;
+  touch-action: pan-y;
   -webkit-user-drag: none;
   user-select: none;
+  cursor: grab;
   will-change: transform;
 }
 .logo-cube.logo-dragging { cursor: grabbing; }
