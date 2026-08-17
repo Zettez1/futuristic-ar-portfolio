@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/style.css?v=26" />
+  <link rel="stylesheet" href="/css/style.css?v=27" />
   <link rel="stylesheet" href="/css/tailwind.css?v=25" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="canonical" href="https://fast-start-digital.com/" />
@@ -28,6 +28,7 @@
   <script src="/js/hero3d.js" defer></script>
   <script src="/js/app.js?v=29" defer></script>
   <script src="/js/logo-cube.js?v=2" defer></script>
+  <script src="/js/universe.js?v=1" defer></script>
   <script src="/js/chat.js?v=25" defer></script>
   <script src="/js/quote-demo.js" defer></script>
 </head>
@@ -44,6 +45,7 @@
         <div class="hidden lg:flex items-center gap-1 text-sm">
           <a href="#services" class="nav-link">Послуги</a>
           <a href="#ar" class="nav-link">AR-галерея</a>
+          <a href="#universe" class="nav-link">AI-Всесвіт</a>
           <a href="#pytools" class="nav-link">Python-інструменти</a>
           <a href="#bots" class="nav-link">Боти</a>
           <a href="#process" class="nav-link">Етапи</a>
@@ -226,11 +228,108 @@
     </div>
   </section>
 
+  <!-- ============ AI UNIVERSE ============ -->
+  <section id="universe" class="relative py-28">
+    <div class="max-w-7xl mx-auto px-5 lg:px-8">
+      <div class="section-head reveal max-w-2xl">
+        <div class="eyebrow">03 · ЖИВИЙ ШТУЧНИЙ ІНТЕЛЕКТ</div>
+        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
+          Міні-всесвіт: роботи <span class="text-gradient">вчаться жити</span> прямо в браузері
+        </h2>
+        <p class="mt-4 text-slate-400 text-lg">
+          Нейроеволюція без сервера: популяція роботів щохвилини тренується в реальному часі —
+          мутації, відбір, нові покоління. Праворуч живе найкращий мозок з цієї ж еволюції
+          і показує, чого навчився: шукає їжу, обходить стіни, досліджує світ.
+        </p>
+      </div>
+
+      <div class="mt-14 grid lg:grid-cols-2 gap-6">
+        <div class="tool-panel reveal">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-white/5">
+            <div class="flex items-center gap-2 font-mono text-xs text-slate-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></span>
+              <span class="ml-3">universe/neat.js · нейроеволюція</span>
+            </div>
+            <span class="status-badge"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> <span id="uni-train-status">еволюція йде</span></span>
+          </div>
+
+          <div class="p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <button id="uni-toggle" class="cta-btn cta-ghost text-xs px-3 py-1.5">Пауза</button>
+                <button id="uni-reset" class="cta-btn cta-ghost text-xs px-3 py-1.5">Скинути еволюцію</button>
+                <label class="font-mono text-xs text-slate-500 flex items-center gap-1">×
+                  <select id="uni-speed" class="uni-select">
+                    <option value="1">1</option>
+                    <option value="4">4</option>
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                  </select>
+                </label>
+              </div>
+              <div class="flex gap-5 font-mono text-xs">
+                <div><div class="text-slate-500">покоління</div><div id="uni-gen" class="text-white text-base font-semibold leading-6">1</div></div>
+                <div><div class="text-slate-500">кращий фітнес</div><div id="uni-best" class="text-cyan-300 text-base font-semibold leading-6">0</div></div>
+                <div><div class="text-slate-500">середній</div><div id="uni-avg" class="text-white text-base font-semibold leading-6">0</div></div>
+              </div>
+            </div>
+
+            <div class="mt-4 uni-canvas-box"><canvas id="uni-train-canvas"></canvas></div>
+
+            <div class="mt-3 flex items-end gap-4">
+              <canvas id="uni-chart" class="uni-chart"></canvas>
+              <div class="font-mono text-xs text-slate-500 leading-5 shrink-0 text-right">
+                <div><span class="text-cyan-300">—</span> кращий</div>
+                <div><span class="text-slate-400">—</span> середній</div>
+                <div class="mt-1">поколінь: <span id="uni-chart-seen" class="text-slate-300">0</span></div>
+              </div>
+            </div>
+            <div class="mt-2 font-mono text-xs text-slate-500">
+              <span class="text-cyan-300">●</span> найкращий робот популяції · <span class="text-slate-400">●</span> решта · <span class="text-emerald-400">●</span> їжа · <span class="text-violet-400">■</span> стіни
+            </div>
+          </div>
+        </div>
+
+        <div class="tool-panel reveal d1">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-white/5">
+            <div class="flex items-center gap-2 font-mono text-xs text-slate-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></span>
+              <span class="ml-3">universe/life.js · найкращий мозок</span>
+            </div>
+            <span class="status-badge"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> живе у всесвіті</span>
+          </div>
+
+          <div class="p-5">
+            <div class="flex items-center justify-between gap-3 font-mono text-xs">
+              <div class="text-slate-500">мозок з генерації <span id="uni-life-gen" class="text-cyan-300 text-base font-semibold">—</span></div>
+              <div class="text-right">
+                <div class="text-slate-500">їжі зібрано</div>
+                <div id="uni-life-food" class="text-white text-base font-semibold leading-6">0</div>
+              </div>
+            </div>
+
+            <div class="mt-4 uni-canvas-box"><canvas id="uni-life-canvas"></canvas></div>
+
+            <div class="mt-4 space-y-2" id="uni-skills"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal d1 mt-10 text-center">
+        <a href="#lead" class="cta-btn cta-ghost">Вбудувати AI-демо у ваш продукт? Обговорити</a>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ PYTHON TOOLS ============ -->
   <section id="pytools" class="relative py-28">
     <div class="max-w-7xl mx-auto px-5 lg:px-8">
       <div class="section-head reveal max-w-2xl">
-        <div class="eyebrow">03 · ЖИВЕ ПРОГРАМУВАННЯ</div>
+        <div class="eyebrow">04 · ЖИВЕ ПРОГРАМУВАННЯ</div>
         <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
           Інтерактивні <span class="text-gradient">Python-інструменти</span> в дії
         </h2>
@@ -327,7 +426,7 @@
   <section id="bots" class="relative py-28 bg-[#05070f] border-y border-white/5">
     <div class="max-w-7xl mx-auto px-5 lg:px-8">
       <div class="section-head reveal max-w-2xl">
-        <div class="eyebrow">04 · РОЗРОБКА БОТІВ</div>
+        <div class="eyebrow">05 · РОЗРОБКА БОТІВ</div>
         <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
           Торговий бот <span class="text-gradient">працює прямо на сторінці</span>
         </h2>
@@ -391,7 +490,7 @@
   <section id="process" class="relative py-28 bg-[#05070f] border-y border-white/5">
     <div class="max-w-7xl mx-auto px-5 lg:px-8">
       <div class="section-head reveal max-w-2xl">
-        <div class="eyebrow">04 · ЯК МИ ПРАЦЮЄМО</div>
+        <div class="eyebrow">06 · ЯК МИ ПРАЦЮЄМО</div>
         <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
           Від ідеї до <span class="text-gradient">працюючого продукту</span> — 5 кроків
         </h2>
@@ -410,7 +509,7 @@
   <section id="pricing" class="relative py-28">
     <div class="max-w-7xl mx-auto px-5 lg:px-8">
       <div class="section-head reveal max-w-2xl">
-        <div class="eyebrow">05 · ІНВЕСТИЦІЇ</div>
+        <div class="eyebrow">07 · ІНВЕСТИЦІЇ</div>
         <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
           Прозорі формати <span class="text-gradient">співпраці</span>
         </h2>
@@ -459,7 +558,7 @@
   <section id="reviews" class="relative py-28 bg-[#05070f] border-y border-white/5">
     <div class="max-w-7xl mx-auto px-5 lg:px-8">
       <div class="section-head reveal max-w-2xl">
-        <div class="eyebrow">06 · ВІДГУКИ</div>
+        <div class="eyebrow">08 · ВІДГУКИ</div>
         <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
           Нам <span class="text-gradient">довіряють</span> стартапи та бізнеси
         </h2>
@@ -498,7 +597,7 @@
     <div class="hero-glow absolute -top-40 -right-20 w-[600px] h-[400px] rounded-full blur-[140px] opacity-20"></div>
     <div class="max-w-7xl mx-auto px-5 lg:px-8 relative z-10">
       <div class="section-head reveal max-w-2xl">
-        <div class="eyebrow">07 · РЕАЛІЗОВАНІ ПРОЄКТИ</div>
+        <div class="eyebrow">09 · РЕАЛІЗОВАНІ ПРОЄКТИ</div>
         <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
           Кейси, які вже <span class="text-gradient">приносять гроші</span>
         </h2>
@@ -559,7 +658,7 @@
     <div class="max-w-7xl mx-auto px-5 lg:px-8 relative z-10">
       <div class="grid lg:grid-cols-2 gap-12 items-center">
         <div class="reveal">
-          <div class="eyebrow">08 · СТАРТ ПРОЄКТУ</div>
+          <div class="eyebrow">10 · СТАРТ ПРОЄКТУ</div>
           <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mt-3">
             Розрахуємо вартість <span class="text-gradient">за 24 години</span> — безкоштовно
           </h2>

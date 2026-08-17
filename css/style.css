@@ -858,3 +858,51 @@ select.field option { background: #0a0d1c; color: #eef4ff; }
   .case-card { padding: 20px; }
   .case-row { grid-template-columns: 56px 1fr; }
 }
+/* ==== AI Universe ==== */
+.uni-canvas-box canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #05070f;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+}
+.uni-chart {
+  width: 100%;
+  height: 56px;
+  display: block;
+  background: #05070f;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+}
+.uni-select {
+  background: #0a0f1c;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-family: "JetBrains Mono", monospace;
+  padding: 3px 6px;
+  border-radius: 8px;
+}
+.uni-skill {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.25);
+}
+.uni-skill-ok { color: #34d399; font-weight: 600; }
+.uni-skill-in { animation: uniSkillIn 0.45s ease; }
+@keyframes uniSkillIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+.uni-flash { animation: uniFlash 0.9s ease; }
+@keyframes uniFlash {
+  0% { color: #67e8f9; text-shadow: 0 0 12px rgba(34,211,238,0.7); }
+  100% { color: inherit; text-shadow: none; }
+}
