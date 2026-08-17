@@ -70,12 +70,11 @@
       scale: "1 1 1"
     },
     {
-      title: "Пляшка води",
-      desc: "Продукт у реальному розмірі на полиці",
-      glb: "/models/bottle.glb?v=18",
-      usdz: "/models/bottle.usdz?v=18",
-      note: "напої · FMCG-магазини",
-      scale: "1 1 1"
+      title: "Кава з пончиком",
+      desc: "Десерт-сет у реальному розмірі — прикрасить стіл кав'ярні",
+      glb: "/models/coffee_donut.glb?v=1",
+      note: "кав'ярні · HoReCa",
+      scale: "0.13 0.13 0.13"
     }
   ];
 
