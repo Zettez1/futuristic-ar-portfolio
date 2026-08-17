@@ -73,6 +73,7 @@
       title: "Кава з пончиком",
       desc: "Десерт-сет у реальному розмірі — прикрасить стіл кав'ярні",
       glb: "/models/coffee_donut.glb?v=1",
+      usdz: "/models/coffee_donut.usdz?v=1",
       note: "кав'ярні · HoReCa",
       scale: "0.13 0.13 0.13"
     }
