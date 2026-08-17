@@ -32,6 +32,7 @@
   <script src="/js/chat.js?v=25" defer></script>
   <script src="/js/quote-demo.js" defer></script>
   <script src="/js/jobs-demo.js?v=1" defer></script>
+  <script src="/js/dash-demo.js?v=1" defer></script>
 </head>
 <body class="bg-[#04050c] text-slate-200 antialiased overflow-x-hidden">
 
@@ -415,10 +416,14 @@
             </button>
           </article>
           <article class="tool-card reveal d1">
-            <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">arsenal.finance</span><span class="tool-tag">Streamlit</span></div>
-            <h3 class="font-display text-base font-semibold text-white mt-2">Фінансові дашборди</h3>
-            <p class="text-sm text-slate-400 mt-2">Інтерактивні BI-дашборди: конверсія, LTV, завантаження сервісів, прогноз продажів.</p>
-            <p class="mt-3 text-xs text-slate-500 font-mono">iframe: /dash/streamlit · інтеграція 1 клік</p>
+            <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">dash-live</span><span class="tool-tag">BI · real-time</span></div>
+            <h3 class="font-display text-base font-semibold text-white mt-2">Фінансовий дашборд</h3>
+            <p class="text-sm text-slate-400 mt-2">LTV, конверсія та MRR оновлюються в реальному часі з бази клієнта — стрічки Live, прогноз на 30 днів пунктиром.</p>
+            <canvas id="dash-canvas" class="mt-4 w-full h-[240px] block"></canvas>
+            <button id="dash-run" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M13.4 2.9A8 8 0 1 0 14 8h-1.7A6.4 6.4 0 1 1 12.2 4L10 6.2V2h3.4v.9zM8 3.6l3 3-1.1 1.1L8.8 6.7v4.5H7.2V6.7L5.1 8.8 4 7.7l3-3h1z" transform="scale(0.62)"/></svg>
+              Перезапустити демо
+            </button>
           </article>
           <article class="tool-card reveal d2">
             <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">lead-agent</span><span class="tool-tag">AI · 24/7</span></div>
