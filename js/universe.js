@@ -13,7 +13,10 @@
     c.getContext("2d").setTransform(DPR, 0, 0, DPR, 0, 0);
   });
   CHART.width = 800 * DPR; CHART.height = 56 * DPR;
-  cctx = CHART.getContext("2d"); cctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  var tctx = TRAIN.getContext("2d");
+  var lctx = LIFE.getContext("2d");
+  var cctx = CHART.getContext("2d");
+  cctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
   var WALLS = [
     { x: 0, y: 0, w: W, h: 8 }, { x: 0, y: HH - 8, w: W, h: 8 },
@@ -213,7 +216,6 @@
     }
     lifeSteps = 0; lifeEaten = 0; lifeWallT = 0; lifeDist = 0;
     lifePath = []; lifeCover = new Uint8Array(24 * 16); lifeCovered = 0;
-    lifeCoveredTel = 0;
     document.getElementById("uni-life-gen").textContent = champGen || "—";
     var f = document.getElementById("uni-life-gen");
     f.classList.remove("uni-flash"); void f.offsetWidth; f.classList.add("uni-flash");
@@ -358,13 +360,12 @@
   function drawLife() {
     drawWorld(lctx, lifeFood, true);
     if (lifePath.length > 1) {
-      ctx = lctx;
-      ctx.strokeStyle = "rgba(34,211,238,0.3)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(lifePath[0].x, lifePath[0].y);
-      for (var i = 1; i < lifePath.length; i++) ctx.lineTo(lifePath[i].x, lifePath[i].y);
-      ctx.stroke();
+      lctx.strokeStyle = "rgba(34,211,238,0.3)";
+      lctx.lineWidth = 2;
+      lctx.beginPath();
+      lctx.moveTo(lifePath[0].x, lifePath[0].y);
+      for (var i = 1; i < lifePath.length; i++) lctx.lineTo(lifePath[i].x, lifePath[i].y);
+      lctx.stroke();
     }
     drawRays(lctx, lifeBot, "rgba(34,211,238,0.4)");
     drawBotShape(lctx, lifeBot, "#22d3ee", true);
