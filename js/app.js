@@ -70,12 +70,12 @@
       scale: "1 1 1"
     },
     {
-      title: "Кава з пончиком",
-      desc: "Десерт-сет у реальному розмірі — прикрасить стіл кав'ярні",
-      glb: "/models/coffee_donut.glb?v=1",
-      usdz: "/models/coffee_donut.usdz?v=1",
-      note: "кав'ярні · HoReCa",
-      scale: "0.13 0.13 0.13"
+      title: "Чайна пара",
+      desc: "Чайна пара в реальному розмірі — для кав'ярень та ресторанів",
+      glb: "/models/tea_set.glb?v=1",
+      usdz: "/models/tea_set.usdz?v=1",
+      note: "кав'ярні · ресторани · HoReCa",
+      scale: "1.2 1.2 1.2"
     }
   ];
 
