@@ -30,6 +30,7 @@
 
   logo.addEventListener('pointerdown', function (e) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
     dragging = true;
     moved = false;
     startX = e.clientX;
@@ -37,6 +38,9 @@
     try { logo.setPointerCapture(e.pointerId); } catch (err) {}
     logo.classList.add('logo-dragging');
   });
+
+  logo.addEventListener('dragstart', function (e) { e.preventDefault(); });
+  link.addEventListener('dragstart', function (e) { e.preventDefault(); });
 
   logo.addEventListener('pointermove', function (e) {
     if (!dragging) return;
