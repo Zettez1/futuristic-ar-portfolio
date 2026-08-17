@@ -43,7 +43,7 @@ async def _lifespan(app: FastAPI):
     _tg_start()
     yield
     _stop_bot()
-    _tg_stop()
+    _tg_shutdown()
 
 
 app = FastAPI(title="FastStart Digital Portfolio", version="1.1.0", lifespan=_lifespan)
@@ -716,7 +716,7 @@ def _tg_start() -> None:
     threading.Thread(target=_tg_worker, name="tg-leads", daemon=True).start()
 
 
-def _tg_stop() -> None:
+def _tg_shutdown() -> None:
     _tg_stop.set()
 
 
