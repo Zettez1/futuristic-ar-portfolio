@@ -136,14 +136,16 @@
     var p = freeSpot();
     return {
       brain: newBrain(), x: p.x, y: p.y, a: Math.random() * Math.PI * 2,
-      fit: 0, eaten: 0, dist: 0, wallT: 0
+      fit: 0, eaten: 0, dist: 0, wallT: 0, hunger: 0,
+      cover: new Uint8Array(24 * 16)
     };
   }
   function respawnBot(b, brain) {
     var p = freeSpot();
     b.brain = brain; b.x = p.x; b.y = p.y;
     b.a = Math.random() * Math.PI * 2;
-    b.fit = 0; b.eaten = 0; b.dist = 0; b.wallT = 0;
+    b.fit = 0; b.eaten = 0; b.dist = 0; b.wallT = 0; b.hunger = 0;
+    b.cover = new Uint8Array(24 * 16);
   }
   function resetEvolution() {
     bots = [];
@@ -160,15 +162,28 @@
     var vx = Math.cos(b.a) * (L + R) / 2, vy = Math.sin(b.a) * (L + R) / 2;
     var nx = b.x + vx * dt, ny = b.y + vy * dt;
     b.a += (R - L) * dt / 30;
-    b.dist += Math.sqrt(vx * vx + vy * vy) * dt;
-    if (!inWall(nx, ny, 5)) { b.x = nx; b.y = ny; }
-    else { b.wallT++; b.fit -= 1.5; }
-    b.fit += Math.sqrt(vx * vx + vy * vy) * dt * 0.02;
+    var sp = 0;
+    if (!inWall(nx, ny, 5)) {
+      b.x = nx; b.y = ny;
+      sp = Math.sqrt(vx * vx + vy * vy);
+    } else {
+      b.wallT++;
+      b.fit -= 1.5;
+    }
+    b.dist += sp * dt;
+    b.fit += sp * dt * 0.02;
+    if (sp < 7) b.fit -= 2.0;
+    b.hunger++;
+    b.fit -= 0.2;
+    var cx = Math.max(0, Math.min(23, (b.x / W * 24) | 0));
+    var cy = Math.max(0, Math.min(15, (b.y / HH * 16) | 0));
+    if (!b.cover[cx + cy * 24]) { b.cover[cx + cy * 24] = 1; b.fit += 1.5; }
     for (var i = 0; i < food.length; i++) {
       var dx = food[i].x - b.x, dy = food[i].y - b.y;
       if (dx * dx + dy * dy < 110) {
         food.splice(i, 1);
         b.eaten++; b.fit += 90;
+        b.hunger = 0;
         spawnOneFood();
         break;
       }
