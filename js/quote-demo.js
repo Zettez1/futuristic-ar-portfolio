@@ -3,7 +3,7 @@
 
   var ids = ["quote-team", "quote-complexity", "quote-team-val", "quote-complexity-val",
              "quote-type", "quote-svg", "res-cost", "res-weeks", "res-hours",
-             "res-support", "res-price", "quote-status", "res-breakdown"];
+             "res-support", "res-price", "quote-status", "res-breakdown", "res-disclaimer"];
   var els = {};
   ids.forEach(function (id) { els[id] = document.getElementById(id); });
   if (!els["quote-svg"]) return;
@@ -96,19 +96,28 @@
       .then(function (d) {
         if (id !== requestId || !d.ok) return;
         drawTimeline(d.weeks, team);
-        els["res-cost"].textContent = d.cost.toLocaleString("uk-UA") + " грн";
+        els["res-cost"].textContent = "≈ " + d.cost.toLocaleString("uk-UA") + " грн";
         els["res-weeks"].textContent = d.weeks + " тиж";
         els["res-hours"].textContent = d.hours.toLocaleString("uk-UA");
         els["res-support"].textContent = d.support_month.toLocaleString("uk-UA") + " грн";
-        els["res-price"].textContent = "від " + d.from_price.toLocaleString("uk-UA") + " грн";
+        var rng = d.range || {};
+        if (rng.low && rng.high) {
+          els["res-price"].textContent =
+            rng.low.toLocaleString("uk-UA") + "–" + rng.high.toLocaleString("uk-UA") + " грн";
+        } else {
+          els["res-price"].textContent = "від " + d.from_price.toLocaleString("uk-UA") + " грн";
+        }
         setStatus(d.type_label + " · " + d.complexity_label + " · готово до релізу", "status-ok");
         if (els["res-breakdown"]) {
           var rate = 850;
           els["res-breakdown"].textContent =
-            d.hours.toLocaleString("uk-UA") + " год × " + rate + " грн/год = " +
-            d.cost.toLocaleString("uk-UA") + " грн · команда " + team +
+            d.hours.toLocaleString("uk-UA") + " год × " + rate + " грн/год ≈ " +
+            d.cost.toLocaleString("uk-UA") + " грн · орієнтовно ±20% · команда " + team +
             " · " + d.weeks + " тиж · підтримка " +
             d.support_month.toLocaleString("uk-UA") + " грн/міс";
+        }
+        if (els["res-disclaimer"]) {
+          els["res-disclaimer"].textContent = d.disclaimer || "";
         }
       })
       .catch(function () {

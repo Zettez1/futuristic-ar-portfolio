@@ -427,6 +427,7 @@ def calc_quote(ptype: str = "landing", team: int = 1, complexity: int = 1):
     cost = round(hours * RATE_UAH_HOUR)
     weeks = max(base["weeks_min"], math.ceil(hours / max(team, 1) / HOURS_PER_WEEK))
     support_month = round(cost * 0.15)
+    band = round(cost * 0.2)
 
     return {
         "ok": True,
@@ -442,6 +443,8 @@ def calc_quote(ptype: str = "landing", team: int = 1, complexity: int = 1):
         "rate_uah_hour": RATE_UAH_HOUR,
         "hours_per_week": HOURS_PER_WEEK,
         "from_price": cost,
+        "range": {"low": cost - band, "high": cost + band, "band_pct": 20},
+        "disclaimer": "Попередня оцінка за типовими проєктами — точний кошторис після обговорення ТЗ.",
         "params": {"rate": f"{RATE_UAH_HOUR:g} UAH/h", "norm": "робочий тиждень 38 год"},
     }
 

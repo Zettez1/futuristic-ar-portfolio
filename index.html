@@ -31,6 +31,7 @@
   <script src="/js/universe.js?v=3" defer></script>
   <script src="/js/chat.js?v=25" defer></script>
   <script src="/js/quote-demo.js" defer></script>
+  <script src="/js/jobs-demo.js?v=1" defer></script>
 </head>
 <body class="bg-[#04050c] text-slate-200 antialiased overflow-x-hidden">
 
@@ -394,6 +395,7 @@
               </div>
             </div>
             <div class="mt-3 text-xs text-slate-500 font-mono leading-relaxed" id="res-breakdown">—</div>
+            <div class="mt-2 text-xs text-amber-400/70" id="res-disclaimer"></div>
           </div>
         </div>
 
@@ -401,10 +403,16 @@
           <article class="tool-card reveal">
             <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">job-parser-bot</span><span class="tool-tag">Telegram</span></div>
             <h3 class="font-display text-base font-semibold text-white mt-2">AI-бот-парсер вакансій</h3>
-            <p class="text-sm text-slate-400 mt-2">Збирає вакансії з 30+ джерел, фільтрує за вашими критеріями та надсилає у Telegram щогодини.</p>
+            <p class="text-sm text-slate-400 mt-2">Збирає вакансії з 30+ джерел, фільтрує за вашими критеріями та надсилає у Telegram щогодини. Запустіть демо-прогін і подивіться процес:</p>
             <div class="mt-4 font-mono text-xs text-slate-500 bg-black/30 rounded-lg p-3 overflow-x-auto">
-              <span class="text-emerald-400">$</span> python bot.py --sources djinni,work.ua<br />[12:00] 14 new jobs · filter: python/ai<br />[12:00] sent to @t.me/candidate
+              <div class="min-h-[120px] leading-relaxed" id="jobs-term">
+                <span class="t-ok">▊</span>
+              </div>
             </div>
+            <button id="jobs-run" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M4 2l9 6-9 6V2z"/></svg>
+              Запустити демо
+            </button>
           </article>
           <article class="tool-card reveal d1">
             <div class="tool-card-head"><span class="font-mono text-cyan-400 text-xs">arsenal.finance</span><span class="tool-tag">Streamlit</span></div>
