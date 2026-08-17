@@ -26,7 +26,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -561,14 +561,14 @@ def bot_logs(after: int = 0, limit: int = 300) -> dict:
 # Lead-accepting bot: visitors who message the bot get their application
 # saved as a lead, and every site lead is forwarded to the owner chat.
 # Owner chat id is captured automatically from the first /start message.
+# Delivery is webhook-based (no polling → no 409 conflicts).
 TG_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 TG_SUPPORT = os.getenv("TELEGRAM_SUPPORT", "faststart_digital_support").strip()
 TG_OWNER_FILE = DATA_DIR / "telegram_owner.json"
 TG_API = "https://api.telegram.org/bot"
-TG_POLL_TIMEOUT = 25
+TG_WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "fsd_tg_secret_2026")
 
 _tg_lock = threading.Lock()
-_tg_stop = threading.Event()
 _tg_state = {
     "running": False, "me": None, "owner": None, "last_error": None,
     "updates": 0, "sent": 0, "last_update": None,
@@ -643,81 +643,71 @@ def _tg_notify_lead(p: dict) -> None:
     _tg_send(owner["chat_id"], _tg_lead_text(p))
 
 
-def _tg_worker() -> None:
+def _tg_handle_update(upd: dict) -> None:
+    msg = upd.get("message") or {}
+    chat = msg.get("chat") or {}
+    text = (msg.get("text") or "").strip()
     with _tg_lock:
-        _tg_state["running"] = True
-    me = _tg_call("getMe")
-    if me and me.get("ok"):
-        with _tg_lock:
-            _tg_state["me"] = me["result"]
-        print(f"[TG] bot @{me['result'].get('username')} online")
-    owner = _tg_owner()
-    if owner:
-        _tg_send(owner["chat_id"], "🟢 FastStart Digital: бот-приймач заявок перезапущено.")
+        _tg_state["updates"] += 1
+        _tg_state["last_update"] = time.time()
+    if not chat.get("id"):
+        return
 
-    offset = None
-    while not _tg_stop.is_set():
-        res = _tg_call("getUpdates", {
-            "offset": offset,
-            "timeout": TG_POLL_TIMEOUT,
-            "allowed_updates": ["message"],
-        }, timeout=60)
-        if not res or not res.get("ok"):
-            time.sleep(4)
-            continue
-        for upd in res.get("result", []):
-            offset = upd["update_id"] + 1
-            msg = upd.get("message") or {}
-            chat = msg.get("chat") or {}
-            text = (msg.get("text") or "").strip()
-            with _tg_lock:
-                _tg_state["updates"] += 1
-                _tg_state["last_update"] = time.time()
-            if not chat.get("id"):
-                continue
+    if text == "/start":
+        info = {
+            "chat_id": chat["id"],
+            "name": chat.get("first_name") or chat.get("title") or "owner",
+            "username": chat.get("username") or "",
+            "ts": datetime.now(timezone.utc).isoformat(),
+        }
+        existed = _tg_owner() is not None
+        first = info["username"] and info["username"].lower() not in ("", "bot")
+        _tg_set_owner(info)
+        if existed:
+            reply = "✅ Новий власник!\nСюди будуть приходити заявки на розробку.\nТехпідтримка: t.me/" + TG_SUPPORT
+        else:
+            reply = "✅ Бота підключено!\nЗ цього часу всі заявки на розробку з сайту приходитимуть сюди.\nТехпідтримка: t.me/" + TG_SUPPORT
+        _tg_send(chat["id"], reply)
+    elif text.startswith("/"):
+        _tg_send(chat["id"], "ℹ️ Команди: /start — підключити прийом заявок.\nТехпідтримка: t.me/" + TG_SUPPORT)
+    else:
+        uname = chat.get("username")
+        contact = "@" + uname if uname else f"tg {chat['id']}"
+        _save_lead({
+            "name": chat.get("first_name") or chat.get("title") or "Telegram",
+            "contact": contact,
+            "message": text,
+            "source": "telegram-bot",
+        })
+        _tg_send(chat["id"],
+            "✅ <b>Заявку прийнято!</b>\n"
+            "Інженер FastStart Digital зв'яжеться з вами протягом 24 годин і підготує прорахунок.\n"
+            "Техпідтримка: t.me/" + TG_SUPPORT)
 
-            if text == "/start":
-                info = {
-                    "chat_id": chat["id"],
-                    "name": chat.get("first_name") or chat.get("title") or "owner",
-                    "username": chat.get("username") or "",
-                    "ts": datetime.now(timezone.utc).isoformat(),
-                }
-                existed = _tg_owner() is not None
-                _tg_set_owner(info)
-                if existed:
-                    reply = "✅ Новий власник!\nСюди будуть приходити заявки на розробку.\nТехпідтримка: t.me/" + TG_SUPPORT
-                else:
-                    reply = "✅ Бота підключено!\nЗ цього часу всі заявки на розробку з сайту приходитимуть сюди.\nТехпідтримка: t.me/" + TG_SUPPORT
-                _tg_send(chat["id"], reply)
-            elif text.startswith("/"):
-                _tg_send(chat["id"], "ℹ️ Команди: /start — підключити прийом заявок.\nТехпідтримка: t.me/" + TG_SUPPORT)
-            else:
-                uname = chat.get("username")
-                contact = "@" + uname if uname else f"tg {chat['id']}"
-                _save_lead({
-                    "name": chat.get("first_name") or chat.get("title") or "Telegram",
-                    "contact": contact,
-                    "message": text,
-                    "source": "telegram-bot",
-                })
-                _tg_send(chat["id"],
-                    "✅ <b>Заявку прийнято!</b>\n"
-                    "Інженер FastStart Digital зв'яжеться з вами протягом 24 годин і підготує прорахунок.\n"
-                    "Техпідтримка: t.me/" + TG_SUPPORT)
+
+@app.post("/api/tg/webhook")
+async def tg_webhook(request: Request) -> dict:
+    if request.headers.get("X-Telegram-Bot-Api-Secret-Token") != TG_WEBHOOK_SECRET:
+        raise HTTPException(401, "bad secret token")
+    upd = await request.json()
+    threading.Thread(target=_tg_handle_update, args=(upd,), daemon=True).start()
+    return {"ok": True}
 
 
 def _tg_start() -> None:
     if not TG_TOKEN:
         return
-    if _tg_state.get("running"):
-        return
-    _tg_stop.clear()
-    threading.Thread(target=_tg_worker, name="tg-leads", daemon=True).start()
-
-
-def _tg_shutdown() -> None:
-    _tg_stop.set()
+    with _tg_lock:
+        _tg_state["running"] = True
+        _tg_state["last_error"] = None
+    me = _tg_call("getMe")
+    if me and me.get("ok"):
+        with _tg_lock:
+            _tg_state["me"] = me["result"]
+        print(f"[TG] bot @{me['result'].get('username')} online (webhook mode)")
+    owner = _tg_owner()
+    if owner:
+        _tg_send(owner["chat_id"], "🟢 FastStart Digital: бот-приймач заявок перезапущено.")
 
 
 @app.get("/api/tg/status")
