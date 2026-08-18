@@ -97,6 +97,10 @@ def _channel_contact_link(channel: str | None, contact: str) -> str:
         return f"facebook.com/{c}" if not c.startswith("http") else c
     if channel == "email":
         return c
+    if channel == "phone":
+        digits = re.sub(r"[^\d]", "", c)
+        # no calls — the number is only for search (open the chat in Telegram)
+        return f"t.me/+{digits}" if digits else ""
     return ""
 
 
@@ -677,12 +681,21 @@ def _tg_lead_text(p: dict) -> str:
         ("contact", "Контакт"), ("message", "Повідомлення"), ("page", "Сторінка"),
     ]
     channel = p.get("channel")
+    contact = (p.get("contact") or "").strip()
+    if not channel:
+        # legacy/empty form submissions: guess the channel from the contact
+        if contact.startswith("+") or (contact and contact.replace("+", "").replace(" ", "").isdigit()):
+            channel = "phone"
+        elif "@" in contact and "." in contact.split("@")[1]:
+            channel = "email"
+        else:
+            channel = "telegram"
     if channel:
         lines.append(f"<b>Канал:</b> {CHANNEL_LABELS.get(channel, channel)}")
     for key, label in labels:
         if p.get(key):
             lines.append(f"<b>{label}:</b> {p[key]}")
-    link = _channel_contact_link(channel, p.get("contact") or "")
+    link = _channel_contact_link(channel, contact)
     if link:
         lines.append(f"🔗 <a href=\"https://{link}\">Знайти клієнта → {link}</a>")
     lines.append(f"<i>Джерело: {p.get('source', 'site')} · {p.get('ts', '')}</i>")

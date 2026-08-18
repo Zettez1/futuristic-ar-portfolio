@@ -257,8 +257,7 @@ return (
     whatsapp: { ph: "+380 67 123 45 67", hint: "Номер у WhatsApp з кодом країни, наприклад +380 67 123 45 67" },
     instagram: { ph: "@username", hint: "Нік в Instagram, наприклад @ivan.design" },
     facebook: { ph: "ім'я або посилання", hint: "Ім'я та прізвище або посилання на профіль Facebook" },
-    email: { ph: "name@email.com", hint: "Пошта, на яку надіслати розрахунок та КП" },
-    phone: { ph: "+380 67 123 45 67", hint: "Номер для дзвінка або Viber, наприклад +380 67 123 45 67" }
+    email: { ph: "name@email.com", hint: "Пошта, на яку надіслати розрахунок та КП" }
   };
   function updateChannelUI() {
     if (!leadContact || !leadForm) return;
