@@ -135,6 +135,7 @@ def _mail_send(to: str, subject: str, html: str) -> tuple[bool, str]:
         return False, "RESEND_API_KEY not set"
     payload = json.dumps({
         "from": MAIL_FROM, "to": [to], "subject": subject, "html": html,
+        "headers": {"Content-Type": "text/html; charset=utf-8"},
     }).encode("utf-8")
     req = urllib.request.Request("https://api.resend.com/emails", data=payload, headers={
         "Authorization": "Bearer " + RESEND_API_KEY,
