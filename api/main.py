@@ -594,9 +594,14 @@ def bot_logs(after: int = 0, limit: int = 300) -> dict:
 # saved as a lead, and every site lead is forwarded to the owner chat.
 # Owner chat id is captured automatically from the first /start message.
 # Delivery is webhook-based (no polling → no 409 conflicts).
+# Pinning: the owner file lives in the ephemeral container fs and is wiped on
+# every Railway deploy, so TELEGRAM_OWNER_CHAT env var pins the owner chat and
+# _tg_start() re-seeds the file from it (getChat) after each redeploy.
 TG_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 TG_SUPPORT = os.getenv("TELEGRAM_SUPPORT", "faststart_digital_support").strip()
 TG_OWNER_FILE = DATA_DIR / "telegram_owner.json"
+TG_OWNER_CHAT = os.getenv("TELEGRAM_OWNER_CHAT", "").strip()
+TG_OWNER_NAME = os.getenv("TELEGRAM_OWNER_NAME", "").strip()
 TG_API = "https://api.telegram.org/bot"
 TG_WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET", "fsd_tg_secret_2026")
 
@@ -639,11 +644,22 @@ def _tg_send(chat_id, text: str) -> None:
 
 def _tg_owner() -> dict | None:
     with _tg_lock:
+        info = None
         if TG_OWNER_FILE.exists():
             try:
-                return json.loads(TG_OWNER_FILE.read_text("utf-8"))
+                info = json.loads(TG_OWNER_FILE.read_text("utf-8"))
             except json.JSONDecodeError:
-                return None
+                info = None
+    if info:
+        if not TG_OWNER_CHAT or str(info.get("chat_id")) == TG_OWNER_CHAT:
+            return info
+    if TG_OWNER_CHAT:
+        return {
+            "chat_id": int(TG_OWNER_CHAT),
+            "name": TG_OWNER_NAME or "owner (env)",
+            "username": "",
+            "ts": "env",
+        }
     return None
 
 
@@ -708,6 +724,9 @@ def _tg_handle_update(upd: dict) -> None:
         return
 
     if text == "/start":
+        if TG_OWNER_CHAT and str(chat["id"]) != TG_OWNER_CHAT:
+            _tg_send(chat["id"], "ℹ️ Бот вже приймає заявки на розробку.\nТехпідтримка: t.me/" + TG_SUPPORT)
+            return
         info = {
             "chat_id": chat["id"],
             "name": chat.get("first_name") or chat.get("title") or "owner",
@@ -762,6 +781,21 @@ def _tg_start() -> None:
             _tg_state["me"] = me["result"]
         print(f"[TG] bot @{me['result'].get('username')} online (webhook mode)")
     owner = _tg_owner()
+    if not owner and TG_OWNER_CHAT:
+        try:
+            chat_id = int(TG_OWNER_CHAT)
+        except ValueError:
+            chat_id = 0
+        info = {"chat_id": chat_id, "name": TG_OWNER_NAME or "owner (env)", "username": "", "ts": "env"}
+        ch = _tg_call("getChat", {"chat_id": chat_id})
+        if ch and ch.get("ok"):
+            info["name"] = ch["result"].get("first_name") or ch["result"].get("title") or info["name"]
+            info["username"] = ch["result"].get("username") or ""
+        with _tg_lock:
+            _tg_state["owner"] = info
+            TG_OWNER_FILE.write_text(json.dumps(info, ensure_ascii=False, indent=2), "utf-8")
+        owner = info
+        print(f"[TG] owner restored from env pin: chat {chat_id}")
     if owner:
         _tg_send(owner["chat_id"], "🟢 FastStart Digital: бот-приймач заявок перезапущено.")
 
