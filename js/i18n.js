@@ -29,6 +29,25 @@
   function norm(s) { return String(s).replace(/\s+/g, " ").trim(); }
   function dict() { return window.FSD_I18N_DICT || {}; }
 
+  /* originals: keep UA texts so re-translation works after the DOM has been translated */
+  var nodeOrig = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+  var elOrig = {};
+  var lastPH = {};
+  var lastAR = {};
+  function origFor(el, kind) {
+    if (el.dataset && !el.dataset.fsdKey) { el.dataset.fsdKey = String(elOrig._n === undefined ? (elOrig._n = 0) : ++elOrig._n); }
+    var k = kind + "|" + el.dataset.fsdKey;
+    var attr = kind === "ph" ? "placeholder" : "aria-label";
+    var cur = el.getAttribute(attr) || "";
+    var lastMap = kind === "ph" ? lastPH : lastAR;
+    var orig = elOrig[k];
+    if (orig === undefined || (lastMap[k] !== undefined && cur !== lastMap[k])) {
+      orig = cur;
+      elOrig[k] = orig;
+    }
+    return orig;
+  }
+
   function detect() {
     try {
       var s = localStorage.getItem(STORE);
@@ -87,19 +106,20 @@
     });
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(function (n) {
-      var v = n.nodeValue;
-      var lead = (v.match(/^\s*/) || [""])[0];
-      var tail = (v.match(/\s*$/) || [""])[0];
-      var e = D[norm(v)];
+      var origText = nodeOrig ? nodeOrig.get(n) : undefined;
+      if (origText === undefined) { origText = n.nodeValue; if (nodeOrig) nodeOrig.set(n, origText); }
+      var lead = (origText.match(/^\s*/) || [""])[0];
+      var tail = (origText.match(/\s*$/) || [""])[0];
+      var e = D[norm(origText)];
       if (e && e[lang]) n.nodeValue = lead + e[lang] + tail;
     });
     document.querySelectorAll("[placeholder]").forEach(function (el) {
-      var e = D[norm(el.getAttribute("placeholder") || "")];
-      if (e && e[lang]) el.setAttribute("placeholder", e[lang]);
+      var e = D[norm(origFor(el, "ph"))];
+      if (e && e[lang]) { el.setAttribute("placeholder", e[lang]); lastPH[el.dataset.fsdKey] = e[lang]; }
     });
     document.querySelectorAll("[aria-label]").forEach(function (el) {
-      var e = D[norm(el.getAttribute("aria-label") || "")];
-      if (e && e[lang]) el.setAttribute("aria-label", e[lang]);
+      var e = D[norm(origFor(el, "ar"))];
+      if (e && e[lang]) { el.setAttribute("aria-label", e[lang]); lastAR[el.dataset.fsdKey] = e[lang]; }
     });
   }
 
@@ -131,7 +151,9 @@
     buildSwitcher();
     translateDom(cur);
     try {
-      window.dispatchEvent(new CustomEvent("fsd:lang", { detail: { lang: cur } }));
+      var ev = new CustomEvent("fsd:lang", { detail: { lang: cur }, bubbles: true });
+      document.dispatchEvent(ev);
+      window.dispatchEvent(ev);
     } catch (e) {}
   }
 
