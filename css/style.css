@@ -575,6 +575,37 @@ body::before {
 }
 .field::placeholder { color: #5b6b84; }
 select.field option { background: #0a0d1c; color: #eef4ff; }
+.channel-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.channel-pill {
+  position: relative;
+  cursor: pointer;
+}
+.channel-pill input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.channel-pill span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--muted);
+  background: rgba(2, 4, 12, 0.55);
+  border: 1px solid rgba(255,255,255,0.12);
+  transition: all 0.2s;
+  user-select: none;
+}
+.channel-pill input:checked + span {
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.6);
+  background: rgba(34, 211, 238, 0.1);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+}
+.channel-pill:hover span { border-color: rgba(255,255,255,0.3); }
 .contact-line { display: flex; align-items: center; gap: 12px; color: var(--muted); }
 .success-box {
   display: flex; align-items: center; gap: 10px;

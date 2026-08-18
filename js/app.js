@@ -250,7 +250,29 @@ return (
   var leadForm = document.getElementById("lead-form");
   var leadSuccess = document.getElementById("lead-success");
   var leadError = document.getElementById("lead-error");
+  var leadContact = document.getElementById("lead-contact");
+  var leadHint = document.getElementById("lead-contact-hint");
+  var CHANNELS = {
+    telegram: { ph: "@username", hint: "Нік у Telegram, наприклад @ivan — ми знайдемо вас одразу" },
+    whatsapp: { ph: "+380 67 123 45 67", hint: "Номер у WhatsApp з кодом країни, наприклад +380 67 123 45 67" },
+    instagram: { ph: "@username", hint: "Нік в Instagram, наприклад @ivan.design" },
+    facebook: { ph: "ім'я або посилання", hint: "Ім'я та прізвище або посилання на профіль Facebook" },
+    email: { ph: "name@email.com", hint: "Пошта, на яку надіслати розрахунок та КП" },
+    phone: { ph: "+380 67 123 45 67", hint: "Номер для дзвінка або Viber, наприклад +380 67 123 45 67" }
+  };
+  function updateChannelUI() {
+    if (!leadContact || !leadForm) return;
+    var sel = leadForm.querySelector("input[name=channel]:checked");
+    var key = sel ? sel.value : "telegram";
+    var c = CHANNELS[key] || CHANNELS.telegram;
+    leadContact.placeholder = c.ph;
+    if (leadHint) leadHint.textContent = c.hint;
+  }
   if (leadForm) {
+    leadForm.querySelectorAll("input[name=channel]").forEach(function (r) {
+      r.addEventListener("change", updateChannelUI);
+    });
+    updateChannelUI();
     function showError(msg) {
       if (!leadError) return;
       leadError.textContent = msg;
@@ -263,6 +285,7 @@ return (
       var payload = {
         name: fd.get("name"),
         contact: fd.get("contact"),
+        channel: fd.get("channel"),
         type: fd.get("type"),
         budget: fd.get("budget"),
         message: fd.get("message"),

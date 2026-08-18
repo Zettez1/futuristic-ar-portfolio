@@ -694,8 +694,20 @@
               <input class="field" name="name" required placeholder="Олександр" />
             </div>
             <div>
-              <label class="field-label">Контакт (Telegram / телефон / email)</label>
-              <input class="field" name="contact" required placeholder="@username або +380…" />
+              <label class="field-label">Де вам зручно отримати розрахунок? <span class="text-slate-500">(оберіть канал)</span></label>
+              <div class="channel-pills" id="lead-channels">
+                <label class="channel-pill"><input type="radio" name="channel" value="telegram" checked><span>✈️ Telegram</span></label>
+                <label class="channel-pill"><input type="radio" name="channel" value="whatsapp"><span>💬 WhatsApp</span></label>
+                <label class="channel-pill"><input type="radio" name="channel" value="instagram"><span>📸 Instagram</span></label>
+                <label class="channel-pill"><input type="radio" name="channel" value="facebook"><span>👍 Facebook</span></label>
+                <label class="channel-pill"><input type="radio" name="channel" value="email"><span>✉️ Email</span></label>
+                <label class="channel-pill"><input type="radio" name="channel" value="phone"><span>📞 Телефон</span></label>
+              </div>
+            </div>
+            <div>
+              <label class="field-label">Ваш контакт у цьому каналі</label>
+              <input class="field" name="contact" required id="lead-contact" placeholder="@username або +380…" />
+              <p class="mt-1.5 text-xs text-slate-500" id="lead-contact-hint">Наприклад: @username, +380 67 123 45 67, name@email.com — щоб ми точно знайшли вас</p>
             </div>
             <div>
               <label class="field-label">Тип проєкту</label>

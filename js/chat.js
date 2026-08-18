@@ -5,7 +5,7 @@
   if (!root) return;
 
   var PLACEHOLDER = "Напишіть повідомлення…";
-  var state = { step: 0, projectType: null, budget: null, name: null, contact: null, input: null, custom: null };
+  var state = { step: 0, projectType: null, budget: null, channel: null, name: null, contact: null, input: null, custom: null };
 
   var ICON_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-3.4-.7L3 21l1.8-5.6A8.4 8.4 0 0121 11.5z"/></svg>';
   var ICON_SEND = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>';
@@ -233,13 +233,62 @@
       typing(function () {
         addMsg("Зафіксувала: бюджет <b>" + text + "</b>. Зроблю попередній розрахунок і підготую КП.", "bot");
         setTimeout(function () {
-          addMsg("Як до вас звертатись?", "bot");
+          addMsg("Де вам зручніше отримати розрахунок?", "bot");
+          setChips(["Telegram", "WhatsApp", "Instagram", "Facebook", "Email", "Телефон"]);
         }, 350);
       });
       return;
     }
 
     if (state.step === 2) {
+      if (looksLikeQuestion(t)) {
+        botThink(function (done) {
+          askNova(text, function (reply) {
+            done(reply);
+            addMsg("Де вам зручніше отримати розрахунок?", "bot");
+            setChips(["Telegram", "WhatsApp", "Instagram", "Facebook", "Email", "Телефон"]);
+          });
+        });
+        return;
+      }
+      var chMap = [
+        { k: "telegram", v: "telegram" },
+        { k: "ватсап", v: "whatsapp" },
+        { k: "whatsapp", v: "whatsapp" },
+        { k: "вайбер", v: "whatsapp" },
+        { k: "viber", v: "whatsapp" },
+        { k: "instagram", v: "instagram" },
+        { k: "інста", v: "instagram" },
+        { k: "facebook", v: "facebook" },
+        { k: "фейсбук", v: "facebook" },
+        { k: "email", v: "email" },
+        { k: "пошта", v: "email" },
+        { k: "мейл", v: "email" },
+        { k: "телефон", v: "phone" },
+        { k: "номер", v: "phone" },
+        { k: "дзвон", v: "phone" }
+      ];
+      var cm = chMap.find(function (m) { return t.indexOf(m.k) !== -1; });
+      state.step++;
+      state.channel = cm ? cm.v : "telegram";
+      var prompts = {
+        telegram: "Ваш нік у Telegram (наприклад @ivan)?",
+        whatsapp: "Ваш номер у WhatsApp (наприклад +380 67 123 45 67)?",
+        instagram: "Ваш нік в Instagram (наприклад @ivan.design)?",
+        facebook: "Ім'я або посилання на Facebook?",
+        email: "Ваша пошта (наприклад name@email.com)?",
+        phone: "Ваш номер телефону (наприклад +380 67 123 45 67)?"
+      };
+      typing(function () {
+        addMsg("Дякую! Щоб інженер точно знайшов вас:", "bot");
+        setTimeout(function () {
+          addMsg(prompts[state.channel] || prompts.telegram, "bot");
+        }, 300);
+      });
+      return;
+    }
+
+    if (state.step === 3) {
       if (looksLikeQuestion(t)) {
         botThink(function (done) {
           askNova(text, function (reply) {
@@ -254,13 +303,13 @@
       typing(function () {
         addMsg("Приємно познайомитись, <b>" + text + "</b>! Останній крок:", "bot");
         setTimeout(function () {
-          addMsg("Залиште контакт — Telegram або телефон, щоб інженер надіслав вам КП:", "bot");
+          addMsg("Залиште ваш контакт — щоб інженер надіслав вам КП:", "bot");
         }, 350);
       });
       return;
     }
 
-    if (state.step === 3) {
+    if (state.step === 4) {
       if (isContact(t)) {
         state.contact = text;
         state.step++;
@@ -271,7 +320,7 @@
         botThink(function (done) {
           askNova(text, function (reply) {
             done(reply);
-            addMsg("Залиште контакт — Telegram або телефон, щоб інженер надіслав вам КП:", "bot");
+            addMsg("Залиште ваш контакт — щоб інженер надіслав вам КП:", "bot");
           });
         });
         return;
@@ -286,7 +335,7 @@
           } else {
             askNova(text, function (reply) {
               done(reply);
-              addMsg("Залиште контакт — Telegram або телефон, щоб інженер надіслав вам КП:", "bot");
+              addMsg("Залиште ваш контакт — щоб інженер надіслав вам КП:", "bot");
             });
           }
         });
@@ -306,7 +355,7 @@
 
   function sendLead() {
     typing(function () {
-      addMsg("Дякую, " + state.name + "! Ваша заявка прийнята. Інженер надішле розрахунок та КП на <b>" + state.contact + "</b> протягом 24 годин.", "bot");
+      addMsg("Дякую, " + state.name + "! Ваша заявка прийнята. Інженер надішле розрахунок та КП на <b>" + state.contact + "</b> (" + (state.channel || "Telegram") + ") протягом 24 годин.", "bot");
       setTimeout(function () {
         addMsg("Поки чекаєте — відкрийте WebAR-галерею вище, щоб побачити, як виглядає проєкт у реальному просторі.", "bot");
         setChips(["Відкрити AR-галерею", "Почитати про послуги"]);
@@ -315,6 +364,7 @@
     saveLead({
       name: state.name,
       contact: state.contact,
+      channel: state.channel || "telegram",
       type: state.projectType,
       budget: state.budget,
       source: "ai-chat",

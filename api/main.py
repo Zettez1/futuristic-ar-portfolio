@@ -60,12 +60,44 @@ app.add_middleware(
 class Lead(BaseModel):
     name: str | None = None
     contact: str | None = None
+    channel: str | None = None
     type: str | None = None
     budget: str | None = None
     message: str | None = None
     source: str = "site"
     page: str | None = None
     ts: str | None = None
+
+
+CHANNEL_LABELS = {
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "email": "Email",
+    "phone": "Телефон",
+}
+
+
+def _channel_contact_link(channel: str | None, contact: str) -> str:
+    """Build a clickable link for the owner: t.me/…, wa.me/…, mailto:…"""
+    c = (contact or "").strip()
+    if not c:
+        return ""
+    if channel == "telegram":
+        u = c.replace("@", "").strip()
+        return f"t.me/{u}"
+    if channel == "whatsapp":
+        digits = re.sub(r"[^\d]", "", c)
+        return f"wa.me/{digits}" if digits else ""
+    if channel == "instagram":
+        u = c.replace("@", "").strip()
+        return f"instagram.com/{u}"
+    if channel == "facebook":
+        return f"facebook.com/{c}" if not c.startswith("http") else c
+    if channel == "email":
+        return c
+    return ""
 
 
 def _save_lead(payload: dict) -> None:
@@ -628,11 +660,32 @@ def _tg_lead_text(p: dict) -> str:
         ("type", "Тип"), ("budget", "Бюджет"), ("name", "Ім'я"),
         ("contact", "Контакт"), ("message", "Повідомлення"), ("page", "Сторінка"),
     ]
+    channel = p.get("channel")
+    if channel:
+        lines.append(f"<b>Канал:</b> {CHANNEL_LABELS.get(channel, channel)}")
     for key, label in labels:
         if p.get(key):
             lines.append(f"<b>{label}:</b> {p[key]}")
+    link = _channel_contact_link(channel, p.get("contact") or "")
+    if link:
+        lines.append(f"🔗 <a href=\"https://{link}\">Знайти клієнта → {link}</a>")
     lines.append(f"<i>Джерело: {p.get('source', 'site')} · {p.get('ts', '')}</i>")
     return "\n".join(lines)
+
+
+def _tg_ping_client(p: dict) -> None:
+    """Reassure the client in their channel: 'we found you, expect the quote'."""
+    if not TG_TOKEN:
+        return
+    if p.get("source") == "telegram-bot" and p.get("contact"):
+        # client talked to the bot first → we already replied with confirmation
+        return
+    chat_id = p.get("tg_chat_id")
+    if not chat_id:
+        return
+    _tg_send(chat_id, "👋 Ми вас знайшли!\n"
+        "Ваша заявка прийнята — інженер готує розрахунок. Очікуйте повідомлення протягом 24 годин.\n"
+        "Техпідтримка: t.me/" + TG_SUPPORT)
 
 
 def _tg_notify_lead(p: dict) -> None:
@@ -641,6 +694,7 @@ def _tg_notify_lead(p: dict) -> None:
         print("[TG] owner chat not set yet — /start the bot first")
         return
     _tg_send(owner["chat_id"], _tg_lead_text(p))
+    _tg_ping_client(p)
 
 
 def _tg_handle_update(upd: dict) -> None:
@@ -676,8 +730,10 @@ def _tg_handle_update(upd: dict) -> None:
         _save_lead({
             "name": chat.get("first_name") or chat.get("title") or "Telegram",
             "contact": contact,
+            "channel": "telegram",
             "message": text,
             "source": "telegram-bot",
+            "tg_chat_id": chat["id"],
         })
         _tg_send(chat["id"],
             "✅ <b>Заявку прийнято!</b>\n"
