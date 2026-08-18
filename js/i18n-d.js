@@ -3,6 +3,7 @@
   "use strict";
   if (typeof window === "undefined" || typeof window.FSD_I18N_DICT !== "object") return;
   var D = {
+  "на": { en: "into", ru: "в", sk: "na", pl: "w", de: "in" },
   "AI-агент": { en: "AI agent", ru: "ИИ-агент", sk: "AI agent", pl: "Agent AI", de: "KI-Agent" },
   ": ваш продукт продає сам": { en: ": your product sells itself", ru: ": ваш продукт продаёт сам", sk: ": váš produkt sa predáva sám", pl: ": Twój produkt sprzedaje się sam", de: ": Ihr Produkt verkauft sich selbst" },
   "для вашого бізнесу": { en: "for your business", ru: "для вашего бизнеса", sk: "pre váš biznis", pl: "dla Twojego biznesu", de: "für Ihr Unternehmen" },
