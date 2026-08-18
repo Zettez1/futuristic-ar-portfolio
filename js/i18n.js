@@ -111,16 +111,27 @@
       var lead = (origText.match(/^\s*/) || [""])[0];
       var tail = (origText.match(/\s*$/) || [""])[0];
       var e = D[norm(origText)];
-      if (e && e[lang]) n.nodeValue = lead + e[lang] + tail;
+      var val = e ? pick(e, lang, origText) : undefined;
+      if (val !== undefined) n.nodeValue = lead + val + tail;
     });
     document.querySelectorAll("[placeholder]").forEach(function (el) {
-      var e = D[norm(origFor(el, "ph"))];
-      if (e && e[lang]) { el.setAttribute("placeholder", e[lang]); lastPH[el.dataset.fsdKey] = e[lang]; }
+      var orig = origFor(el, "ph");
+      var e = D[norm(orig)];
+      var val = e ? pick(e, lang, orig) : undefined;
+      if (val !== undefined) { el.setAttribute("placeholder", val); lastPH[el.dataset.fsdKey] = val; }
     });
     document.querySelectorAll("[aria-label]").forEach(function (el) {
-      var e = D[norm(origFor(el, "ar"))];
-      if (e && e[lang]) { el.setAttribute("aria-label", e[lang]); lastAR[el.dataset.fsdKey] = e[lang]; }
+      var orig = origFor(el, "ar");
+      var e = D[norm(orig)];
+      var val = e ? pick(e, lang, orig) : undefined;
+      if (val !== undefined) { el.setAttribute("aria-label", val); lastAR[el.dataset.fsdKey] = val; }
     });
+  }
+
+  function pick(e, lang, orig) {
+    if (e[lang] !== undefined) return e[lang];
+    if (lang === "uk") return norm(orig);
+    return undefined;
   }
 
   function buildSwitcher() {
