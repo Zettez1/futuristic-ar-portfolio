@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  var T = window.FSD_T || function (s) { return s; };
+
   var term = document.getElementById("jobs-term");
   var btn = document.getElementById("jobs-run");
   if (!term || !btn) return;
@@ -57,24 +59,24 @@
     (async function () {
       line(t0 + " python bot.py --sources djinni,work.ua,dou.ua,remoteok", "text-slate-400");
       await delay(500);
-      line(t0 + " підключення до " + SOURCES.length + " джерел…", "text-slate-400");
+      line(t0 + " " + T("підключення до %s джерел…", SOURCES.length), "text-slate-400");
       await delay(700);
       var est = 900 + Math.floor(Math.random() * 600);
-      line(t0 + " зібрано ~" + fmt(est) + " вакансій за 38 сек", "text-emerald-400");
+      line(t0 + " " + T("зібрано ~%s вакансій за 38 сек", fmt(est)), "text-emerald-400");
       await delay(600);
-      line(t0 + " фільтр: python/ai · досвід 1–3 р · Україна/Remote", "text-slate-400");
+      line(t0 + " " + T("фільтр: python/ai · досвід 1–3 р · Україна/Remote"), "text-slate-400");
       await delay(700);
       var after = Math.floor(est * (0.12 + Math.random() * 0.08));
-      line(t0 + " після фільтра: " + fmt(after) + " -> дедуплікація -> " + fmt(Math.floor(after * 0.85)) + " унікальних", "text-cyan-300");
+      line(t0 + " " + T("після фільтра: %s -> дедуплікація -> %s унікальних", fmt(after), fmt(Math.floor(after * 0.85))), "text-cyan-300");
       await delay(600);
-      line(t0 + " топ-кандидати:", "");
+      line(t0 + " " + T("топ-кандидати:"), "");
       var picks = SAMPLE.slice().sort(function () { return Math.random() - 0.5; }).slice(0, 4);
       picks.forEach(function (j) {
         line("   \u2713 " + j.t + " · " + j.c + " · " + j.s + "  [" + j.src + "]", "");
       });
       await delay(700);
       var who = BOTS[Math.floor(Math.random() * BOTS.length)];
-      line(t0 + " надіслано digest → " + who + " (" + picks.length + " вакансій)", "text-emerald-400");
+      line(t0 + " " + T("надіслано digest → %s (%s вакансій)", who, picks.length), "text-emerald-400");
       await delay(400);
       line(t0 + " наступний запуск: через 60 хв (cron)", "text-slate-500");
       running = false;

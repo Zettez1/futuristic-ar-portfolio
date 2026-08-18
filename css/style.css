@@ -937,3 +937,20 @@ select.field option { background: #0a0d1c; color: #eef4ff; }
   0% { color: #67e8f9; text-shadow: 0 0 12px rgba(34,211,238,0.7); }
   100% { color: inherit; text-shadow: none; }
 }
+
+/* language switcher */
+.lang-switch {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 7px 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.lang-switch:hover { border-color: rgba(34, 211, 238, 0.5); background: rgba(255, 255, 255, 0.09); }
+.lang-switch option { background: #0b1020; color: #e2e8f0; }

@@ -4,7 +4,8 @@
   var root = document.getElementById("chat-root");
   if (!root) return;
 
-  var PLACEHOLDER = "Напишіть повідомлення…";
+  var T = window.FSD_T || function (s) { return s; };
+  var PLACEHOLDER = T("Напишіть повідомлення…");
   var state = { step: 0, projectType: null, budget: null, channel: null, name: null, contact: null, input: null, custom: null };
 
   var ICON_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.6 8.6 0 01-3.4-.7L3 21l1.8-5.6A8.4 8.4 0 0121 11.5z"/></svg>';
@@ -19,14 +20,14 @@
 
   /* ---------------- render shell ---------------- */
   root.innerHTML =
-    '<button class="chat-fab" id="chat-fab" aria-label="Відкрити AI-чат">' + ICON_CHAT +
+    '<button class="chat-fab" id="chat-fab" aria-label="' + T("Відкрити AI-чат") + '">' + ICON_CHAT +
     '<span class="chat-badge">1</span></button>' +
-    '<div class="chat-panel hidden" id="chat-panel" role="dialog" aria-label="AI-агент FastStart Digital">' +
+    '<div class="chat-panel hidden" id="chat-panel" role="dialog" aria-label="' + T("AI-агент FastStart Digital") + '">' +
     '<div class="chat-head">' +
     '<div class="chat-avatar">F</div>' +
-    '<div><div class="font-display font-semibold text-white text-sm">NOVA · AI-агент FastStart Digital</div>' +
-    '<div class="chat-online">online · відповідає миттєво</div></div>' +
-    '<button class="chat-close" id="chat-close" aria-label="Закрити">' + ICON_CLOSE + '</button>' +
+    '<div><div class="font-display font-semibold text-white text-sm" id="chat-title">' + T("NOVA · AI-агент FastStart Digital") + '</div>' +
+    '<div class="chat-online" id="chat-online">' + T("online · відповідає миттєво") + '</div></div>' +
+    '<button class="chat-close" id="chat-close" aria-label="' + T("Закрити") + '">' + ICON_CLOSE + '</button>' +
     '</div>' +
     '<div class="chat-body" id="chat-body"></div>' +
     '<div class="chat-chips" id="chat-chips"></div>' +
@@ -34,7 +35,7 @@
     '<input id="chat-text" type="text" autocomplete="off" placeholder="' + PLACEHOLDER + '" />' +
     '<button class="chat-send" type="submit">' + ICON_SEND + '</button>' +
     '</form>' +
-    '<div class="chat-note">AI-агент збирає контакти для розрахунку КП · t.me/faststart_digital</div>' +
+    '<div class="chat-note" id="chat-note">' + T("AI-агент збирає контакти для розрахунку КП · t.me/faststart_digital") + '</div>' +
     '</div>';
 
   var fab = document.getElementById("chat-fab");
@@ -83,7 +84,7 @@
   }
 
   function fallbackReply() {
-    return "Записала ваше повідомлення — інженер підготує розрахунок і відповість разом із КП.";
+    return T("Записала ваше повідомлення — інженер підготує розрахунок і відповість разом із КП.");
   }
 
   /* LLM classifier: is the funnel answer a real contact or a question? */
@@ -143,19 +144,29 @@
 
   /* ---------------- flow ---------------- */
   function budgetGuess(type) {
-    if (type === "Веб-розробка") return "250 – 1 500 €";
-    if (type === "3D / WebAR-візуалізація") return "6 000 – 25 000 грн";
-    if (type === "AI-агент / автоматизація") return "150 – 1 200 €";
-    if (type === "Комплексний проєкт") return "350 – 650 €";
-    return "250 – 1 500 €";
+    if (type === "Веб-розробка" || type == T("Веб-розробка")) return T("250 – 1 500 €");
+    if (type === "3D / WebAR-візуалізація") return T("6 000 – 25 000 грн");
+    if (type === "AI-агент / автоматизація") return T("150 – 1 200 €");
+    if (type === "Комплексний проєкт") return T("350 – 650 €");
+    return T("250 – 1 500 €");
   }
+
+  var SERVICE_KEYS = ["Веб-розробка", "3D / WebAR-візуалізація", "AI-агент / автоматизація", "Комплексний проєкт"];
+  var BUDGET_KEYS = ["до 15 000", "15 000 – 50 000", "50 000 – 150 000", "від 150 000", "Поки не знаю"];
+  var CHANNEL_KEYS = ["Telegram", "WhatsApp", "Instagram", "Facebook", "Email", "Телефон"];
+  var TYPES = {
+    "Веб-розробка": "Веб-розробка",
+    "3D / WebAR-візуалізація": "3D / WebAR-візуалізація",
+    "AI-агент / автоматизація": "AI-агент / автоматизація",
+    "Комплексний проєкт": "Комплексний проєкт"
+  };
 
   function start() {
     typing(function () {
-      addMsg("Привіт! Я NOVA — консультант FastStart Digital. Допоможу підібрати оптимальний варіант під вашу задачу — за 30 секунд.", "bot");
+      addMsg(T("Привіт! Я NOVA — консультант FastStart Digital. Допоможу підібрати оптимальний варіант під вашу задачу — за 30 секунд."), "bot");
       setTimeout(function () {
-        addMsg("Що вас цікавить?", "bot");
-        setChips(["Веб-розробка", "3D / WebAR-візуалізація", "AI-агент / автоматизація", "Комплексний проєкт"]);
+        addMsg(T("Що вас цікавить?"), "bot");
+        setChips(SERVICE_KEYS.map(function (k) { return T(k); }));
       }, 350);
     });
   }
@@ -173,7 +184,7 @@
         botThink(function (done) {
           askNova(text, function (reply) {
             done(reply);
-            setChips(["Веб-розробка", "3D / WebAR-візуалізація", "AI-агент / автоматизація", "Комплексний проєкт"]);
+            setChips(SERVICE_KEYS.map(function (k) { return T(k); }));
           });
         });
         return;
@@ -200,17 +211,17 @@
         state.step++;
         state.projectType = matched.v;
         typing(function () {
-          addMsg("Чудово! Тоді середній чек для «" + state.projectType + "» — <b>" + budgetGuess(state.projectType) + "</b> без урахування матеріалів.", "bot");
+          addMsg(T("Чудово! Тоді середній чек для «%s» — <b>%s</b> без урахування матеріалів.", state.projectType, budgetGuess(state.projectType)), "bot");
           setTimeout(function () {
-            addMsg("Який орієнтовний бюджет закладаєте?", "bot");
-            setChips(["до 15 000", "15 000 – 50 000", "50 000 – 150 000", "від 150 000", "Поки не знаю"]);
+            addMsg(T("Який орієнтовний бюджет закладаєте?"), "bot");
+            setChips(BUDGET_KEYS.map(function (k) { return T(k); }));
           }, 350);
         });
       } else {
         botThink(function (done) {
           askNova(text, function (reply) {
             done(reply);
-            setChips(["Веб-розробка", "3D / WebAR-візуалізація", "AI-агент / автоматизація"]);
+            setChips(SERVICE_KEYS.map(function (k) { return T(k); }));
           });
         });
       }
@@ -222,8 +233,8 @@
         botThink(function (done) {
           askNova(text, function (reply) {
             done(reply);
-            addMsg("Який орієнтовний бюджет закладаєте?", "bot");
-            setChips(["до 15 000", "15 000 – 50 000", "50 000 – 150 000", "від 150 000", "Поки не знаю"]);
+            addMsg(T("Який орієнтовний бюджет закладаєте?"), "bot");
+            setChips(BUDGET_KEYS.map(function (k) { return T(k); }));
           });
         });
         return;
@@ -231,10 +242,10 @@
       state.step++;
       state.budget = text;
       typing(function () {
-        addMsg("Зафіксувала: бюджет <b>" + text + "</b>. Зроблю попередній розрахунок і підготую КП.", "bot");
+        addMsg(T("Зафіксувала: бюджет <b>%s</b>. Зроблю попередній розрахунок і підготую КП.", text), "bot");
         setTimeout(function () {
-          addMsg("Де вам зручніше отримати розрахунок?", "bot");
-          setChips(["Telegram", "WhatsApp", "Instagram", "Facebook", "Email", "Телефон"]);
+          addMsg(T("Де вам зручніше отримати розрахунок?"), "bot");
+          setChips(CHANNEL_KEYS.map(function (k) { return T(k); }));
         }, 350);
       });
       return;
@@ -245,8 +256,8 @@
         botThink(function (done) {
           askNova(text, function (reply) {
             done(reply);
-            addMsg("Де вам зручніше отримати розрахунок?", "bot");
-            setChips(["Telegram", "WhatsApp", "Instagram", "Facebook", "Email", "Телефон"]);
+            addMsg(T("Де вам зручніше отримати розрахунок?"), "bot");
+            setChips(CHANNEL_KEYS.map(function (k) { return T(k); }));
           });
         });
         return;
@@ -280,9 +291,9 @@
         phone: "Ваш номер телефону (наприклад +380 67 123 45 67)?"
       };
       typing(function () {
-        addMsg("Дякую! Щоб інженер точно знайшов вас:", "bot");
+        addMsg(T("Дякую! Щоб інженер точно знайшов вас:"), "bot");
         setTimeout(function () {
-          addMsg(prompts[state.channel] || prompts.telegram, "bot");
+          addMsg(T(prompts[state.channel] || prompts.telegram), "bot");
         }, 300);
       });
       return;
@@ -293,7 +304,7 @@
         botThink(function (done) {
           askNova(text, function (reply) {
             done(reply);
-            addMsg("Як до вас звертатись?", "bot");
+            addMsg(T("Як до вас звертатись?"), "bot");
           });
         });
         return;
@@ -301,9 +312,9 @@
       state.step++;
       state.name = text;
       typing(function () {
-        addMsg("Приємно познайомитись, <b>" + text + "</b>! Останній крок:", "bot");
+        addMsg(T("Приємно познайомитись, <b>%s</b>! Останній крок:", text), "bot");
         setTimeout(function () {
-          addMsg("Залиште ваш контакт — щоб інженер надіслав вам КП:", "bot");
+          addMsg(T("Залиште ваш контакт — щоб інженер надіслав вам КП:"), "bot");
         }, 350);
       });
       return;
@@ -320,7 +331,7 @@
         botThink(function (done) {
           askNova(text, function (reply) {
             done(reply);
-            addMsg("Залиште ваш контакт — щоб інженер надіслав вам КП:", "bot");
+            addMsg(T("Залиште ваш контакт — щоб інженер надіслав вам КП:"), "bot");
           });
         });
         return;
@@ -330,12 +341,12 @@
           if (kind === "contact") {
             state.contact = text;
             state.step++;
-            done("Дякую — зафіксувала ваш контакт!");
+            done(T("Дякую — зафіксувала ваш контакт!"));
             setTimeout(sendLead, 350);
           } else {
             askNova(text, function (reply) {
               done(reply);
-              addMsg("Залиште ваш контакт — щоб інженер надіслав вам КП:", "bot");
+              addMsg(T("Залиште ваш контакт — щоб інженер надіслав вам КП:"), "bot");
             });
           }
         });
@@ -347,7 +358,7 @@
     botThink(function (done) {
       askNova(text, function (reply) {
         done(reply);
-        setChips(["Так, ще питання", "Дякую, чекаю КП"]);
+        setChips(["Так, ще питання", "Дякую, чекаю КП"].map(function (k) { return T(k); }));
       });
     });
     saveLead({ message: text, source: "chat-followup" });
@@ -355,10 +366,10 @@
 
   function sendLead() {
     typing(function () {
-      addMsg("Дякую, " + state.name + "! Ваша заявка прийнята. Інженер надішле розрахунок та КП на <b>" + state.contact + "</b> (" + (state.channel || "Telegram") + ") протягом 24 годин.", "bot");
+      addMsg(T("Дякую, %s! Ваша заявка прийнята. Інженер надішле розрахунок та КП на <b>%s</b> (%s) протягом 24 годин.", state.name, state.contact, state.channel || "Telegram"), "bot");
       setTimeout(function () {
-        addMsg("Поки чекаєте — відкрийте WebAR-галерею вище, щоб побачити, як виглядає проєкт у реальному просторі.", "bot");
-        setChips(["Відкрити AR-галерею", "Почитати про послуги"]);
+        addMsg(T("Поки чекаєте — відкрийте WebAR-галерею вище, щоб побачити, як виглядає проєкт у реальному просторі."), "bot");
+        setChips(["Відкрити AR-галерею", "Почитати про послуги"].map(function (k) { return T(k); }));
       }, 400);
     });
     saveLead({
@@ -398,5 +409,17 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && !panel.classList.contains("hidden")) panel.classList.add("hidden");
+  });
+
+  document.addEventListener("fsd:lang", function () {
+    var online = document.getElementById("chat-online");
+    var note = document.getElementById("chat-note");
+    var title = document.getElementById("chat-title");
+    var fab = document.getElementById("chat-fab");
+    if (input) input.placeholder = T("Напишіть повідомлення…");
+    if (online) online.textContent = T("online · відповідає миттєво");
+    if (note) note.textContent = T("AI-агент збирає контакти для розрахунку КП · t.me/faststart_digital");
+    if (title) title.textContent = T("NOVA · AI-агент FastStart Digital");
+    if (fab) fab.setAttribute("aria-label", T("Відкрити AI-чат"));
   });
 })();

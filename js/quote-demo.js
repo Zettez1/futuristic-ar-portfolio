@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  var T = window.FSD_T || function (s) { return s; };
+
   var ids = ["quote-team", "quote-complexity", "quote-team-val", "quote-complexity-val",
              "quote-type", "quote-svg", "res-cost", "res-weeks", "res-hours",
              "res-support", "res-price", "quote-status", "res-breakdown", "res-disclaimer"];
@@ -78,18 +80,18 @@
     dimT.setAttribute("text-anchor", "middle");
     dimT.setAttribute("fill", "#64748b"); dimT.setAttribute("font-size", "11");
     dimT.setAttribute("font-family", "JetBrains Mono, monospace");
-    dimT.textContent = "команда: " + team + " розробник(и)";
+    dimT.textContent = T("команда: %s розробник(и)", team);
     svg.appendChild(dimT);
   }
 
   function calc() {
     var team = parseInt(els["quote-team"].value, 10) || 1;
     var complexity = parseInt(els["quote-complexity"].value, 10) || 1;
-    els["quote-team-val"].textContent = team + " розробник" + (team > 1 ? "и" : "");
-    els["quote-complexity-val"].textContent = COMPLEXITY_NAMES[complexity];
+    els["quote-team-val"].textContent = T("%s розробник%s", team, team > 1 ? "и" : "");
+    els["quote-complexity-val"].textContent = T(COMPLEXITY_NAMES[complexity]);
 
     var id = ++requestId;
-    setStatus("Розрахунок на сервері…", "status-wait");
+    setStatus(T("Розрахунок на сервері…"), "status-wait");
 
     fetch("/api/calc/quote?" + new URLSearchParams({ ptype: ptype, team: String(team), complexity: String(complexity) }))
       .then(function (r) { return r.json(); })
@@ -105,16 +107,14 @@
           els["res-price"].textContent =
             rng.low.toLocaleString("uk-UA") + "–" + rng.high.toLocaleString("uk-UA") + " грн";
         } else {
-          els["res-price"].textContent = "від " + d.from_price.toLocaleString("uk-UA") + " грн";
+          els["res-price"].textContent = T("від %s грн", d.from_price.toLocaleString("uk-UA"));
         }
-        setStatus(d.type_label + " · " + d.complexity_label + " · готово до релізу", "status-ok");
+        setStatus(d.type_label + " · " + d.complexity_label + " · " + T("готово до релізу"), "status-ok");
         if (els["res-breakdown"]) {
           var rate = 850;
           els["res-breakdown"].textContent =
-            d.hours.toLocaleString("uk-UA") + " год × " + rate + " грн/год ≈ " +
-            d.cost.toLocaleString("uk-UA") + " грн · орієнтовно ±20% · команда " + team +
-            " · " + d.weeks + " тиж · підтримка " +
-            d.support_month.toLocaleString("uk-UA") + " грн/міс";
+            T("%s год × %s грн/год ≈ %s грн · орієнтовно ±20% · команда %s · %s тиж · підтримка %s грн/міс",
+              d.hours.toLocaleString("uk-UA"), rate, d.cost.toLocaleString("uk-UA"), team, d.weeks, d.support_month.toLocaleString("uk-UA"));
         }
         if (els["res-disclaimer"]) {
           els["res-disclaimer"].textContent = d.disclaimer || "";
@@ -122,7 +122,7 @@
       })
       .catch(function () {
         if (id !== requestId) return;
-        setStatus("Офлайн-режим: сервіс недоступний", "status-fail");
+        setStatus(T("Офлайн-режим: сервіс недоступний"), "status-fail");
         ["res-cost", "res-weeks", "res-hours", "res-support", "res-price"].forEach(function (k) {
           els[k].textContent = "—";
         });
@@ -140,6 +140,8 @@
 
   els["quote-team"].addEventListener("input", calc);
   els["quote-complexity"].addEventListener("input", calc);
+
+  document.addEventListener("fsd:lang", calc);
 
   var revealO = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {

@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  var T = window.FSD_T || function (s) { return s; };
+
   var cv = document.getElementById("dash-canvas");
   if (!cv) return;
   var ctx = cv.getContext("2d");
@@ -103,7 +105,7 @@
     var delta = (b - b0) / b0 * 100;
     ctx.fillStyle = delta >= 0 ? "#34d399" : "#f87171";
     ctx.font = "9px 'JetBrains Mono', monospace";
-    ctx.fillText((delta >= 0 ? "▲" : "▼") + " " + Math.abs(delta).toFixed(1) + "% / 7д", x + 10, y + h - 6);
+    ctx.fillText((delta >= 0 ? "▲" : "▼") + " " + Math.abs(delta).toFixed(1) + "% / " + T("7д"), x + 10, y + h - 6);
   }
 
   var TTL = 60;
@@ -125,9 +127,9 @@
     mrr[TTL - 1] = Math.max(1800, mrr[TTL - 1] + rnd(-25, 25) + 6);
 
     ctx.clearRect(0, 0, W, H);
-    panel(0, 0, W, H / 2 - 5, "LTV (життєва цінність клієнта)", ltv, "#22d3ee");
-    panel(0, H / 2 + 5, W / 2 - 5, H / 2 - 5, "Конверсія, %", conv, "#34d399");
-    panel(W / 2 + 5, H / 2 + 5, W / 2 - 5, H / 2 - 5, "MRR (місячний дохід)", mrr, "#a78bfa");
+    panel(0, 0, W, H / 2 - 5, T("LTV (життєва цінність клієнта)"), ltv, "#22d3ee");
+    panel(0, H / 2 + 5, W / 2 - 5, H / 2 - 5, T("Конверсія, %"), conv, "#34d399");
+    panel(W / 2 + 5, H / 2 + 5, W / 2 - 5, H / 2 - 5, T("MRR (місячний дохід)"), mrr, "#a78bfa");
   }
   frame();
 })();

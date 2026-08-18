@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  var T = window.FSD_T || function (s) { return s; };
+
   var TRAIN = document.getElementById("uni-train-canvas");
   var LIFE = document.getElementById("uni-life-canvas");
   var CHART = document.getElementById("uni-chart");
@@ -350,16 +352,16 @@
   function renderSkills() {
     var box = document.getElementById("uni-skills");
     var skills = [];
-    if (lifeEaten > 0) skills.push("знаходить і збирає їжу");
-    if (lifeSteps > 400 && lifeWallT / lifeSteps < 0.12) skills.push("обходить стіни та перешкоди");
-    if (lifeSteps > 300 && lifeCovered / 384 > 0.25) skills.push("досліджує територію");
-    if (lifeSteps > 400 && lifeDist / lifeSteps > 0.35) skills.push("тримає напрямок та швидкість");
-    if (lifeSteps > 700 && lifeEaten * 1000 / lifeSteps > 1.4) skills.push("полює на їжу цілеспрямовано");
+    if (lifeEaten > 0) skills.push(T("знаходить і збирає їжу"));
+    if (lifeSteps > 400 && lifeWallT / lifeSteps < 0.12) skills.push(T("обходить стіни та перешкоди"));
+    if (lifeSteps > 300 && lifeCovered / 384 > 0.25) skills.push(T("досліджує територію"));
+    if (lifeSteps > 400 && lifeDist / lifeSteps > 0.35) skills.push(T("тримає напрямок та швидкість"));
+    if (lifeSteps > 700 && lifeEaten * 1000 / lifeSteps > 1.4) skills.push(T("полює на їжу цілеспрямовано"));
     box.innerHTML = "";
     if (!skills.length) {
       var ghost = document.createElement("div");
       ghost.className = "uni-skill";
-      ghost.innerHTML = "<span class='text-slate-500'>◌</span><span class='text-slate-400'>мозок адаптується — навички з'являться тут</span>";
+      ghost.innerHTML = "<span class='text-slate-500'>◌</span><span class='text-slate-400'>" + T("мозок адаптується — навички з'являться тут") + "</span>";
       box.appendChild(ghost);
       return;
     }
@@ -477,14 +479,21 @@
   var speed = 10;
   document.getElementById("uni-toggle").addEventListener("click", function () {
     trainOn = !trainOn;
-    this.textContent = trainOn ? "Пауза" : "Продовжити";
-    document.getElementById("uni-train-status").textContent = trainOn ? "еволюція йде" : "на паузі";
+    this.textContent = trainOn ? T("Пауза") : T("Продовжити");
+    document.getElementById("uni-train-status").textContent = trainOn ? T("еволюція йде") : T("на паузі");
   });
   document.getElementById("uni-reset").addEventListener("click", function () {
     resetEvolution();
   });
   document.getElementById("uni-speed").addEventListener("change", function () {
     speed = parseInt(this.value, 10) || 10;
+  });
+  document.addEventListener("fsd:lang", function () {
+    var tog = document.getElementById("uni-toggle");
+    if (tog) tog.textContent = trainOn ? T("Пауза") : T("Продовжити");
+    var st = document.getElementById("uni-train-status");
+    if (st) st.textContent = trainOn ? T("еволюція йде") : T("на паузі");
+    renderSkills();
   });
 
   var sec = document.getElementById("universe");

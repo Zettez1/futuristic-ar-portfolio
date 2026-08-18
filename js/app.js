@@ -1,6 +1,8 @@
 ﻿(function () {
   "use strict";
 
+  var T = window.FSD_T || function (s) { return s; };
+
   /* ---------- navbar ---------- */
   var navbar = document.getElementById("navbar");
   function onScroll() {
@@ -161,8 +163,8 @@
           var holder = card.querySelector(".ar-model-holder");
           if (holder) {
             holder.innerHTML = '<div class="ar-model-fallback">' +
-              '<div class="font-display text-white text-sm">' + item.title + '</div>' +
-              '<div class="text-xs text-slate-400 mt-1">3D-модель у цьому форматі недоступна. Ми підготуємо вашу власну — замовте Web3D-розробку.</div>' +
+              '<div class="font-display text-white text-sm">' + T(item.title) + '</div>' +
+              '<div class="text-xs text-slate-400 mt-1">' + T("3D-модель у цьому форматі недоступна. Ми підготуємо вашу власну — замовте Web3D-розробку.") + '</div>' +
               '</div>';
           }
         });
@@ -183,18 +185,18 @@ return (
         'ar-modes="webxr scene-viewer quick-look" camera-controls auto-rotate ' +
         'scale="' + (item.scale || "1 1 1") + '" ' +
         'shadow-intensity="1.1" environment-image="neutral" tone-mapping="aces" ' +
-        'style="width:100%;height:260px" alt="' + item.title + '">' +
+        'style="width:100%;height:260px" alt="' + T(item.title) + '">' +
         '</model-viewer>' +
         '</div>' +
         '<button type="button" class="ar-cta-btn">' +
         '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
         '<path d="M12 2l8.5 4.9v9.8L12 21.6l-8.5-4.9V6.9L12 2zm0 0v9.8m8.5-4.9L12 11.8 3.5 6.9"/></svg> ' +
-        'Дивитись у AR' +
+        T("Дивитись у AR") +
         '</button>' +
         '<div class="ar-info">' +
-        '<div class="font-display font-semibold text-white">' + item.title + '</div>' +
-        '<div class="text-xs text-slate-400 mt-0.5">' + item.desc + '</div>' +
-        '<div class="ar-note mt-2">' + item.note + ' · ' + formats + '</div>' +
+        '<div class="font-display font-semibold text-white">' + T(item.title) + '</div>' +
+        '<div class="text-xs text-slate-400 mt-0.5">' + T(item.desc) + '</div>' +
+        '<div class="ar-note mt-2">' + T(item.note) + ' · ' + formats + '</div>' +
         '</div>' +
         '</div>'
       );
@@ -265,8 +267,9 @@ return (
     var key = sel ? sel.value : "telegram";
     var c = CHANNELS[key] || CHANNELS.telegram;
     leadContact.placeholder = c.ph;
-    if (leadHint) leadHint.textContent = c.hint;
+    if (leadHint) leadHint.textContent = T(c.hint);
   }
+  document.addEventListener("fsd:lang", updateChannelUI);
   if (leadForm) {
     leadForm.querySelectorAll("input[name=channel]").forEach(function (r) {
       r.addEventListener("change", updateChannelUI);
@@ -294,7 +297,7 @@ return (
       };
       var btn = leadForm.querySelector("button[type=submit]");
       var original = btn.textContent;
-      btn.textContent = "Відправлення…";
+      btn.textContent = T("Відправлення…");
 
       fetch("/api/lead", {
         method: "POST",
@@ -307,11 +310,11 @@ return (
             leadSuccess.classList.remove("hidden");
             leadForm.querySelectorAll("input,textarea").forEach(function (i) { i.value = ""; });
           } else {
-            showError("Не вдалося відправити. Напишіть нам у Telegram: t.me/faststart_digital");
+            showError(T("Не вдалося відправити. Напишіть нам у Telegram: t.me/faststart_digital"));
           }
         })
         .catch(function () {
-          showError("Не вдалося відправити. Спробуйте ще раз або напишіть у Telegram: t.me/faststart_digital");
+          showError(T("Не вдалося відправити. Спробуйте ще раз або напишіть у Telegram: t.me/faststart_digital"));
         })
         .finally(function () { btn.textContent = original; });
     });
@@ -379,7 +382,7 @@ return (
           }
         })
         .catch(function () {
-          if (botStatusEl) botStatusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-500/80"></span> термінал недоступний';
+          if (botStatusEl) botStatusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-500/80"></span> ' + T("термінал недоступний");
         });
       fetch("/api/bot/status", { cache: "no-store" })
         .then(function (r) { return r.json(); })
@@ -388,9 +391,9 @@ return (
           if (botUptime && b.running && b.uptime_s) {
             var sec = Math.floor(b.uptime_s);
             var hh = Math.floor(sec / 3600), mm = Math.floor((sec % 3600) / 60);
-            botUptime.textContent = "аптайм " + (hh > 0 ? hh + " год " : "") + mm + " хв";
+            botUptime.textContent = T("аптайм") + " " + (hh > 0 ? hh + " " + T("год") + " " : "") + mm + " " + T("хв");
           }
-          if (botRestarts) botRestarts.textContent = "перезапусків: " + (b.restarts || 0);
+          if (botRestarts) botRestarts.textContent = T("перезапусків:") + " " + (b.restarts || 0);
         })
         .catch(function () {});
     }
@@ -406,4 +409,11 @@ return (
     }, { rootMargin: "200px" });
     botObserver.observe(botTerm);
   }
+
+  document.addEventListener("fsd:lang", function () {
+    if (grid && grid.childElementCount) {
+      grid.innerHTML = "";
+      renderARGrid();
+    }
+  });
 })();
