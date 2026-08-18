@@ -794,7 +794,7 @@ def _tg_start() -> None:
             _tg_state["me"] = me["result"]
         print(f"[TG] bot @{me['result'].get('username')} online (webhook mode)")
     owner = _tg_owner()
-    if not owner and TG_OWNER_CHAT:
+    if TG_OWNER_CHAT and not TG_OWNER_FILE.exists():
         try:
             chat_id = int(TG_OWNER_CHAT)
         except ValueError:
