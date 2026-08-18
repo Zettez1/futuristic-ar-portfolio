@@ -41,7 +41,9 @@ _lock = threading.Lock()
 async def _lifespan(app: FastAPI):
     _start_bot()
     _tg_start()
+    _mk_start()
     yield
+    _mk_shutdown()
     _stop_bot()
     _tg_shutdown()
 
@@ -118,6 +120,25 @@ def _save_lead(payload: dict) -> None:
         LEADS_FILE.write_text(json.dumps(rows, ensure_ascii=False, indent=2), "utf-8")
     print(f"[LEAD] {payload.get('type','?')} | {payload.get('name','?')} | {payload.get('contact','?')} | {payload.get('budget','?')}")
     threading.Thread(target=_tg_notify_lead, args=(payload,), daemon=True).start()
+    threading.Thread(target=_mk_thanks, args=(payload,), daemon=True).start()
+
+
+def _mk_thanks(lead: dict) -> None:
+    """Instant thank-you email to the client who just applied."""
+    to = _extract_email(lead.get("contact"))
+    if not to:
+        return
+    name = (lead.get("name") or "").strip()
+    body = (
+        f'<p><b>Дякуємо за вашу заявку{", " + name if name else ""}!</b></p>'
+        f'<p>Інженер FastStart Digital підготує розрахунок і звʼяжеться з вами <b>протягом 24 годин</b>.</p>'
+        f'<p>Проєкт: <b>{lead.get("type") or "—"}</b> · Бюджет: <b>{lead.get("budget") or "—"}</b></p>'
+        f'<p style="font-size:12px;color:#8b93b2">Не чекайте — пропозиції вже підібрано '
+        f'<a href="{SITE_URL}#contact" style="color:#22d3ee">у наступному листі</a>.</p>'
+    )
+    ok, _ = _mail_send(to, "FastStart Digital — дякуємо за заявку!", _mail_frame(body))
+    if ok:
+        print(f"[MK] thanks -> {to}")
 
 
 # ------------------------------------------------------------- mail ----
@@ -202,6 +223,241 @@ def mail_status() -> dict:
         "from": MAIL_FROM,
         "token_set": bool(MAIL_API_TOKEN),
     }
+
+
+# -------------------------------------------------------- marketing bot ----
+# "Marketing agent": understands what the client needs from their lead and
+# what we have in the arsenal, then sends ONE tailored offer email per week
+# (no spam: interval configurable, opt-out honored, never more often).
+MARKETING_DAYS = int(os.getenv("MARKETING_INTERVAL_DAYS", "7"))
+MARKETING_STATE_FILE = DATA_DIR / "marketing_state.json"
+
+_OFFERS = {
+    "web": {"title": "Веб-розробка Full-Stack", "desc": "Лендінги, корпоративні сайти та веб-застосунки на Next.js + FastAPI, швидкість і SEO.", "price_min": 15000},
+    "webar": {"title": "Web3D / WebAR-візуалізація", "desc": "Інтерактивні 3D-сцени та AR-перегляд продукту в реальному просторі зі смартфона.", "price_min": 20000},
+    "ai": {"title": "AI-агент/бот продажів", "desc": "Бот-консультант, генератор лідів, авто-відповіді 24/7 у Telegram та веб-чатах.", "price_min": 20000},
+    "parser": {"title": "AI-бот-парсер заявок", "desc": "Моніторинг 30+ джерел, фільтр за критеріями, заявки у ваш Telegram щогодини.", "price_min": 20000},
+    "dash": {"title": "BI-дашборд (звітність)", "desc": "Живі LTV/конверсія/MRR-панелі у реальному часі для вашого бізнесу.", "price_min": 15000},
+    "trading": {"title": "Трейдинг-бот", "desc": "Автономна стратегія зі стоп-лосом і трейлингом на Binance Futures, паперовий або реальний режим.", "price_min": 25000},
+    "full": {"title": "Комплексний проєкт під ключ", "desc": "AI-агенти, боти, дашборди + хмарний деплой і моніторинг 24/7.", "price_min": 50000},
+}
+
+# what the client asked → which arsenal items fit best
+_OFFER_MATCH = {
+    "web": ["web", "ai", "dash"],
+    "webar": ["webar", "web", "ai"],
+    "ai": ["ai", "parser", "full"],
+    "parser": ["parser", "ai", "dash"],
+    "dash": ["dash", "web", "ai"],
+    "trading": ["trading", "parser", "ai"],
+    "full": ["full", "web", "ai"],
+}
+_TYPE_TO_KEY = {
+    "Веб-сайт / застосунок": "web",
+    "3D / WebAR-візуалізація": "webar",
+    "AI-агент / автоматизація": "ai",
+    "Комплексний проєкт": "full",
+}
+_BUDGET_RANK = {"до 15 000": 15000, "15 000 – 50 000": 50000, "50 000 – 150 000": 150000, "від 150 000": 9999999}
+
+
+def _mk_state() -> dict:
+    try:
+        return json.loads(MARKETING_STATE_FILE.read_text("utf-8")) if MARKETING_STATE_FILE.exists() else {}
+    except json.JSONDecodeError:
+        return {}
+
+
+def _mk_save(state: dict) -> None:
+    MARKETING_STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), "utf-8")
+
+
+def _extract_email(contact: str | None) -> str | None:
+    c = (contact or "").strip()
+    m = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", c)
+    return m.group(0) if m else None
+
+
+def _mk_pick(lead: dict) -> list[str]:
+    """Choose 1-3 offers that fit the client's type + budget."""
+    key = _TYPE_TO_KEY.get((lead.get("type") or "").strip(), "full" if "Комплексн" in (lead.get("type") or "") else "web")
+    cands = _OFFER_MATCH.get(key, ["web", "ai"])
+    budget = None
+    for k, v in _BUDGET_RANK.items():
+        if k.lower() in (lead.get("budget") or "").lower():
+            budget = v
+    fits = []
+    for cid in cands:
+        off = _OFFERS[cid]
+        if budget is not None and off["price_min"] > budget * 2:
+            continue
+        fits.append(cid)
+        if len(fits) == 3:
+            break
+    return fits or ["web"]
+
+
+def _mk_offers_html(cids: list[str], cta: bool = True) -> str:
+    parts = []
+    for cid in cids:
+        off = _OFFERS[cid]
+        parts.append(
+            f'<div style="background:#0d1020;border:1px solid #232a45;border-radius:10px;'
+            f'padding:14px 16px;margin:10px 0">'
+            f'<div style="font-weight:700;color:#fff">{off["title"]}</div>'
+            f'<div style="margin-top:4px;font-size:13px;color:#aab3cc">{off["desc"]} '
+            f'Від {off["price_min"]:,} грн.</div>'.replace(",", " "))
+    if cta and parts:
+        parts.append(
+            f'<div style="margin:16px 0;text-align:center"><a href="{SITE_URL}#contact" '
+            f'style="background:#22d3ee;color:#04050c;text-decoration:none;padding:12px 26px;'
+            f'border-radius:10px;font-weight:700">Обговорити пропозицію →</a></div>'
+        )
+    return "".join(parts)
+
+
+def _mk_digest_html(lead: dict) -> str:
+    name = (lead.get("name") or "друже").strip()
+    offers = _mk_offers_html(_mk_pick(lead))
+    unsub = f'{SITE_URL}/api/mail/unsubscribe?email={_extract_email(lead.get("contact"))}'
+    body = (
+        f'<p><b>Дякуємо, що обрали FastStart Digital!</b></p>'
+        f'<p>Ви звернулись до нас з питанням про <b>{lead.get("type") or "розробку"}</b>. '
+        f'Ось добірка пропозицій, які найкраще підходять вам:</p>'
+        f'{offers}'
+        f'<p style="font-size:12px;color:#8b93b2">Цей лист — раз на тиждень, не частіше. '
+        f'<a href="{unsub}" style="color:#8b93b2">Відписатися</a> можна в один клік.</p>'
+    )
+    return _mail_frame(body)
+
+
+def _mk_send_digest(lead: dict) -> bool:
+    to = _extract_email(lead.get("contact"))
+    if not to:
+        return False
+    ok, _ = _mail_send(
+        to,
+        f"FastStart Digital: пропозиції під ваш проєкт ({name})".replace("({name})", "") if False else "FastStart Digital — добірка пропозицій для вас",
+        _mk_digest_html(lead),
+    )
+    return ok
+
+
+def _mk_check_weekly() -> None:
+    """Send the weekly digest to every subscribed client, but never more
+    often than MARKETING_DAYS, and skip those who opted out."""
+    now = time.time()
+    state = _mk_state()
+    last = state.get("last", {})
+    unsub = set(state.get("unsubscribed", []))
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+    seen = set()
+    sent_any = False
+    for lead in rows:
+        to = _extract_email(lead.get("contact"))
+        if not to or to in unsub or to in seen:
+            continue
+        seen.add(to)
+        if now - last.get(to, 0) < MARKETING_DAYS * 86400:
+            continue
+        if _mk_send_digest(lead):
+            last[to] = now
+            sent_any = True
+            print(f"[MK] weekly digest -> {to}")
+    if sent_any:
+        state["last"] = last
+        _mk_save(state)
+
+
+def _mk_loop() -> None:
+    while not _mk_stop.is_set():
+        _mk_stop.wait(6 * 3600)
+        if _mk_stop.is_set():
+            break
+        try:
+            _mk_check_weekly()
+        except Exception as exc:
+            print(f"[MK] weekly pass failed: {exc}")
+
+
+_mk_stop = threading.Event()
+
+
+def _mk_start() -> None:
+    threading.Thread(target=_mk_loop, daemon=True).start()
+    print(f"[MK] marketing agent online (every {MARKETING_DAYS} days)")
+
+
+def _mk_shutdown() -> None:
+    _mk_stop.set()
+
+
+@app.get("/api/mail/unsubscribe")
+def mail_unsubscribe(email: str) -> dict:
+    """One-click opt-out from the weekly digest."""
+    state = _mk_state()
+    unsub = set(state.get("unsubscribed", []))
+    unsub.add(email.strip().lower())
+    state["unsubscribed"] = sorted(unsub)
+    _mk_save(state)
+    return {"ok": True, "unsubscribed": email.strip()}
+
+
+@app.get("/api/marketing/status")
+def marketing_status() -> dict:
+    state = _mk_state()
+    return {
+        "ok": True,
+        "interval_days": MARKETING_DAYS,
+        "resend_ready": bool(RESEND_API_KEY),
+        "subscribed": len(state.get("last", {})),
+        "last_sent": state.get("last", {}),
+        "unsubscribed": state.get("unsubscribed", []),
+    }
+
+
+class MKSendRequest(BaseModel):
+    to: str | None = None      # send to one email (marketer test)
+    force: bool = False        # ignore weekly interval
+
+
+@app.post("/api/marketing/send")
+def marketing_send(req: MKSendRequest, request: Request) -> dict:
+    """Marketing agent manual trigger: digests for all / one recipient."""
+    if request.headers.get("X-Mail-Token") != MAIL_API_TOKEN:
+        raise HTTPException(401, "bad mail token")
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+    if req.to:
+        lead = next((r for r in rows if _extract_email(r.get("contact")) == req.to.strip().lower()), None)
+        if not lead:
+            raise HTTPException(404, "no lead for this email")
+        ok, info = _mail_send(
+            req.to.strip(), "FastStart Digital — добірка пропозицій для вас", _mk_digest_html(lead),
+        )
+        return {"ok": ok, "to": req.to, "error": None if ok else info}
+    sent, errors = [], []
+    state = _mk_state()
+    now = time.time()
+    seen = set()
+    for lead in rows:
+        to = _extract_email(lead.get("contact"))
+        if not to or to in seen:
+            continue
+        seen.add(to)
+        if not req.force and now - state.get("last", {}).get(to, 0) < MARKETING_DAYS * 86400:
+            continue
+        if _mk_send_digest(lead):
+            sent.append(to)
+        else:
+            errors.append(to)
+    if sent:
+        state = _mk_state()
+        for to in sent:
+            state.setdefault("last", {})[to] = now
+        _mk_save(state)
+    return {"ok": not errors, "sent": sent, "failed": errors}
 
 
 @app.get("/api/health")
