@@ -120,6 +120,88 @@ def _save_lead(payload: dict) -> None:
     threading.Thread(target=_tg_notify_lead, args=(payload,), daemon=True).start()
 
 
+# ------------------------------------------------------------- mail ----
+# Branded email sending via Resend API (free 100 emails/day) for the AI agent
+# and mailings. RESEND_API_KEY must be set in env; the mail domain is verified
+# in Resend with DKIM. Logo is the site's own LOGO.png (hotlinked).
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
+MAIL_FROM = os.getenv("MAIL_FROM", "FastStart Digital <hello@fast-start-digital.com>").strip()
+MAIL_API_TOKEN = os.getenv("MAIL_API_TOKEN", "fsd_mail_2026").strip()
+SITE_URL = os.getenv("SITE_URL", "https://web-frontend-production-78d2.up.railway.app").strip()
+
+
+def _mail_send(to: str, subject: str, html: str) -> tuple[bool, str]:
+    if not RESEND_API_KEY:
+        return False, "RESEND_API_KEY not set"
+    payload = json.dumps({
+        "from": MAIL_FROM, "to": [to], "subject": subject, "html": html,
+    }).encode("utf-8")
+    req = urllib.request.Request("https://api.resend.com/emails", data=payload, headers={
+        "Authorization": "Bearer " + RESEND_API_KEY,
+        "Content-Type": "application/json",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return True, resp.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        return False, exc.read().decode("utf-8", "replace")[:300]
+
+
+def _mail_frame(body_html: str) -> str:
+    logo = f"{SITE_URL}/LOGO.png"
+    return f"""<!DOCTYPE html><html lang="uk"><body style="margin:0;background:#0b0e1a;font-family:Arial,sans-serif;color:#e5e7eb">
+<div style="max-width:560px;margin:24px auto;background:#111527;border:1px solid #232a45;border-radius:14px;overflow:hidden">
+  <div style="padding:24px;border-bottom:1px solid #232a45;text-align:center">
+    <img src="{logo}" alt="FastStart Digital" width="52" height="52" style="border-radius:10px;object-fit:contain">
+    <div style="margin-top:8px;font-weight:700;font-size:15px;letter-spacing:.5px">FASTSTART DIGITAL</div>
+  </div>
+  <div style="padding:24px 28px;font-size:14px;line-height:1.6">{body_html}</div>
+  <div style="padding:16px 28px;border-top:1px solid #232a45;font-size:12px;color:#8b93b2;text-align:center">
+    Веб-розробка · 3D/WebAR · AI-агенти<br>
+    <a href="{SITE_URL}" style="color:#22d3ee">fast-start-digital.com</a> · t.me/faststart_digital
+  </div>
+</div></body></html>"""
+
+
+class MailPayload(BaseModel):
+    to: str
+    subject: str = ""
+    name: str | None = None
+    message: str | None = None
+
+
+@app.post("/api/mail/send")
+def mail_send(payload: MailPayload, request: Request) -> dict:
+    """AI-agent mailer: branded HTML email with the FastStart Digital logo."""
+    if request.headers.get("X-Mail-Token") != MAIL_API_TOKEN:
+        raise HTTPException(401, "bad mail token")
+    to = (payload.to or "").strip()
+    if "@" not in to:
+        raise HTTPException(400, "invalid recipient")
+    subject = (payload.subject or "").strip() or "FastStart Digital"
+    name = (payload.name or "").strip()
+    message = (payload.message or "").strip()
+    body = ""
+    if name:
+        body += f"<p><b>Вітаємо, {name}!</b></p>"
+    body += (message or "").replace("\n", "<br>") or "<p>Дякуємо, що звернулись до FastStart Digital!</p>"
+    ok, info = _mail_send(to, subject, _mail_frame(body))
+    if not ok:
+        raise HTTPException(502, f"mail send failed: {info}")
+    print(f"[MAIL] -> {to} | {subject}")
+    return {"ok": True, "to": to, "subject": subject}
+
+
+@app.get("/api/mail/status")
+def mail_status() -> dict:
+    return {
+        "ok": True,
+        "resend_ready": bool(RESEND_API_KEY),
+        "from": MAIL_FROM,
+        "token_set": bool(MAIL_API_TOKEN),
+    }
+
+
 @app.get("/api/health")
 def health() -> dict:
     return {"status": "ok", "service": "faststart-portfolio", "time": datetime.now(timezone.utc).isoformat()}
