@@ -150,7 +150,7 @@ def _mail_send(to: str, subject: str, html: str) -> tuple[bool, str]:
 
 def _mail_frame(body_html: str) -> str:
     logo = f"{SITE_URL}/LOGO.png"
-    return f"""<!DOCTYPE html><html lang="uk"><body style="margin:0;background:#0b0e1a;font-family:Arial,sans-serif;color:#e5e7eb">
+    return f"""<!DOCTYPE html><html lang="uk"><head><meta charset="utf-8"></head><body style="margin:0;background:#0b0e1a;font-family:Arial,sans-serif;color:#e5e7eb">
 <div style="max-width:560px;margin:24px auto;background:#111527;border:1px solid #232a45;border-radius:14px;overflow:hidden">
   <div style="padding:24px;border-bottom:1px solid #232a45;text-align:center">
     <img src="{logo}" alt="FastStart Digital" width="52" height="52" style="border-radius:10px;object-fit:contain">
