@@ -57,7 +57,13 @@
   "Тип": { en: "Type", ru: "Тип", sk: "Typ", pl: "Typ", de: "Typ" },
   "Бюджет": { en: "Budget", ru: "Бюджет", sk: "Rozpočet", pl: "Budżet", de: "Budget" },
   "Повідомлення": { en: "Message", ru: "Сообщение", sk: "Správa", pl: "Wiadomość", de: "Nachricht" },
-  "Джерело": { en: "Source", ru: "Источник", sk: "Zdroj", pl: "Źródło", de: "Quelle" }
+  "Джерело": { en: "Source", ru: "Источник", sk: "Zdroj", pl: "Źródło", de: "Quelle" },
+  "Проекти": { en: "Projects", ru: "Проекты", sk: "Projekty", pl: "Projekty", de: "Projekte" },
+  "Статус": { en: "Status", ru: "Статус", sk: "Stav", pl: "Status", de: "Status" },
+  "Нова": { en: "New", ru: "Новая", sk: "Nová", pl: "Nowa", de: "Neu" },
+  "В розробці": { en: "In development", ru: "В разработке", sk: "Vo vývoji", pl: "W opracowaniu", de: "In Entwicklung" },
+  "Завершено": { en: "Done", ru: "Завершен", sk: "Dokončené", pl: "Zakończone", de: "Abgeschlossen" },
+  "Немає проєктів": { en: "No projects", ru: "Нет проектов", sk: "Žiadne projekty", pl: "Brak projektów", de: "Keine Projekte" }
   };
   window.FSD_I18N_DICT = Object.assign({}, window.FSD_I18N_DICT, D);
 })();

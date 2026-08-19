@@ -1,4 +1,4 @@
-/* FastStart Digital admin auth: Google OAuth chip in navbar + leads modal. */
+/* FastStart Digital auth: Google OAuth chip + account dropdown (Projects / Sign out) + projects modal. */
 (function () {
   "use strict";
 
@@ -14,36 +14,55 @@
   var box = document.createElement("div");
   box.id = "fsd-auth";
   box.className = "fsd-auth";
+  box.style.position = "relative";
   host.appendChild(box);
 
-  var state = { user: null };
+  var state = { user: null, projects: null };
   var denied = /[?&]auth=denied/.test(location.search);
 
-  function renderUser(u) {
-    var pic = u.picture
-      ? '<img class="fsd-av" src="' + E(u.picture) + '" alt="">'
-      : '<span class="fsd-av">' + E((u.name || u.email || "A").charAt(0).toUpperCase()) + "</span>";
-    box.innerHTML = pic +
-      '<span class="fsd-auth-name">' + E(u.name || u.email) + "</span>" +
-      '<button type="button" class="fsd-auth-btn" data-action="leads">' + T("Заявки") + "</button>" +
-      '<button type="button" class="fsd-auth-btn" data-action="logout">' + T("Вийти") + "</button>";
+  function esc(s) { return E(s); }
+
+  function statusLabel(status) {
+    if (status === "в розробці") return T("В розробці");
+    if (status === "завершено") return T("Завершено");
+    return T("Нова");
   }
 
-  function render() {
-    if (state.user) {
-      renderUser(state.user);
-    } else {
+  function renderChip(open) {
+    var u = state.user;
+    if (!u) {
       box.innerHTML = '<a class="fsd-auth-btn fsd-login" href="/api/auth/google">' + T("Увійти") + "</a>";
+      return;
     }
+    var pic = u.picture
+      ? '<img class="fsd-av" src="' + esc(u.picture) + '" alt="">'
+      : '<span class="fsd-av">' + esc((u.name || u.email || "A").charAt(0).toUpperCase()) + "</span>";
+    box.innerHTML = '<button type="button" class="fsd-acc" data-action="toggle" aria-haspopup="true" aria-expanded="' + (open ? "true" : "false") + '">' +
+      pic + '<span class="fsd-auth-name">' + esc(u.name || u.email) + "</span>" +
+      '<svg class="fsd-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' +
+      (open ? renderMenu() : "");
   }
 
-  if (denied) {
-    var note = document.createElement("div");
-    note.className = "fsd-auth-note";
-    note.innerHTML = '<span class="pulse-dot w-1.5 h-1.5 rounded-full bg-rose-400"></span> ' + T("Доступ заборонено");
-    host.insertBefore(note, box);
-    setTimeout(function () { if (note.parentNode) note.parentNode.removeChild(note); }, 6000);
+  function renderMenu() {
+    var dev = state.projects ? state.projects.dev_count : 0;
+    var badge = dev > 0
+      ? '<span class="fsd-badge">' + dev + '</span>'
+      : "";
+    return '<div class="fsd-menu">' +
+      '<button type="button" class="fsd-item" data-action="projects">' + T("Проекти") + badge + "</button>" +
+      '<button type="button" class="fsd-item" data-action="logout">' + T("Вийти") + "</button>" +
+      "</div>";
   }
+
+  function render() { renderChip(false); }
+
+  function refreshProjects() {
+    return fetch("/api/projects", { credentials: "same-origin" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { state.projects = d; renderChip(false); });
+  }
+
+  function closeMenu() { renderChip(false); }
 
   function openLeads() {
     var overlay = document.createElement("div");
@@ -54,8 +73,7 @@
     titleRow.className = "fsd-modal-head";
     var title = document.createElement("div");
     title.className = "font-display font-semibold text-white";
-    title.id = "fsd-leads-title";
-    title.textContent = T("Заявки");
+    title.id = "fsd-projects-title";
     var closeBtns = document.createElement("div");
     closeBtns.className = "flex items-center gap-2";
     var refresh = document.createElement("button");
@@ -77,38 +95,59 @@
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
 
+    var isAdmin = state.projects ? state.projects.admin : false;
+
+    function statusTd(p) {
+      if (!isAdmin) {
+        return '<span class="fsd-status s-' + esc(p.status) + '">' + esc(statusLabel(p.status)) + "</span>";
+      }
+      var opts = ["нова", "в розробці", "завершено"].map(function (s) {
+        return '<option value="' + s + '"' + (p.status === s ? " selected" : "") + ">" + esc(statusLabel(s)) + "</option>";
+      }).join("");
+      return '<select class="fsd-status-sel" data-ts="' + esc(p.ts) + '">' + opts + "</select>";
+    }
+
     function fill() {
       body.innerHTML = '<div class="text-slate-400">…</div>';
-      fetch("/api/leads")
+      fetch("/api/projects", { credentials: "same-origin" })
         .then(function (r) {
           if (r.status === 401) throw new Error("unauthorized");
           return r.json();
         })
         .then(function (d) {
-          title.textContent = T("Заявки") + " · " + (d.count || 0);
-          if (!d.leads || !d.leads.length) {
-            body.innerHTML = '<div class="text-slate-400 py-6 text-center">' + T("Немає заявок") + "</div>";
+          state.projects = d;
+          title.textContent = T("Проекти") + " · " + (d.count || 0);
+          if (!d.projects || !d.projects.length) {
+            body.innerHTML = '<div class="text-slate-400 py-6 text-center">' + T("Немає проєктів") + "</div>";
             return;
           }
-          var rows = d.leads.map(function (l) {
-            var t = l.ts ? new Date(l.ts) : null;
+          var rows = d.projects.map(function (p) {
+            var t = p.ts ? new Date(p.ts) : null;
             var when = t && !isNaN(t) ? t.toLocaleString() : "—";
             return "<tr>" +
-              "<td class='fsd-cell f-t'>" + E(when) + "</td>" +
-              "<td>" + E(l.name || "—") + "</td>" +
-              "<td>" + E(l.contact || "—") + "</td>" +
-              "<td>" + E(l.channel || "—") + "</td>" +
-              "<td>" + E(l.type || "—") + "</td>" +
-              "<td>" + E(l.budget || "—") + "</td>" +
-              "<td class='f-msg'>" + E(l.message || "—") + "</td>" +
-              "<td>" + E(l.source || "—") + "</td>" +
+              "<td>" + statusTd(p) + "</td>" +
+              "<td>" + esc(p.type || "—") + "</td>" +
+              "<td>" + esc(p.budget || "—") + "</td>" +
+              "<td>" + E(when) + "</td>" +
+              "<td class='f-msg'>" + esc(p.message || "—") + "</td>" +
               "</tr>";
           }).join("");
           body.innerHTML = "<table class='fsd-leads'><thead><tr>" +
-            "<th>" + T("Час") + "</th><th>" + T("Ім'я") + "</th><th>" + T("Контакт") + "</th>" +
-            "<th>" + T("Канал") + "</th><th>" + T("Тип") + "</th><th>" + T("Бюджет") + "</th>" +
-            "<th>" + T("Повідомлення") + "</th><th>" + T("Джерело") + "</th></tr></thead><tbody>" +
+            "<th>" + T("Статус") + "</th><th>" + T("Тип") + "</th><th>" + T("Бюджет") + "</th>" +
+            "<th>" + T("Час") + "</th><th>" + T("Повідомлення") + "</th></tr></thead><tbody>" +
             rows + "</tbody></table>";
+          if (isAdmin) {
+            body.querySelectorAll("select.fsd-status-sel").forEach(function (sel) {
+              sel.addEventListener("change", function () {
+                fetch("/api/projects/status", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "same-origin",
+                  body: JSON.stringify({ ts: sel.getAttribute("data-ts"), status: sel.value }),
+                }).then(function (r) { return r.json(); }).then(function () { refreshProjects(); fill(); });
+              });
+            });
+          }
         })
         .catch(function () {
           body.innerHTML = '<div class="text-rose-400 py-6 text-center">' + T("Помилка завантаження") + "</div>";
@@ -119,28 +158,45 @@
     function closeModal() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
     close.addEventListener("click", closeModal);
     overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && overlay.parentNode) closeModal();
-    });
-    panel.addEventListener("fsd:lang", function () {});
+    var onKey = function (e) { if (e.key === "Escape" && overlay.parentNode) closeModal(); };
+    document.addEventListener("keydown", onKey);
+    overlay.addEventListener("fsd:lang", function () { closeModal(); document.removeEventListener("keydown", onKey); });
   }
 
   box.addEventListener("click", function (e) {
     var btn = e.target.closest("[data-action]");
     if (!btn) return;
-    if (btn.getAttribute("data-action") === "logout") {
-      fetch("/api/auth/logout", { method: "POST" })
-        .then(function () { state.user = null; render(); })
-        .catch(function () {});
-    } else if (btn.getAttribute("data-action") === "leads") {
+    var act = btn.getAttribute("data-action");
+    if (act === "toggle") {
+      var opening = !box.querySelector(".fsd-menu");
+      renderChip(opening);
+      if (opening) refreshProjects();
+    } else if (act === "projects") {
+      closeMenu();
       openLeads();
+    } else if (act === "logout") {
+      fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" })
+        .then(function () { state.user = null; state.projects = null; renderChip(false); })
+        .catch(function () {});
     }
+  });
+
+  document.addEventListener("click", function (e) {
+    if (box.querySelector(".fsd-menu") && !box.contains(e.target)) closeMenu();
   });
 
   document.addEventListener("fsd:lang", render);
 
+  if (denied) {
+    var note = document.createElement("div");
+    note.className = "fsd-auth-note";
+    note.innerHTML = '<span class="pulse-dot w-1.5 h-1.5 rounded-full bg-rose-400"></span> ' + T("Доступ заборонено");
+    if (box.parentNode) box.parentNode.insertBefore(note, box);
+    setTimeout(function () { if (note.parentNode) note.parentNode.removeChild(note); }, 6000);
+  }
+
   fetch("/api/auth/me", { credentials: "same-origin" })
     .then(function (r) { return r.json(); })
-    .then(function (d) { state.user = d.ok ? d.user : null; render(); })
-    .catch(function () { state.user = null; render(); });
+    .then(function (d) { state.user = d.ok ? d.user : null; renderChip(false); })
+    .catch(function () { state.user = null; renderChip(false); });
 })();

@@ -232,6 +232,8 @@ class Lead(BaseModel):
     source: str = "site"
     page: str | None = None
     ts: str | None = None
+    email: str | None = None   # client Google email (if submitted while logged in or found in contact)
+    status: str = "нова"       # нова / в розробці / завершено
 
 
 CHANNEL_LABELS = {
@@ -272,6 +274,9 @@ def _channel_contact_link(channel: str | None, contact: str) -> str:
 def _save_lead(payload: dict) -> None:
     payload = {k: (v.strip() if isinstance(v, str) else v) for k, v in payload.items() if v}
     payload["ts"] = payload.get("ts") or datetime.now(timezone.utc).isoformat()
+    if not payload.get("email"):
+        payload["email"] = _extract_email(payload.get("contact")) or ""
+    payload.setdefault("status", "нова")
     with _lock:
         rows = []
         if LEADS_FILE.exists():
@@ -639,9 +644,54 @@ def list_leads(request: Request, limit: int = 50) -> dict:
 
 
 @app.post("/api/lead")
-def create_lead(lead: Lead) -> dict:
-    _save_lead(lead.model_dump(exclude_none=True))
+def create_lead(request: Request, lead: Lead) -> dict:
+    data = lead.model_dump(exclude_none=True)
+    session = _read_session(request)
+    if session and session.get("email"):
+        data["email"] = session["email"]
+    _save_lead(data)
     return {"ok": True, "accepted": True}
+
+
+# -------------------------------------------------------------- projects ----
+@app.get("/api/projects")
+def list_projects(request: Request, limit: int = 100) -> dict:
+    """Client projects: the signed-in user sees their own (matched by email);
+    an admin (in AUTH_ADMIN_EMAILS) sees every project."""
+    session = _read_session(request)
+    if not session:
+        raise HTTPException(401, "auth required")
+    email = (session.get("email") or "").lower()
+    is_admin = email in AUTH_ADMIN_EMAILS
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+    if not is_admin:
+        rows = [r for r in rows
+                if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email]
+    projects = rows[-limit:][::-1]
+    dev_count = sum(1 for p in projects if (p.get("status") or "").strip() == "в розробці")
+    return {"count": len(projects), "dev_count": dev_count, "admin": is_admin, "projects": projects}
+
+
+@app.patch("/api/projects/status")
+def set_project_status(request: Request, item: dict) -> dict:
+    """Admin-only: set a project status. Payload: {"ts": <lead ts>, "status": "..."}."""
+    session = _read_session(request)
+    email = (session.get("email") or "").lower() if session else ""
+    if not session or email not in AUTH_ADMIN_EMAILS:
+        raise HTTPException(401, "auth required")
+    ts = item.get("ts")
+    status = (item.get("status") or "").strip()
+    if not ts or status not in ("нова", "в розробці", "завершено"):
+        raise HTTPException(400, "invalid status or missing ts")
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+        target = next((r for r in rows if r.get("ts") == ts), None)
+        if not target:
+            raise HTTPException(404, "project not found")
+        target["status"] = status
+        LEADS_FILE.write_text(json.dumps(rows, ensure_ascii=False, indent=2), "utf-8")
+    return {"ok": True}
 
 
 # ----------------------------------------------------------------- chat LLM ----
