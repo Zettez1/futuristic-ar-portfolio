@@ -40,7 +40,6 @@
   var couponClaimed = false;
   var couponDragging = false;
   var hintTimer = null;
-  var COUPON_POS_KEY = "fsd_coupon_pos";
 
   function initCoupon() {
     if (couponClaimed || !state.user) return;
@@ -53,23 +52,9 @@
     couponEl.setAttribute("title", T("Перетягніть для знижки 5%"));
     couponEl.style.position = "absolute";
 
-    var saved = null;
-    try { saved = JSON.parse(localStorage.getItem(COUPON_POS_KEY)); } catch (e) {}
-    if (saved && typeof saved.x === "number" && typeof saved.y === "number" && saved.ts) {
-      var age = Date.now() - saved.ts;
-      if (age < 3600000) {
-        couponEl.style.left = saved.x + "px";
-        couponEl.style.top = saved.y + "px";
-      } else {
-        saved = null;
-        try { localStorage.removeItem(COUPON_POS_KEY); } catch (e) {}
-      }
-    }
-    if (!saved) {
-      var navRect = host.getBoundingClientRect();
-      couponEl.style.left = (navRect.right - 10) + "px";
-      couponEl.style.top = (window.scrollY + navRect.bottom + 10) + "px";
-    }
+    var navRect = host.getBoundingClientRect();
+    couponEl.style.left = (navRect.right - 10) + "px";
+    couponEl.style.top = (window.scrollY + navRect.bottom + 10) + "px";
 
     document.body.appendChild(couponEl);
 
@@ -79,16 +64,14 @@
     document.body.appendChild(couponHint);
     positionHint();
 
-    if (!saved) {
-      if (window.anime) {
-        anime({
-          targets: couponEl,
-          scale: [0, 1.15, 1],
-          rotate: [180, 0],
-          duration: 600,
-          easing: "easeOutBack",
-        });
-      }
+    if (window.anime) {
+      anime({
+        targets: couponEl,
+        scale: [0, 1.15, 1],
+        rotate: [180, 0],
+        duration: 600,
+        easing: "easeOutBack",
+      });
     }
 
     setTimeout(showHint, 1500);
@@ -174,8 +157,6 @@
       couponEl.style.left = pageLeft + "px";
       couponEl.style.top = pageTop + "px";
 
-      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: pageLeft, y: pageTop, ts: Date.now() })); } catch (e) {}
-
       positionHint();
       setTimeout(showHint, 2000);
     }
@@ -207,7 +188,6 @@
       couponEl.style.left = pageLeft + "px";
       couponEl.style.top = pageTop + "px";
 
-      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: pageLeft, y: pageTop, ts: Date.now() })); } catch (e) {}
       positionHint();
       setTimeout(showHint, 1500);
     }
@@ -250,7 +230,6 @@
           couponClaimed = true;
           if (state.user) state.user.coupon_5 = true;
           hideHint();
-          try { localStorage.removeItem(COUPON_POS_KEY); } catch (e) {}
           if (window.anime && couponEl) {
             anime({
               targets: couponEl,
@@ -295,7 +274,6 @@
     }
     var drop = document.getElementById("coupon-drop");
     if (drop) drop.classList.remove("coupon-drop-hover");
-    try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: vpLeft, y: window.scrollY + vpTop, ts: Date.now() })); } catch (e) {}
     if (couponHint) { positionHint(); }
     setTimeout(showHint, 1000);
   }
