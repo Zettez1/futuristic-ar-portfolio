@@ -201,10 +201,6 @@ def auth_google_callback(request: Request):
         raise HTTPException(502, "Google auth upstream error")
     email = (user.get("email") or "").lower()
     now = datetime.now(timezone.utc).isoformat()
-    if AUTH_ADMIN_EMAILS and email not in AUTH_ADMIN_EMAILS:
-        resp = RedirectResponse("/?auth=denied", status_code=303)
-        _clear_session_cookie(resp)
-        return resp
     # register-or-login: first Google login creates a client account (users.json)
     registered = False
     with _lock:
@@ -685,8 +681,9 @@ def health() -> dict:
 
 @app.get("/api/leads")
 def list_leads(request: Request, limit: int = 50) -> dict:
-    """Admin-only: requires a valid Google session cookie (admin email allowlist)."""
-    if not _read_session(request):
+    """Admin-only (AUTH_ADMIN_EMAILS): the full lead/CRM table."""
+    session = _read_session(request)
+    if not session or (session.get("email") or "").lower() not in AUTH_ADMIN_EMAILS:
         raise HTTPException(401, "auth required")
     with _lock:
         rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
