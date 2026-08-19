@@ -52,11 +52,15 @@
     couponEl.setAttribute("title", T("Перетягніть для знижки 5%"));
     couponEl.style.position = "absolute";
 
-    var navRect = host.getBoundingClientRect();
+    var chipRect = (box && box.querySelector(".fsd-acc"))
+      ? box.getBoundingClientRect()
+      : host.getBoundingClientRect();
     var vw = window.innerWidth;
-    var vh = window.innerHeight;
-    couponEl.style.left = (Math.max(20, Math.min(vw - 74, (vw - 54) / 2))) + "px";
-    couponEl.style.top = (window.scrollY + navRect.bottom + 60) + "px";
+    var left = chipRect.right + 10;
+    if (left + 54 > vw - 8) left = chipRect.left - 54 - 10;
+    couponEl.style.position = "fixed";
+    couponEl.style.left = Math.max(8, left) + "px";
+    couponEl.style.top = chipRect.top + "px";
 
     document.body.appendChild(couponEl);
 
