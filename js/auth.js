@@ -162,13 +162,27 @@
     }
 
     couponEl.addEventListener("pointerdown", onPointerDown);
+
+    function onScrollWhileDrag() {
+      if (!couponDragging) return;
+      couponDragging = false;
+      couponEl.classList.remove("coupon-dragging");
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      var finalLeft = parseFloat(couponEl.style.left) || 0;
+      var finalTop = parseFloat(couponEl.style.top) || 0;
+      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: finalLeft, y: finalTop })); } catch (e) {}
+      positionHint();
+      setTimeout(showHint, 1500);
+    }
+    window.addEventListener("scroll", onScrollWhileDrag, { passive: true });
   }
 
   function positionHint() {
     if (!couponEl || !couponHint) return;
     var r = couponEl.getBoundingClientRect();
-    couponHint.style.left = (r.left + r.width / 2 - 20) + "px";
-    couponHint.style.top = (r.bottom + 6) + "px";
+    couponHint.style.left = (r.left + r.width / 2) + "px";
+    couponHint.style.top = (r.bottom + 8) + "px";
   }
 
   function showHint() {

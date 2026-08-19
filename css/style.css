@@ -1115,6 +1115,7 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s;
+  transform: translateX(-50%);
 }
 .coupon-hint.show { opacity: 1; }
 .coupon-hint-arrow {
