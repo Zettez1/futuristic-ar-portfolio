@@ -9,12 +9,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/style.css?v=31" />
+  <link rel="stylesheet" href="/css/style.css?v=32" />
   <script src="/js/i18n-a.js?v=1" defer></script>
   <script src="/js/i18n-b.js?v=1" defer></script>
   <script src="/js/i18n-c.js?v=1" defer></script>
   <script src="/js/i18n-d.js?v=9" defer></script>
   <script src="/js/i18n.js?v=3" defer></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <style>
     body { background: #04050c; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
     .font-display { font-family: 'Space Grotesk', sans-serif; }
@@ -71,6 +72,7 @@
                 <span></span>
                 <button type="button" id="forgot-btn" class="auth-link">Забули пароль?</button>
               </div>
+              <div class="cf-turnstile" data-sitekey="0x4AAAAAAEV1VqOA7KyGT76S" data-theme="dark" data-callback="onTurnstileLogin"></div>
               <button type="submit" class="auth-submit">Увійти</button>
             </form>
           </div>
@@ -84,6 +86,7 @@
               <div class="auth-field">
                 <input id="recover-email" type="email" required autocomplete="email" placeholder="name@email.com" />
               </div>
+              <div class="cf-turnstile" data-sitekey="0x4AAAAAAEV1VqOA7KyGT76S" data-theme="dark" data-callback="onTurnstileRecover"></div>
               <button type="button" id="recover-send" class="auth-submit">Продовжити</button>
             </div>
             <div id="recover-code-step" style="display:none">
@@ -127,6 +130,7 @@
               <label for="reg-password2">Повторіть пароль</label>
               <input id="reg-password2" type="password" required autocomplete="new-password" placeholder="••••••••" />
             </div>
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAAEV1VqOA7KyGT76S" data-theme="dark" data-callback="onTurnstileRegister"></div>
             <button type="submit" class="auth-submit">Відправити код</button>
           </form>
 
@@ -156,6 +160,11 @@
     (function () {
       "use strict";
       var T = window.FSD_T || function (s) { return s; };
+
+      var turnstileToken = { login: "", register: "", recover: "" };
+      window.onTurnstileLogin = function (t) { turnstileToken.login = t; };
+      window.onTurnstileRegister = function (t) { turnstileToken.register = t; };
+      window.onTurnstileRecover = function (t) { turnstileToken.recover = t; };
 
       function qp(name) { return new URLSearchParams(location.search).get(name); }
 
@@ -219,9 +228,9 @@
         if (!email || !pw) return;
         var btn = this.querySelector(".auth-submit");
         btnState(btn, true);
-        post("/api/auth/login", { email: email, password: pw })
+        post("/api/auth/login", { email: email, password: pw, cf_turnstile: turnstileToken.login })
           .then(function (res) {
-            if (res.status === 200) location.href = next || "/";
+            if (res.status === 200) { if (window.turnstile) turnstile.reset(); location.href = next || "/"; }
             else if (res.status === 401 && res.d.detail === "use google login") showMsg(T("Цей акаунт створено через Google. Увійдіть через Google"), false);
             else showMsg(T("Невірна пошта або пароль"), false);
           })
@@ -251,9 +260,10 @@
         if (!email) return;
         var btn = this;
         btnState(btn, true);
-        post("/api/auth/recover", { email: email })
+        post("/api/auth/recover", { email: email, cf_turnstile: turnstileToken.recover })
           .then(function (res) {
             if (res.status === 200) {
+              if (window.turnstile) turnstile.reset();
               recoverEmail = email;
               document.getElementById("recover-email-step").style.display = "none";
               document.getElementById("recover-code-step").style.display = "block";
@@ -271,7 +281,7 @@
         if (!email) return;
         var btn = this;
         btnState(btn, true);
-        post("/api/auth/recover", { email: email })
+        post("/api/auth/recover", { email: email, cf_turnstile: turnstileToken.recover })
           .then(function (res) {
             if (res.status === 200) showMsg(T("Код надіслано на %s", email), true);
             else if (res.status === 404) showMsg(T("Цю пошту не знайдено"), false);
@@ -289,9 +299,10 @@
         if (pw.length < 8) { showMsg(T("Пароль занадто короткий (мін. 8 символів)"), false); return; }
         var btn = this;
         btnState(btn, true);
-        post("/api/auth/recover/confirm", { email: recoverEmail, code: code, password: pw })
+        post("/api/auth/recover/confirm", { email: recoverEmail, code: code, password: pw, cf_turnstile: turnstileToken.recover })
           .then(function (res) {
             if (res.status === 200) {
+              if (window.turnstile) turnstile.reset();
               showMsg(T("Пароль змінено! Увійдіть з новим паролем"), true);
               document.getElementById("recover-code-step").style.display = "none";
               document.getElementById("recover-email-step").style.display = "block";
@@ -314,9 +325,10 @@
         if (pw !== pw2) { showMsg(T("Паролі не збігаються"), false); return; }
         var btn = this.querySelector(".auth-submit");
         btnState(btn, true);
-        post("/api/auth/register", { email: email, password: pw })
+        post("/api/auth/register", { email: email, password: pw, cf_turnstile: turnstileToken.register })
           .then(function (res) {
             if (res.status === 200) {
+              if (window.turnstile) turnstile.reset();
               regEmail = email;
               document.getElementById("reg-form").style.display = "none";
               document.getElementById("reg-code-box").style.display = "block";
@@ -352,7 +364,7 @@
         if (!email) return;
         var btn = this;
         btnState(btn, true);
-        post("/api/auth/register", { email: email, password: document.getElementById("reg-password").value })
+        post("/api/auth/register", { email: email, password: document.getElementById("reg-password").value, cf_turnstile: turnstileToken.register })
           .then(function (res) {
             if (res.status === 200) showMsg(T("Код надіслано на %s", email), true);
             else showMsg(T("Не вдалося відправити код. Спробуйте пізніше"), false);

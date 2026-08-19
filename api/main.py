@@ -76,6 +76,32 @@ AUTH_REDIRECT_URI = os.getenv(
     "https://web-frontend-production-78d2.up.railway.app/api/auth/google/callback",
 )
 AUTH_ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("AUTH_ADMIN_EMAILS", "").split(",") if e.strip()}
+TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET", "")
+
+
+def _verify_turnstile(token: str, ip: str = "") -> bool:
+    """Verify Cloudflare Turnstile token. Returns True if no secret configured (dev mode)."""
+    if not TURNSTILE_SECRET:
+        return True
+    if not token or len(token) > 2048:
+        return False
+    data = urlencode({
+        "secret": TURNSTILE_SECRET,
+        "response": token,
+        "remoteip": ip,
+    }).encode()
+    req = urllib.request.Request(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        data=data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            result = json.loads(r.read())
+        return result.get("success", False)
+    except Exception:
+        return False
 AUTH_COOKIE = "fsd_session"
 AUTH_STATE_COOKIE = "fsd_oauth_state"
 SESSION_TTL = 7 * 24 * 3600
@@ -316,6 +342,7 @@ def _check_password(pw: str, salt: str, h: str) -> bool:
 class RegPayload(BaseModel):
     email: str
     password: str
+    cf_turnstile: str = ""
 
 
 class VerifyPayload(BaseModel):
@@ -326,20 +353,26 @@ class VerifyPayload(BaseModel):
 class LoginPayload(BaseModel):
     email: str
     password: str
+    cf_turnstile: str = ""
 
 
 class RecoverPayload(BaseModel):
     email: str
+    cf_turnstile: str = ""
 
 
 class RecoverConfirmPayload(BaseModel):
     email: str
     code: str
     password: str
+    cf_turnstile: str = ""
 
 
 @app.post("/api/auth/register")
-def auth_register(payload: RegPayload) -> dict:
+def auth_register(payload: RegPayload, request: Request) -> dict:
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+    if not _verify_turnstile(payload.cf_turnstile, ip):
+        raise HTTPException(403, "captcha failed")
     email = (payload.email or "").strip().lower()
     pw = payload.password or ""
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
@@ -402,7 +435,10 @@ def auth_verify(payload: VerifyPayload) -> dict:
 
 
 @app.post("/api/auth/login")
-def auth_login(payload: LoginPayload) -> dict:
+def auth_login(payload: LoginPayload, request: Request) -> dict:
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+    if not _verify_turnstile(payload.cf_turnstile, ip):
+        raise HTTPException(403, "captcha failed")
     email = (payload.email or "").strip().lower()
     pw = payload.password or ""
     users = _read_users()
@@ -422,8 +458,11 @@ def auth_login(payload: LoginPayload) -> dict:
 
 
 @app.post("/api/auth/recover")
-def auth_recover(payload: RecoverPayload) -> dict:
+def auth_recover(payload: RecoverPayload, request: Request) -> dict:
     """Step 1 of password recovery: send a 6-digit code to the user's email."""
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+    if not _verify_turnstile(payload.cf_turnstile, ip):
+        raise HTTPException(403, "captcha failed")
     email = (payload.email or "").strip().lower()
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
         raise HTTPException(400, "invalid email")
@@ -451,8 +490,11 @@ def auth_recover(payload: RecoverPayload) -> dict:
 
 
 @app.post("/api/auth/recover/confirm")
-def auth_recover_confirm(payload: RecoverConfirmPayload) -> dict:
+def auth_recover_confirm(payload: RecoverConfirmPayload, request: Request) -> dict:
     """Step 2: code + new password -> update the account password."""
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+    if not _verify_turnstile(payload.cf_turnstile, ip):
+        raise HTTPException(403, "captcha failed")
     email = (payload.email or "").strip().lower()
     code = (payload.code or "").strip()
     pw = payload.password or ""

@@ -1050,6 +1050,8 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
 
 /* auth page */
 .auth-wrap { max-width: 400px; margin: 0 auto; width: 100%; }
+.cf-turnstile { margin: 14px 0; }
+.cf-turnstile iframe { border-radius: 10px; }
 .auth-logo { width: 56px; height: 56px; border-radius: 14px; object-fit: contain; display: block; margin: 0 auto 20px; }
 .auth-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); background: #05070f; }
 .auth-header a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
