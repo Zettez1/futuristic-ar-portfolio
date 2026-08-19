@@ -204,7 +204,6 @@ def auth_google_start(request: Request):
         "response_type": "code",
         "scope": "openid email profile",
         "state": state,
-        "prompt": "select_account",
     }))
     resp = RedirectResponse(url, status_code=302)
     resp.set_cookie(AUTH_STATE_COOKIE, state, max_age=300,
