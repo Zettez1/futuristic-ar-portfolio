@@ -53,8 +53,10 @@
     couponEl.style.position = "absolute";
 
     var navRect = host.getBoundingClientRect();
-    couponEl.style.left = (navRect.right - 10) + "px";
-    couponEl.style.top = (window.scrollY + navRect.bottom + 10) + "px";
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    couponEl.style.left = (Math.max(20, Math.min(vw - 74, (vw - 54) / 2))) + "px";
+    couponEl.style.top = (window.scrollY + navRect.bottom + 60) + "px";
 
     document.body.appendChild(couponEl);
 
