@@ -535,6 +535,8 @@
     setTimeout(function () { if (regNote.parentNode) regNote.parentNode.removeChild(regNote); }, 8000);
   }
 
+  ensureChip();
+
   fetch("/api/auth/me", { credentials: "same-origin" })
     .then(function (r) { return r.json(); })
     .then(function (d) { state.user = d.ok ? d.user : null; ensureChip(); })
