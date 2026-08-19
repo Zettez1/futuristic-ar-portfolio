@@ -42,6 +42,29 @@
   var hintTimer = null;
   var couponToastTimer = null;
 
+  var dropZoneBound = false;
+  function ensureDropZoneBound() {
+    if (dropZoneBound) return;
+    var dropZone = document.getElementById("coupon-drop");
+    if (!dropZone) return;
+    dropZoneBound = true;
+    dropZone.addEventListener("click", function () {
+      if (couponClaimed) {
+        couponToast(T("Знижку вже активовано!"), true);
+        return;
+      }
+      if (!state.user) {
+        couponToast(T("Спочатку увійдіть в акаунт"));
+        return;
+      }
+      couponDragging = false;
+      if (couponEl) couponEl.classList.remove("coupon-dragging");
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      claimCoupon();
+    });
+  }
+
   function initCoupon() {
     if (couponClaimed || !state.user) return;
     if (document.getElementById("coupon-chip")) return;
@@ -187,19 +210,7 @@
     }
 
     couponEl.addEventListener("pointerdown", onPointerDown);
-
-    var dropZone = document.getElementById("coupon-drop");
-    if (dropZone && !dropZone.dataset.fsdClaimBound) {
-      dropZone.dataset.fsdClaimBound = "1";
-      dropZone.addEventListener("click", function () {
-        if (couponClaimed || !couponEl) return;
-        couponDragging = false;
-        couponEl.classList.remove("coupon-dragging");
-        document.removeEventListener("pointermove", onPointerMove);
-        document.removeEventListener("pointerup", onPointerUp);
-        claimCoupon();
-      });
-    }
+    ensureDropZoneBound();
 
     function onScrollWhileDrag() {
       if (!couponDragging) return;
@@ -553,6 +564,7 @@
   }
 
   ensureChip();
+  ensureDropZoneBound();
 
   fetch("/api/auth/me", { credentials: "same-origin" })
     .then(function (r) { return r.json(); })
