@@ -1048,20 +1048,43 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
 }
 .fsd-status-sel option { background: #0b1020; color: #e2e8f0; }
 
-/* auth card inputs */
-.fsd-input {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
-  border-radius: 10px;
-  padding: 11px 13px;
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s, background 0.2s;
+/* auth page */
+.auth-wrap { max-width: 400px; margin: 0 auto; width: 100%; }
+.auth-logo { width: 56px; height: 56px; border-radius: 14px; object-fit: contain; display: block; margin: 0 auto 20px; }
+.auth-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); background: #05070f; }
+.auth-header a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.auth-header img { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; }
+.auth-card { background: rgba(15,20,40,0.85); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 32px 28px; backdrop-filter: blur(16px); box-shadow: 0 24px 64px rgba(0,0,0,0.5); }
+.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: rgba(255,255,255,0.04); border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+.auth-tab { border: none; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: transparent; color: #64748b; font-family: inherit; }
+.auth-tab.active { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+.auth-tab:hover:not(.active) { color: #94a3b8; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: #475569; font-size: 12px; }
+.auth-divider span { flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+.auth-field { margin-bottom: 14px; }
+.auth-field label { display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 6px; }
+.auth-field input { width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; border-radius: 10px; padding: 11px 14px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s, background 0.2s; }
+.auth-field input::placeholder { color: #475569; }
+.auth-field input:focus { border-color: rgba(34,211,238,0.5); background: rgba(255,255,255,0.06); }
+.auth-submit { width: 100%; border: none; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity 0.2s, transform 0.1s; background: linear-gradient(135deg, #22d3ee, #6366f1); color: #fff; }
+.auth-submit:hover { opacity: 0.9; }
+.auth-submit:active { transform: scale(0.98); }
+.auth-submit:disabled { opacity: 0.5; cursor: default; }
+.auth-google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #fff; color: #1a1a2e; border: none; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.auth-google-btn:hover { background: #f0f0f0; }
+.auth-google-btn svg { flex: none; }
+.auth-link { display: inline-block; font-size: 12px; font-weight: 600; color: #22d3ee; cursor: pointer; background: none; border: none; font-family: inherit; padding: 0; }
+.auth-link:hover { color: #67e8f9; }
+.auth-hint { text-align: center; margin-top: 20px; font-size: 13px; color: #64748b; }
+.auth-footer { text-align: center; margin-top: 16px; font-size: 11px; color: #475569; line-height: 1.5; }
+.auth-row { display: flex; justify-content: space-between; align-items: center; margin-top: -4px; margin-bottom: 14px; }
+.auth-msg { border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 16px; text-align: center; }
+.auth-msg.ok { color: #6ee7b7; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.25); }
+.auth-msg.err { color: #fda4af; background: rgba(251,113,133,0.08); border: 1px solid rgba(251,113,133,0.25); }
+@media (max-width: 480px) {
+  .auth-card { padding: 24px 18px; }
+  .auth-header { padding: 14px 16px; }
 }
-.fsd-input::placeholder { color: #64748b; }
-.fsd-input:focus { border-color: rgba(34, 211, 238, 0.6); background: rgba(255, 255, 255, 0.09); }
 
 /* leads modal */
 .fsd-modal {
