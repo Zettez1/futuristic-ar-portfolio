@@ -34,19 +34,19 @@
     return T("Нова");
   }
 
-  function renderChip(open) {
+  function ensureChip() {
     var u = state.user;
     if (!u) {
       box.innerHTML = '<a class="fsd-auth-btn fsd-login" href="/auth.html">' + T("Увійти") + "</a>";
       return;
     }
+    if (box.querySelector(".fsd-acc")) return;
     var pic = u.picture
       ? '<img class="fsd-av" src="' + esc(u.picture) + '" alt="">'
       : '<span class="fsd-av">' + esc((u.name || u.email || "A").charAt(0).toUpperCase()) + "</span>";
-    box.innerHTML = '<button type="button" class="fsd-acc" data-action="toggle" aria-haspopup="true" aria-expanded="' + (open ? "true" : "false") + '">' +
+    box.innerHTML = '<button type="button" class="fsd-acc" data-action="toggle" aria-haspopup="true" aria-expanded="false">' +
       pic + '<span class="fsd-auth-name">' + esc(u.name || u.email) + "</span>" +
-      '<svg class="fsd-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>' +
-      (open ? renderMenu() : "");
+      '<svg class="fsd-caret" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 3l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>';
   }
 
   function renderMenu() {
@@ -60,15 +60,32 @@
       "</div>";
   }
 
-  function render() { renderChip(false); }
+  function toggleMenu(open) {
+    var menu = box.querySelector(".fsd-menu");
+    if (open && !menu) box.insertAdjacentHTML("beforeend", renderMenu());
+    if (!open && menu) menu.remove();
+    var b = box.querySelector(".fsd-acc");
+    if (b) b.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function render() { ensureChip(); }
 
   function refreshProjects() {
     return fetch("/api/projects", { credentials: "same-origin" })
       .then(function (r) { return r.json(); })
-      .then(function (d) { state.projects = d; renderChip(false); });
+      .then(function (d) {
+        state.projects = d;
+        var menu = box.querySelector(".fsd-menu");
+        if (menu) {
+          var tmp = document.createElement("div");
+          tmp.innerHTML = renderMenu();
+          menu.replaceWith(tmp.firstChild);
+        }
+      })
+      .catch(function () {});
   }
 
-  function closeMenu() { renderChip(false); }
+  function closeMenu() { toggleMenu(false); }
 
   function openLeads() {
     var overlay = document.createElement("div");
@@ -175,20 +192,21 @@
     var act = btn.getAttribute("data-action");
     if (act === "toggle") {
       var opening = !box.querySelector(".fsd-menu");
-      renderChip(opening);
+      toggleMenu(opening);
       if (opening) refreshProjects();
     } else if (act === "projects") {
       closeMenu();
       openLeads();
     } else if (act === "logout") {
       fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" })
-        .then(function () { state.user = null; state.projects = null; renderChip(false); })
+        .then(function () { state.user = null; state.projects = null; toggleMenu(false); ensureChip(); })
         .catch(function () {});
     }
   });
 
   document.addEventListener("click", function (e) {
-    if (box.querySelector(".fsd-menu") && !box.contains(e.target)) closeMenu();
+    var menu = box.querySelector(".fsd-menu");
+    if (menu && !e.target.closest("#fsd-auth")) closeMenu();
   });
 
   document.addEventListener("fsd:lang", render);
@@ -211,6 +229,6 @@
 
   fetch("/api/auth/me", { credentials: "same-origin" })
     .then(function (r) { return r.json(); })
-    .then(function (d) { state.user = d.ok ? d.user : null; renderChip(false); })
-    .catch(function () { state.user = null; renderChip(false); });
+    .then(function (d) { state.user = d.ok ? d.user : null; ensureChip(); })
+    .catch(function () { state.user = null; ensureChip(); });
 })();
