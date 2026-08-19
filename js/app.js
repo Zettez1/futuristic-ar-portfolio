@@ -283,6 +283,11 @@ return (
     leadForm.addEventListener("submit", function (e) {
       e.preventDefault();
       leadError && leadError.classList.add("hidden");
+      if (!window.FSD_AUTH || !window.FSD_AUTH.isLoggedIn) {
+        var next = encodeURIComponent(location.pathname + (location.hash || "#lead"));
+        location.href = "/auth.html?next=" + next;
+        return;
+      }
       var fd = new FormData(leadForm);
       var payload = {
         name: fd.get("name"),

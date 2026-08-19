@@ -989,6 +989,7 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
   background: rgba(251, 113, 133, 0.08); border: 1px solid rgba(251, 113, 133, 0.3);
   padding: 6px 10px; border-radius: 10px;
 }
+.fsd-auth-note-ok { color: #6ee7b7; background: rgba(52, 211, 153, 0.08); border-color: rgba(52, 211, 153, 0.3); }
 
 /* account dropdown */
 .fsd-acc {

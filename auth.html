@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="uk" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вхід / Реєстрація — FastStart Digital</title>
+  <meta name="description" content="Увійдіть або зареєструйтеся в кабінеті клієнта FastStart Digital, щоб відстежувати свої проєкти, статуси та історію заявок." />
+  <meta name="theme-color" content="#04050c" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/tailwind.css?v=25" />
+  <link rel="stylesheet" href="/css/style.css?v=30" />
+  <script src="/js/i18n-a.js?v=1" defer></script>
+  <script src="/js/i18n-b.js?v=1" defer></script>
+  <script src="/js/i18n-c.js?v=1" defer></script>
+  <script src="/js/i18n-d.js?v=7" defer></script>
+  <script src="/js/i18n.js?v=3" defer></script>
+</head>
+<body class="bg-[#04050c] text-slate-200 antialiased min-h-screen flex flex-col">
+
+  <header class="border-b border-white/5 bg-[#05070f]">
+    <div class="max-w-3xl mx-auto px-5 py-6 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <span class="logo-mark w-8 h-8 rounded-lg grid place-items-center font-bold text-[#04050c] text-sm">FD</span>
+        <span class="font-display font-700 text-lg text-white">FastStart<span class="text-cyan-400"> Digital</span></span>
+      </a>
+      <div class="flex items-center gap-3" data-lang-host>
+        <a href="/" class="cta-btn cta-ghost text-sm px-4 py-2">← Повернутися на сайт</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 flex items-start justify-center px-5 py-14">
+    <div class="w-full max-w-md">
+      <div class="glass rounded-2xl p-8 border border-white/10 shadow-2xl">
+        <h1 class="font-display text-2xl font-bold text-white text-center" id="auth-title">Увійти</h1>
+        <p class="text-sm text-slate-400 text-center mt-2" id="auth-sub">Керуйте своїми проєктами: статуси, заявки, історія.</p>
+
+        <div id="auth-msg" class="mt-5 hidden"></div>
+
+        <div class="mt-6 grid grid-cols-2 gap-1 bg-white/5 rounded-xl p-1" role="tablist">
+          <button type="button" class="auth-tab font-semibold text-sm rounded-lg py-2.5 transition" data-tab="login" role="tab">Вхід</button>
+          <button type="button" class="auth-tab font-semibold text-sm rounded-lg py-2.5 transition" data-tab="register" role="tab">Реєстрація</button>
+        </div>
+
+        <div class="mt-6 auth-panel" data-panel="login">
+          <a id="google-login" href="/api/auth/google" class="flex items-center justify-center gap-3 bg-white text-slate-900 font-semibold text-sm rounded-xl py-3 px-4 hover:bg-slate-100 transition">
+            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+            Увійти з Google
+          </a>
+        </div>
+
+        <div class="mt-6 auth-panel hidden" data-panel="register">
+          <a id="google-register" href="/api/auth/google" class="flex items-center justify-center gap-3 bg-white text-slate-900 font-semibold text-sm rounded-xl py-3 px-4 hover:bg-slate-100 transition">
+            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+            Створити акаунт з Google
+          </a>
+          <p class="text-xs text-slate-500 text-center mt-4">Захищено Google OAuth. Паролі не зберігаються на нашому сервері.</p>
+        </div>
+
+        <p class="text-center text-sm mt-7" id="auth-switch-hint">
+          <button type="button" class="text-cyan-400 hover:text-cyan-300 font-semibold" data-switch="register">Новий клієнт? Зареєструйтеся</button>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-white/5 bg-[#030409] py-8">
+    <div class="max-w-3xl mx-auto px-5 text-xs text-slate-600 flex flex-col sm:flex-row justify-between gap-2">
+      <span>© 2026 FastStart Digital. Всі права захищено.</span>
+      <a href="/" class="hover:text-slate-400">Повернутися на сайт</a>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+      var T = window.FSD_T || function (s) { return s; };
+
+      function qp(name) {
+        return new URLSearchParams(location.search).get(name);
+      }
+
+      var cur = qp("tab") === "register" ? "register" : "login";
+      var tabs = Array.prototype.slice.call(document.querySelectorAll(".auth-tab"));
+      var panels = Array.prototype.slice.call(document.querySelectorAll(".auth-panel"));
+
+      function showTab(name) {
+        cur = name;
+        tabs.forEach(function (t) {
+          var active = t.getAttribute("data-tab") === cur;
+          t.classList.toggle("bg-white", active);
+          t.classList.toggle("text-slate-900", active);
+          t.classList.toggle("text-slate-400", !active);
+        });
+        panels.forEach(function (p) { p.classList.toggle("hidden", p.getAttribute("data-panel") !== cur); });
+        document.getElementById("auth-title").textContent = cur === "register" ? T("Реєстрація") : T("Вхід");
+        document.getElementById("auth-switch-hint").innerHTML =
+          '<button type="button" class="text-cyan-400 hover:text-cyan-300 font-semibold" data-switch="' +
+          (cur === "register" ? "login" : "register") + '">' +
+          T(cur === "register" ? "Вже маєте акаунт? Увійдіть" : "Новий клієнт? Зареєструйтеся") + "</button>";
+      }
+
+      tabs.forEach(function (t) {
+        t.addEventListener("click", function () { showTab(t.getAttribute("data-tab")); });
+      });
+      document.getElementById("auth-switch-hint").addEventListener("click", function (e) {
+        var b = e.target.closest("[data-switch]");
+        if (b) showTab(b.getAttribute("data-switch"));
+      });
+      showTab(cur);
+
+      var msg = document.getElementById("auth-msg");
+      var auth = qp("auth");
+      if (auth === "registered") {
+        msg.classList.remove("hidden");
+        msg.innerHTML = '<div class="text-sm font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-400/30 rounded-lg px-4 py-3 text-center">' +
+          T("Акаунт створено!") + '</div>';
+      } else if (auth === "denied") {
+        msg.classList.remove("hidden");
+        msg.innerHTML = '<div class="text-sm font-semibold text-rose-300 bg-rose-500/10 border border-rose-400/30 rounded-lg px-4 py-3 text-center">' +
+          T("Доступ заборонено") + '</div>';
+      }
+
+      if (qp("register") === "1") showTab("register");
+    })();
+  </script>
+</body>
+</html>

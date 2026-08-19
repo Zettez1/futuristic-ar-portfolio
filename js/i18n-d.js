@@ -63,7 +63,17 @@
   "Нова": { en: "New", ru: "Новая", sk: "Nová", pl: "Nowa", de: "Neu" },
   "В розробці": { en: "In development", ru: "В разработке", sk: "Vo vývoji", pl: "W opracowaniu", de: "In Entwicklung" },
   "Завершено": { en: "Done", ru: "Завершен", sk: "Dokončené", pl: "Zakończone", de: "Abgeschlossen" },
-  "Немає проєктів": { en: "No projects", ru: "Нет проектов", sk: "Žiadne projekty", pl: "Brak projektów", de: "Keine Projekte" }
+  "Немає проєктів": { en: "No projects", ru: "Нет проектов", sk: "Žiadne projekty", pl: "Brak projektów", de: "Keine Projekte" },
+  "Вхід": { en: "Log in", ru: "Вход", sk: "Prihlásenie", pl: "Logowanie", de: "Anmelden" },
+  "Реєстрація": { en: "Registration", ru: "Регистрация", sk: "Registrácia", pl: "Rejestracja", de: "Registrierung" },
+  "Увійти з Google": { en: "Continue with Google", ru: "Войти через Google", sk: "Prihlásiť sa cez Google", pl: "Kontynuuj z Google", de: "Mit Google anmelden" },
+  "Створити акаунт з Google": { en: "Sign up with Google", ru: "Регистрация через Google", sk: "Registrovať sa cez Google", pl: "Zarejestruj się przez Google", de: "Mit Google registrieren" },
+  "Повернутися на сайт": { en: "Back to the site", ru: "Вернуться на сайт", sk: "Späť na stránku", pl: "Wróć na stronę", de: "Zurück zur Website" },
+  "Керуйте своїми проєктами: статуси, заявки, історія.": { en: "Manage your projects: statuses, requests and history.", ru: "Управляйте своими проектами: статусы, заявки, история.", sk: "Spravujte svoje projekty: statusy, dopyty, história.", pl: "Zarządzaj swoimi projektami: statusy, zapytania, historia.", de: "Verwalten Sie Ihre Projekte: Status, Anfragen, Verlauf." },
+  "Акаунт створено!": { en: "Account created!", ru: "Аккаунт создан!", sk: "Účet vytvorený!", pl: "Konto utworzone!", de: "Konto erstellt!" },
+  "Новий клієнт? Зареєструйтеся": { en: "New client? Register", ru: "Новый клиент? Зарегистрируйтесь", sk: "Nový klient? Zaregistrujte sa", pl: "Nowy klient? Zarejestruj się", de: "Neuer Kunde? Registrieren" },
+  "Вже маєте акаунт? Увійдіть": { en: "Already have an account? Log in", ru: "Уже есть аккаунт? Войдите", sk: "Už máte účet? Prihláste sa", pl: "Masz już konto? Zaloguj się", de: "Schon ein Konto? Anmelden" },
+  "Захищено Google OAuth. Паролі не зберігаються на нашому сервері.": { en: "Secured by Google OAuth. Passwords are never stored on our servers.", ru: "Защищено Google OAuth. Пароли не хранятся на нашем сервере.", sk: "Chránené Google OAuth. Heslá sa na našom serveri neukladajú.", pl: "Zabezpieczone przez Google OAuth. Hasła nie są przechowywane na naszym serwerze.", de: "Geschützt durch Google OAuth. Passwörter werden nie auf unseren Servern gespeichert." }
   };
   window.FSD_I18N_DICT = Object.assign({}, window.FSD_I18N_DICT, D);
 })();

@@ -70,6 +70,7 @@ app.add_middleware(
 #   AUTH_REDIRECT_URI (optional override).
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+USERS_FILE = DATA_DIR / "users.json"
 AUTH_REDIRECT_URI = os.getenv(
     "AUTH_REDIRECT_URI",
     "https://web-frontend-production-78d2.up.railway.app/api/auth/google/callback",
@@ -138,7 +139,7 @@ def _oauth_ready() -> bool:
 
 
 @app.get("/api/auth/google")
-def auth_google_start():
+def auth_google_start(request: Request):
     if not _oauth_ready():
         raise HTTPException(503, "Google OAuth is not configured (missing env)")
     state = secrets.token_urlsafe(24)
@@ -153,6 +154,10 @@ def auth_google_start():
     resp = RedirectResponse(url, status_code=302)
     resp.set_cookie(AUTH_STATE_COOKIE, state, max_age=300,
                     httponly=True, samesite="lax", secure=True, path="/")
+    nxt = request.query_params.get("next", "")
+    if nxt.startswith("/"):
+        resp.set_cookie("fsd_next", nxt, max_age=600,
+                        httponly=True, samesite="lax", secure=True, path="/")
     return resp
 
 
@@ -195,17 +200,62 @@ def auth_google_callback(request: Request):
     except Exception:
         raise HTTPException(502, "Google auth upstream error")
     email = (user.get("email") or "").lower()
+    now = datetime.now(timezone.utc).isoformat()
     if AUTH_ADMIN_EMAILS and email not in AUTH_ADMIN_EMAILS:
         resp = RedirectResponse("/?auth=denied", status_code=303)
         _clear_session_cookie(resp)
         return resp
-    resp = RedirectResponse("/?auth=ok", status_code=303)
-    _set_session_cookie(resp, {
+    # register-or-login: first Google login creates a client account (users.json)
+    registered = False
+    with _lock:
+        users = []
+        if USERS_FILE.exists():
+            try:
+                users = json.loads(USERS_FILE.read_text("utf-8"))
+            except json.JSONDecodeError:
+                users = []
+        existing = next((u for u in users if u.get("email") == email), None)
+        if existing:
+            existing["last_login"] = now
+            existing["name"] = user.get("name", existing.get("name", ""))
+            existing["picture"] = user.get("picture", existing.get("picture", ""))
+        else:
+            users.append({
+                "email": email,
+                "name": user.get("name", ""),
+                "picture": user.get("picture", ""),
+                "created": now,
+                "last_login": now,
+                "admin": email in AUTH_ADMIN_EMAILS,
+            })
+            registered = True
+        USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), "utf-8")
+    res = RedirectResponse("/?auth=registered" if registered else "/?auth=ok", status_code=303)
+    _set_session_cookie(res, {
         "email": email,
         "name": user.get("name", ""),
         "picture": user.get("picture", ""),
+        "fresh": registered,
     })
-    return resp
+    nxt = request.cookies.get("fsd_next", "")
+    if nxt.startswith("/"):
+        frag = ""
+        path = nxt
+        if "#" in nxt:
+            path, frag = nxt.split("#", 1)
+        sep = "&" if "?" in path else "?"
+        res = RedirectResponse(
+            path + sep + "auth=" + ("registered" if registered else "ok") + ("#" + frag if frag else ""),
+            status_code=303,
+        )
+        _set_session_cookie(res, {
+            "email": email,
+            "name": user.get("name", ""),
+            "picture": user.get("picture", ""),
+            "fresh": registered,
+        })
+        res.delete_cookie("fsd_next", path="/")
+    return res
 
 
 @app.get("/api/auth/me")

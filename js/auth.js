@@ -19,6 +19,12 @@
 
   var state = { user: null, projects: null };
   var denied = /[?&]auth=denied/.test(location.search);
+  var registeredNote = /[?&]auth=registered/.test(location.search);
+
+  window.FSD_AUTH = {
+    get user() { return state.user; },
+    get isLoggedIn() { return !!state.user; },
+  };
 
   function esc(s) { return E(s); }
 
@@ -31,7 +37,7 @@
   function renderChip(open) {
     var u = state.user;
     if (!u) {
-      box.innerHTML = '<a class="fsd-auth-btn fsd-login" href="/api/auth/google">' + T("Увійти") + "</a>";
+      box.innerHTML = '<a class="fsd-auth-btn fsd-login" href="/auth.html">' + T("Увійти") + "</a>";
       return;
     }
     var pic = u.picture
@@ -193,6 +199,14 @@
     note.innerHTML = '<span class="pulse-dot w-1.5 h-1.5 rounded-full bg-rose-400"></span> ' + T("Доступ заборонено");
     if (box.parentNode) box.parentNode.insertBefore(note, box);
     setTimeout(function () { if (note.parentNode) note.parentNode.removeChild(note); }, 6000);
+  }
+
+  if (registeredNote) {
+    var regNote = document.createElement("div");
+    regNote.className = "fsd-auth-note fsd-auth-note-ok";
+    regNote.innerHTML = '<span class="pulse-dot w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ' + T("Акаунт створено!");
+    if (box.parentNode) box.parentNode.insertBefore(regNote, box);
+    setTimeout(function () { if (regNote.parentNode) regNote.parentNode.removeChild(regNote); }, 8000);
   }
 
   fetch("/api/auth/me", { credentials: "same-origin" })
