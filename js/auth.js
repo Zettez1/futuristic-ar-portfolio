@@ -36,61 +36,57 @@
 
   /* ---- coupon 5% widget ---- */
   var couponEl = null;
-  var couponBox = null;
+  var couponHint = null;
   var couponClaimed = false;
   var couponDragging = false;
   var hintTimer = null;
+  var COUPON_POS_KEY = "fsd_coupon_pos";
 
   function initCoupon() {
     if (couponClaimed || !state.user) return;
-    if (document.getElementById("coupon-box")) return;
-
-    couponBox = document.createElement("div");
-    couponBox.id = "coupon-box";
-    couponBox.className = "coupon-box";
-
-    var lid = document.createElement("div");
-    lid.className = "coupon-box-lid";
-    couponBox.appendChild(lid);
+    if (document.getElementById("coupon-chip")) return;
 
     couponEl = document.createElement("div");
     couponEl.id = "coupon-chip";
     couponEl.className = "coupon-chip";
     couponEl.textContent = "5%";
     couponEl.setAttribute("title", T("Перетягніть для знижки 5%"));
-    couponBox.appendChild(couponEl);
 
-    var hint = document.createElement("div");
-    hint.className = "coupon-hint";
-    hint.innerHTML = '<div class="coupon-hint-arrow"></div><div class="coupon-hint-text">' + T("Тягніть вниз") + "</div>";
-    couponBox.appendChild(hint);
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(COUPON_POS_KEY)); } catch (e) {}
+    if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
+      couponEl.style.left = saved.x + "px";
+      couponEl.style.top = saved.y + "px";
+    } else {
+      var navRect = host.getBoundingClientRect();
+      couponEl.style.left = (navRect.right - 10) + "px";
+      couponEl.style.top = (navRect.bottom + 10) + "px";
+    }
 
-    host.appendChild(couponBox);
+    document.body.appendChild(couponEl);
 
-    setTimeout(function () {
-      if (!couponBox || couponClaimed) return;
+    couponHint = document.createElement("div");
+    couponHint.className = "coupon-hint";
+    couponHint.innerHTML = '<div class="coupon-hint-arrow"></div><div class="coupon-hint-text">' + T("Тягніть вниз") + "</div>";
+    document.body.appendChild(couponHint);
+    positionHint();
+
+    if (!saved) {
       if (window.anime) {
         anime({
-          targets: lid,
-          rotateX: [-90, 0],
-          opacity: [0, 1],
-          duration: 400,
-          easing: "easeOutQuad",
-        });
-        anime({
           targets: couponEl,
-          translateY: [20, 0],
-          scale: [0.5, 1],
-          opacity: [0, 1],
-          duration: 500,
-          delay: 200,
+          scale: [0, 1.15, 1],
+          rotate: [180, 0],
+          duration: 600,
           easing: "easeOutBack",
         });
       }
-      setTimeout(showHint, 2000);
-    }, 600);
+    }
 
-    var startX, startY, origX, origY;
+    setTimeout(showHint, 1500);
+    startHintLoop();
+
+    var startX, startY, origLeft, origTop;
 
     function onPointerDown(e) {
       if (couponClaimed) return;
@@ -98,28 +94,16 @@
       hideHint();
       couponDragging = true;
 
-      var boxRect = couponBox.getBoundingClientRect();
-      origX = boxRect.left + 3;
-      origY = boxRect.top + 3;
-      couponEl.style.position = "fixed";
-      couponEl.style.left = origX + "px";
-      couponEl.style.top = origY + "px";
-      couponEl.style.width = "46px";
-      couponEl.style.height = "46px";
-      couponEl.style.zIndex = "700";
+      var rect = couponEl.getBoundingClientRect();
+      origLeft = rect.left;
+      origTop = rect.top;
+
+      couponEl.style.left = origLeft + "px";
+      couponEl.style.top = origTop + "px";
+      couponEl.style.transition = "none";
 
       startX = e.clientX;
       startY = e.clientY;
-
-      if (window.anime) {
-        anime({
-          targets: lid,
-          rotateX: -90,
-          opacity: 0,
-          duration: 300,
-          easing: "easeInQuad",
-        });
-      }
 
       couponEl.classList.add("coupon-dragging");
       document.addEventListener("pointermove", onPointerMove);
@@ -131,8 +115,15 @@
       e.preventDefault();
       var dx = e.clientX - startX;
       var dy = e.clientY - startY;
-      couponEl.style.left = (origX + dx) + "px";
-      couponEl.style.top = (origY + dy) + "px";
+      var newLeft = origLeft + dx;
+      var newTop = origTop + dy;
+
+      newLeft = Math.max(0, Math.min(window.innerWidth - 54, newLeft));
+      newTop = Math.max(0, Math.min(window.innerHeight - 54, newTop));
+
+      couponEl.style.left = newLeft + "px";
+      couponEl.style.top = newTop + "px";
+      positionHint();
 
       var drop = document.getElementById("coupon-drop");
       if (drop) {
@@ -162,49 +153,40 @@
         }
       }
 
-      couponEl.style.transition = "all 0.3s ease";
-      couponEl.style.left = (origX) + "px";
-      couponEl.style.top = (origY) + "px";
-      setTimeout(function () {
-        if (!couponEl) return;
-        couponEl.style.transition = "";
-        couponEl.style.position = "absolute";
-        couponEl.style.left = "3px";
-        couponEl.style.top = "3px";
-        couponEl.style.zIndex = "1";
-        if (window.anime) {
-          anime({
-            targets: lid,
-            rotateX: [90, 0],
-            opacity: [0, 1],
-            duration: 300,
-            easing: "easeOutQuad",
-          });
-        }
-        setTimeout(showHint, 3000);
-      }, 350);
+      var finalLeft = parseFloat(couponEl.style.left) || 0;
+      var finalTop = parseFloat(couponEl.style.top) || 0;
+      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: finalLeft, y: finalTop })); } catch (e) {}
+
+      positionHint();
+      setTimeout(showHint, 2000);
     }
 
     couponEl.addEventListener("pointerdown", onPointerDown);
   }
 
+  function positionHint() {
+    if (!couponEl || !couponHint) return;
+    var r = couponEl.getBoundingClientRect();
+    couponHint.style.left = (r.left + r.width / 2 - 20) + "px";
+    couponHint.style.top = (r.bottom + 6) + "px";
+  }
+
   function showHint() {
-    if (couponClaimed || couponDragging) return;
-    var h = couponBox ? couponBox.querySelector(".coupon-hint") : null;
-    if (h) h.classList.add("show");
-    hintTimer = setTimeout(hideHint, 4000);
+    if (couponClaimed || couponDragging || !couponHint) return;
+    positionHint();
+    couponHint.classList.add("show");
+    if (hintTimer) clearTimeout(hintTimer);
+    hintTimer = setTimeout(hideHint, 5000);
   }
 
   function hideHint() {
     if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
-    var h = couponBox ? couponBox.querySelector(".coupon-hint") : null;
-    if (h) h.classList.remove("show");
+    if (couponHint) couponHint.classList.remove("show");
   }
 
   function startHintLoop() {
-    if (couponClaimed) return;
     setInterval(function () {
-      if (!couponClaimed && !couponDragging) showHint();
+      if (!couponClaimed && !couponDragging && couponEl && couponEl.parentNode) showHint();
     }, 30000);
   }
 
@@ -215,6 +197,7 @@
         if (d.ok) {
           couponClaimed = true;
           hideHint();
+          try { localStorage.removeItem(COUPON_POS_KEY); } catch (e) {}
           if (window.anime && couponEl) {
             anime({
               targets: couponEl,
@@ -224,15 +207,17 @@
               duration: 500,
               easing: "easeInBack",
               complete: function () {
-                if (couponBox && couponBox.parentNode) couponBox.parentNode.removeChild(couponBox);
+                if (couponEl && couponEl.parentNode) couponEl.parentNode.removeChild(couponEl);
+                if (couponHint && couponHint.parentNode) couponHint.parentNode.removeChild(couponHint);
                 couponEl = null;
-                couponBox = null;
+                couponHint = null;
               },
             });
-          } else if (couponBox && couponBox.parentNode) {
-            couponBox.parentNode.removeChild(couponBox);
+          } else {
+            if (couponEl && couponEl.parentNode) couponEl.parentNode.removeChild(couponEl);
+            if (couponHint && couponHint.parentNode) couponHint.parentNode.removeChild(couponHint);
             couponEl = null;
-            couponBox = null;
+            couponHint = null;
           }
           var drop = document.getElementById("coupon-drop");
           if (drop) {
@@ -260,9 +245,10 @@
     if (!u) {
       box.innerHTML = '<a class="fsd-auth-btn fsd-login" href="/auth.html">' + T("Увійти") + "</a>";
       couponClaimed = false;
-      if (couponBox && couponBox.parentNode) couponBox.parentNode.removeChild(couponBox);
+      if (couponEl && couponEl.parentNode) couponEl.parentNode.removeChild(couponEl);
+      if (couponHint && couponHint.parentNode) couponHint.parentNode.removeChild(couponHint);
       couponEl = null;
-      couponBox = null;
+      couponHint = null;
       hideHint();
       var zone = document.getElementById("coupon-zone");
       if (zone) zone.classList.add("hidden");
@@ -279,8 +265,9 @@
       couponClaimed = true;
       showCouponBadge();
     } else {
-      setTimeout(initCoupon, 300);
-      startHintLoop();
+      var zone = document.getElementById("coupon-zone");
+      if (zone) zone.classList.remove("hidden");
+      setTimeout(initCoupon, 200);
     }
   }
 

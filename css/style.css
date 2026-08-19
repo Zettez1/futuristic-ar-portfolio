@@ -1049,31 +1049,12 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
 .fsd-status-sel option { background: #0b1020; color: #e2e8f0; }
 
 /* coupon 5% */
-.coupon-box {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin-left: 6px;
-  flex-shrink: 0;
-}
-.coupon-box-lid {
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  background: linear-gradient(140deg, #1a1f35, #12162a);
-  border: 1px solid rgba(251,191,36,0.25);
-  z-index: 2;
-  transform-origin: top center;
-  pointer-events: none;
-}
 .coupon-chip {
-  position: absolute;
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
+  position: fixed;
+  z-index: 600;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
   background: linear-gradient(140deg, #fbbf24, #f59e0b, #d97706);
   color: #04050c;
   font-weight: 800;
@@ -1088,14 +1069,14 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
     inset 0 1px 0 rgba(255,255,255,0.25);
   touch-action: none;
   user-select: none;
-  z-index: 1;
   border: 2px dashed rgba(4,5,12,0.2);
+  transition: box-shadow 0.2s;
 }
 .coupon-chip::after {
   content: "";
   position: absolute;
-  inset: 4px;
-  border-radius: 8px;
+  inset: 5px;
+  border-radius: 9px;
   border: 1.5px dashed rgba(4,5,12,0.18);
   pointer-events: none;
 }
@@ -1106,6 +1087,7 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
     0 0 0 3px rgba(251,191,36,0.4),
     inset 0 1px 0 rgba(255,255,255,0.25);
   z-index: 700;
+  transition: none;
 }
 .coupon-badge {
   display: inline-flex;
@@ -1124,10 +1106,8 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
   vertical-align: middle;
 }
 .coupon-hint {
-  position: absolute;
-  bottom: -28px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  z-index: 601;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1135,27 +1115,27 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s;
-  z-index: 10;
 }
 .coupon-hint.show { opacity: 1; }
 .coupon-hint-arrow {
   width: 0;
   height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 7px solid #fbbf24;
-  animation: couponBounce 1.2s ease-in-out infinite;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid #fbbf24;
+  animation: couponBounce 1s ease-in-out infinite;
 }
 .coupon-hint-text {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   color: #fbbf24;
   white-space: nowrap;
   letter-spacing: 0.05em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
 }
 @keyframes couponBounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(5px); }
+  50% { transform: translateY(6px); }
 }
 .coupon-drop-zone {
   border: 2px dashed rgba(251,191,36,0.35);
