@@ -36,34 +36,91 @@
 
   /* ---- coupon 5% widget ---- */
   var couponEl = null;
+  var couponBox = null;
   var couponClaimed = false;
   var couponDragging = false;
+  var hintTimer = null;
 
   function initCoupon() {
     if (couponClaimed || !state.user) return;
-    if (document.getElementById("coupon-chip")) return;
+    if (document.getElementById("coupon-box")) return;
 
-    var zone = document.getElementById("coupon-zone");
-    if (zone) zone.classList.remove("hidden");
+    couponBox = document.createElement("div");
+    couponBox.id = "coupon-box";
+    couponBox.className = "coupon-box";
+
+    var lid = document.createElement("div");
+    lid.className = "coupon-box-lid";
+    couponBox.appendChild(lid);
 
     couponEl = document.createElement("div");
     couponEl.id = "coupon-chip";
     couponEl.className = "coupon-chip";
-    couponEl.innerHTML = '<div class="coupon-inner">5%</div>';
+    couponEl.textContent = "5%";
     couponEl.setAttribute("title", T("Перетягніть для знижки 5%"));
-    document.body.appendChild(couponEl);
+    couponBox.appendChild(couponEl);
+
+    var hint = document.createElement("div");
+    hint.className = "coupon-hint";
+    hint.innerHTML = '<div class="coupon-hint-arrow"></div><div class="coupon-hint-text">' + T("Тягніть вниз") + "</div>";
+    couponBox.appendChild(hint);
+
+    host.appendChild(couponBox);
+
+    setTimeout(function () {
+      if (!couponBox || couponClaimed) return;
+      if (window.anime) {
+        anime({
+          targets: lid,
+          rotateX: [-90, 0],
+          opacity: [0, 1],
+          duration: 400,
+          easing: "easeOutQuad",
+        });
+        anime({
+          targets: couponEl,
+          translateY: [20, 0],
+          scale: [0.5, 1],
+          opacity: [0, 1],
+          duration: 500,
+          delay: 200,
+          easing: "easeOutBack",
+        });
+      }
+      setTimeout(showHint, 2000);
+    }, 600);
 
     var startX, startY, origX, origY;
 
     function onPointerDown(e) {
       if (couponClaimed) return;
       e.preventDefault();
+      hideHint();
       couponDragging = true;
-      var rect = couponEl.getBoundingClientRect();
+
+      var boxRect = couponBox.getBoundingClientRect();
+      origX = boxRect.left + 3;
+      origY = boxRect.top + 3;
+      couponEl.style.position = "fixed";
+      couponEl.style.left = origX + "px";
+      couponEl.style.top = origY + "px";
+      couponEl.style.width = "46px";
+      couponEl.style.height = "46px";
+      couponEl.style.zIndex = "700";
+
       startX = e.clientX;
       startY = e.clientY;
-      origX = rect.left;
-      origY = rect.top;
+
+      if (window.anime) {
+        anime({
+          targets: lid,
+          rotateX: -90,
+          opacity: 0,
+          duration: 300,
+          easing: "easeInQuad",
+        });
+      }
+
       couponEl.classList.add("coupon-dragging");
       document.addEventListener("pointermove", onPointerMove);
       document.addEventListener("pointerup", onPointerUp);
@@ -76,9 +133,6 @@
       var dy = e.clientY - startY;
       couponEl.style.left = (origX + dx) + "px";
       couponEl.style.top = (origY + dy) + "px";
-      couponEl.style.right = "auto";
-      couponEl.style.bottom = "auto";
-      couponEl.style.position = "fixed";
 
       var drop = document.getElementById("coupon-drop");
       if (drop) {
@@ -109,30 +163,49 @@
       }
 
       couponEl.style.transition = "all 0.3s ease";
-      var navRect = host.getBoundingClientRect();
-      couponEl.style.left = (navRect.right + 8) + "px";
-      couponEl.style.top = (navRect.top) + "px";
-      couponEl.style.right = "auto";
-      couponEl.style.bottom = "auto";
-      setTimeout(function () { if (couponEl) couponEl.style.transition = ""; }, 350);
+      couponEl.style.left = (origX) + "px";
+      couponEl.style.top = (origY) + "px";
+      setTimeout(function () {
+        if (!couponEl) return;
+        couponEl.style.transition = "";
+        couponEl.style.position = "absolute";
+        couponEl.style.left = "3px";
+        couponEl.style.top = "3px";
+        couponEl.style.zIndex = "1";
+        if (window.anime) {
+          anime({
+            targets: lid,
+            rotateX: [90, 0],
+            opacity: [0, 1],
+            duration: 300,
+            easing: "easeOutQuad",
+          });
+        }
+        setTimeout(showHint, 3000);
+      }, 350);
     }
 
     couponEl.addEventListener("pointerdown", onPointerDown);
+  }
 
-    var navRect = host.getBoundingClientRect();
-    couponEl.style.position = "fixed";
-    couponEl.style.left = (navRect.right + 8) + "px";
-    couponEl.style.top = (navRect.top) + "px";
+  function showHint() {
+    if (couponClaimed || couponDragging) return;
+    var h = couponBox ? couponBox.querySelector(".coupon-hint") : null;
+    if (h) h.classList.add("show");
+    hintTimer = setTimeout(hideHint, 4000);
+  }
 
-    if (window.anime) {
-      anime({
-        targets: couponEl,
-        scale: [0, 1.2, 1],
-        rotate: [180, 0],
-        duration: 600,
-        easing: "easeOutBack",
-      });
-    }
+  function hideHint() {
+    if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+    var h = couponBox ? couponBox.querySelector(".coupon-hint") : null;
+    if (h) h.classList.remove("show");
+  }
+
+  function startHintLoop() {
+    if (couponClaimed) return;
+    setInterval(function () {
+      if (!couponClaimed && !couponDragging) showHint();
+    }, 30000);
   }
 
   function claimCoupon() {
@@ -141,20 +214,25 @@
       .then(function (d) {
         if (d.ok) {
           couponClaimed = true;
-          if (couponEl) {
-            if (window.anime) {
-              anime({
-                targets: couponEl,
-                scale: [1, 1.4, 0],
-                opacity: [1, 1, 0],
-                duration: 500,
-                easing: "easeInBack",
-                complete: function () { if (couponEl && couponEl.parentNode) couponEl.parentNode.removeChild(couponEl); couponEl = null; },
-              });
-            } else if (couponEl.parentNode) {
-              couponEl.parentNode.removeChild(couponEl);
-              couponEl = null;
-            }
+          hideHint();
+          if (window.anime && couponEl) {
+            anime({
+              targets: couponEl,
+              scale: [1, 1.3, 0],
+              rotate: [0, 180],
+              opacity: [1, 1, 0],
+              duration: 500,
+              easing: "easeInBack",
+              complete: function () {
+                if (couponBox && couponBox.parentNode) couponBox.parentNode.removeChild(couponBox);
+                couponEl = null;
+                couponBox = null;
+              },
+            });
+          } else if (couponBox && couponBox.parentNode) {
+            couponBox.parentNode.removeChild(couponBox);
+            couponEl = null;
+            couponBox = null;
           }
           var drop = document.getElementById("coupon-drop");
           if (drop) {
@@ -182,9 +260,10 @@
     if (!u) {
       box.innerHTML = '<a class="fsd-auth-btn fsd-login" href="/auth.html">' + T("Увійти") + "</a>";
       couponClaimed = false;
-      var oldChip = document.getElementById("coupon-chip");
-      if (oldChip && oldChip.parentNode) oldChip.parentNode.removeChild(oldChip);
+      if (couponBox && couponBox.parentNode) couponBox.parentNode.removeChild(couponBox);
       couponEl = null;
+      couponBox = null;
+      hideHint();
       var zone = document.getElementById("coupon-zone");
       if (zone) zone.classList.add("hidden");
       return;
@@ -201,6 +280,7 @@
       showCouponBadge();
     } else {
       setTimeout(initCoupon, 300);
+      startHintLoop();
     }
   }
 
