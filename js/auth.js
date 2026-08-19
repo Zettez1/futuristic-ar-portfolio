@@ -242,10 +242,13 @@
 
   function claimCoupon() {
     fetch("/api/coupon/claim", { method: "POST", credentials: "same-origin" })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        return r.json().catch(function () { return { status: r.status }; });
+      })
       .then(function (d) {
-        if (d.ok) {
+        if (d && (d.ok || d.status === 409)) {
           couponClaimed = true;
+          if (state.user) state.user.coupon_5 = true;
           hideHint();
           try { localStorage.removeItem(COUPON_POS_KEY); } catch (e) {}
           if (window.anime && couponEl) {
@@ -274,13 +277,47 @@
             drop.innerHTML = '<div class="coupon-drop-ok">5% ' + T("знижку активовано!") + "</div>";
           }
           showCouponBadge();
+        } else {
+          restoreCoupon();
         }
       })
-      .catch(function () {});
+      .catch(function () { restoreCoupon(); });
+  }
+
+  function restoreCoupon() {
+    var vpLeft = parseFloat(couponEl && couponEl.style.left) || 0;
+    var vpTop = parseFloat(couponEl && couponEl.style.top) || 0;
+    if (couponEl) {
+      couponEl.style.position = "absolute";
+      couponEl.style.left = vpLeft + "px";
+      couponEl.style.top = (window.scrollY + vpTop) + "px";
+      couponEl.classList.remove("coupon-dragging");
+    }
+    var drop = document.getElementById("coupon-drop");
+    if (drop) drop.classList.remove("coupon-drop-hover");
+    try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: vpLeft, y: window.scrollY + vpTop, ts: Date.now() })); } catch (e) {}
+    if (couponHint) { positionHint(); }
+    setTimeout(showHint, 1000);
   }
 
   function showCouponBadge() {
     if (!state.user) return;
+    var btn = box.querySelector(".fsd-acc");
+    if (btn) {
+      var inside = btn.querySelector(".coupon-badge");
+      if (inside) return;
+      var b2 = document.createElement("span");
+      b2.className = "coupon-badge";
+      b2.textContent = "-5%";
+      b2.title = T("Знижка 5% активована");
+      var name = btn.querySelector(".fsd-auth-name");
+      if (name && name.nextSibling) {
+        btn.insertBefore(b2, name.nextSibling);
+      } else {
+        btn.appendChild(b2);
+      }
+      return;
+    }
     var existing = box.querySelector(".coupon-badge");
     if (existing) return;
     var badge = document.createElement("span");
@@ -414,7 +451,7 @@
           title.textContent = T("Проекти") + " · " + (d.count || 0);
           var couponInfo = "";
           if (d.coupon_5) {
-            couponInfo = '<span class="coupon-badge" style="margin-left:8px">5%</span>';
+            couponInfo = '<span class="coupon-badge" style="margin-left:8px">-5%</span>';
           }
           title.innerHTML = T("Проекти") + " · " + (d.count || 0) + couponInfo;
           if (!d.projects || !d.projects.length) {
