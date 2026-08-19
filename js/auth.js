@@ -84,7 +84,6 @@
     function onPointerDown(e) {
       if (couponClaimed) return;
       e.preventDefault();
-      hideHint();
       couponDragging = true;
 
       var rect = couponEl.getBoundingClientRect();
@@ -110,7 +109,22 @@
         if (x >= dr.left && x <= dr.right && y >= dr.top && y <= dr.bottom) return true;
       }
       var cr = couponEl.getBoundingClientRect();
-      return !(cr.right < dr.left || cr.left > dr.right || cr.bottom < dr.top || cr.top > dr.bottom);
+      var cx = cr.left + cr.width / 2;
+      var cy = cr.top + cr.height / 2;
+      return cx >= dr.left && cx <= dr.right && cy >= dr.top && cy <= dr.bottom;
+    }
+
+    function claimIfOver() {
+      var drop = document.getElementById("coupon-drop");
+      if (!drop) return false;
+      drop.classList.remove("coupon-drop-hover");
+      if (!overDrop(undefined, undefined)) return false;
+      couponDragging = false;
+      couponEl.classList.remove("coupon-dragging");
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      claimCoupon();
+      return true;
     }
 
     function onPointerMove(e) {
@@ -128,6 +142,13 @@
       couponEl.style.top = newTop + "px";
       positionHint();
 
+      var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (newTop >= window.innerHeight - 120 && window.scrollY < maxScroll) {
+        window.scrollBy(0, 14);
+      } else if (newTop <= 70 && window.scrollY > 0) {
+        window.scrollBy(0, -14);
+      }
+
       var drop = document.getElementById("coupon-drop");
       if (drop) {
         drop.classList.toggle("coupon-drop-hover", overDrop(e.clientX, e.clientY));
@@ -136,19 +157,15 @@
 
     function onPointerUp(e) {
       if (!couponDragging) return;
+      if (claimIfOver()) return;
+
       couponDragging = false;
       couponEl.classList.remove("coupon-dragging");
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
 
       var drop = document.getElementById("coupon-drop");
-      if (drop) {
-        drop.classList.remove("coupon-drop-hover");
-        if (overDrop(e.clientX, e.clientY)) {
-          claimCoupon();
-          return;
-        }
-      }
+      if (drop) drop.classList.remove("coupon-drop-hover");
 
       var vpLeft = parseFloat(couponEl.style.left) || 0;
       var vpTop = parseFloat(couponEl.style.top) || 0;
@@ -167,31 +184,8 @@
 
     function onScrollWhileDrag() {
       if (!couponDragging) return;
-      couponDragging = false;
-      couponEl.classList.remove("coupon-dragging");
-      document.removeEventListener("pointermove", onPointerMove);
-      document.removeEventListener("pointerup", onPointerUp);
-
-      var drop = document.getElementById("coupon-drop");
-      if (drop) {
-        drop.classList.remove("coupon-drop-hover");
-        if (overDrop(undefined, undefined)) {
-          claimCoupon();
-          return;
-        }
-      }
-
-      var vpLeft = parseFloat(couponEl.style.left) || 0;
-      var vpTop = parseFloat(couponEl.style.top) || 0;
-      var pageLeft = vpLeft;
-      var pageTop = window.scrollY + vpTop;
-
-      couponEl.style.position = "absolute";
-      couponEl.style.left = pageLeft + "px";
-      couponEl.style.top = pageTop + "px";
-
-      positionHint();
-      setTimeout(showHint, 1500);
+      claimIfOver();
+      window.setTimeout(positionHint, 0);
     }
     window.addEventListener("scroll", onScrollWhileDrag, { passive: true });
   }
