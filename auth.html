@@ -15,7 +15,7 @@
   <script src="/js/i18n-a.js?v=1" defer></script>
   <script src="/js/i18n-b.js?v=1" defer></script>
   <script src="/js/i18n-c.js?v=1" defer></script>
-  <script src="/js/i18n-d.js?v=8" defer></script>
+  <script src="/js/i18n-d.js?v=9" defer></script>
   <script src="/js/i18n.js?v=3" defer></script>
 </head>
 <body class="bg-[#04050c] text-slate-200 antialiased min-h-screen flex flex-col">
@@ -23,7 +23,7 @@
   <header class="border-b border-white/5 bg-[#05070f]">
     <div class="max-w-3xl mx-auto px-5 py-6 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2">
-        <span class="logo-mark w-8 h-8 rounded-lg grid place-items-center font-bold text-[#04050c] text-sm">FD</span>
+        <img src="/LOGO.png?v=2" alt="FastStart Digital" class="w-10 h-10 rounded-xl object-contain bg-white/5 ring-1 ring-white/10 select-none" draggable="false">
         <span class="font-display font-700 text-lg text-white">FastStart<span class="text-cyan-400"> Digital</span></span>
       </a>
       <div class="flex items-center gap-3" data-lang-host>
@@ -33,7 +33,7 @@
   </header>
 
   <main class="flex-1 flex items-center justify-center px-5 py-12">
-    <div class="w-full max-w-md">
+    <div class="w-full max-w-[380px]">
 
       <div class="glass rounded-2xl border border-white/10 shadow-2xl px-7 py-8">
         <div class="text-center mb-6">
@@ -48,36 +48,69 @@
           <button type="button" class="auth-tab font-semibold text-sm rounded-lg py-2.5 transition" data-tab="register" role="tab">Реєстрація</button>
         </div>
 
+        <!-- ======================= LOGIN ======================= -->
         <div class="auth-panel space-y-4" data-panel="login">
-          <a id="google-login" href="/api/auth/google" class="flex items-center justify-center gap-3 bg-white text-slate-900 font-semibold text-sm rounded-xl py-3 px-4 hover:bg-slate-100 transition">
-            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
-            Увійти з Google
-          </a>
+          <div id="login-main" class="space-y-4">
+            <a id="google-login" href="/api/auth/google" class="flex items-center justify-center gap-3 bg-white text-slate-900 font-semibold text-sm rounded-xl py-3 px-4 hover:bg-slate-100 transition">
+              <svg class="flex-none" width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+              Увійти з Google
+            </a>
 
-          <div class="flex items-center gap-3 text-xs text-slate-500">
-            <span class="h-px flex-1 bg-white/10"></span>
-            <span>або</span>
-            <span class="h-px flex-1 bg-white/10"></span>
+            <div class="flex items-center gap-3 text-xs text-slate-500">
+              <span class="h-px flex-1 bg-white/10"></span>
+              <span>або</span>
+              <span class="h-px flex-1 bg-white/10"></span>
+            </div>
+
+            <form id="login-form" class="space-y-3" novalidate>
+              <div>
+                <label for="login-email" class="block text-xs font-semibold text-slate-400 mb-1.5">Ваша пошта</label>
+                <input id="login-email" name="email" type="email" required autocomplete="email" placeholder="name@email.com"
+                  class="fsd-input w-full" />
+              </div>
+              <div>
+                <label for="login-password" class="block text-xs font-semibold text-slate-400 mb-1.5">Пароль</label>
+                <input id="login-password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••"
+                  class="fsd-input w-full" />
+              </div>
+              <div class="flex justify-end">
+                <button type="button" id="forgot-btn" class="text-xs font-semibold text-cyan-400 hover:text-cyan-300">Забули пароль?</button>
+              </div>
+              <button type="submit" class="cta-btn cta-primary w-full justify-center py-3 text-sm">Увійти</button>
+            </form>
           </div>
 
-          <form id="login-form" class="space-y-3" novalidate>
-            <div>
-              <label for="login-email" class="block text-xs font-semibold text-slate-400 mb-1.5">Ваша пошта</label>
-              <input id="login-email" name="email" type="email" required autocomplete="email" placeholder="name@email.com"
-                class="fsd-input w-full" />
+          <!-- password recovery -->
+          <div id="recover-box" class="hidden space-y-3">
+            <div class="text-center">
+              <div class="font-display font-semibold text-white" id="recover-title">Відновлення пароля</div>
+              <p class="text-xs text-slate-400 mt-1.5" id="recover-sub">Ми надішлемо код на вашу пошту</p>
             </div>
-            <div>
-              <label for="login-password" class="block text-xs font-semibold text-slate-400 mb-1.5">Пароль</label>
-              <input id="login-password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••"
+            <div id="recover-email-step" class="space-y-3">
+              <input id="recover-email" name="email" type="email" required autocomplete="email" placeholder="name@email.com"
                 class="fsd-input w-full" />
+              <button type="button" id="recover-send" class="cta-btn cta-primary w-full justify-center py-3 text-sm">Продовжити</button>
             </div>
-            <button type="submit" class="cta-btn cta-primary w-full justify-center py-3 text-sm">Увійти</button>
-          </form>
+            <div id="recover-code-step" class="hidden space-y-3">
+              <input id="recover-code" name="code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+                placeholder="000000" class="fsd-input w-full text-center text-lg tracking-[0.4em]" />
+              <input id="recover-password" name="password" type="password" required autocomplete="new-password" placeholder="Новий пароль (мін. 8 символів)"
+                class="fsd-input w-full" />
+              <input id="recover-password2" name="password2" type="password" required autocomplete="new-password" placeholder="Повторіть новий пароль"
+                class="fsd-input w-full" />
+              <button type="button" id="recover-confirm" class="cta-btn cta-primary w-full justify-center py-3 text-sm">Підтвердити</button>
+            </div>
+            <div class="flex justify-between text-xs">
+              <button type="button" id="recover-back" class="font-semibold text-slate-400 hover:text-slate-200">← Назад до входу</button>
+              <button type="button" id="recover-resend" class="font-semibold text-cyan-400 hover:text-cyan-300">Надіслати ще раз</button>
+            </div>
+          </div>
         </div>
 
+        <!-- ======================= REGISTER ======================= -->
         <div class="auth-panel hidden space-y-4" data-panel="register">
           <a id="google-register" href="/api/auth/google" class="flex items-center justify-center gap-3 bg-white text-slate-900 font-semibold text-sm rounded-xl py-3 px-4 hover:bg-slate-100 transition">
-            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+            <svg class="flex-none" width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.4 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.2 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
             Створити акаунт з Google
           </a>
 
@@ -158,6 +191,10 @@
           ' border rounded-lg px-4 py-3 text-center">' + html + "</div>";
       }
 
+      function hideMsg() {
+        document.getElementById("auth-msg").classList.add("hidden");
+      }
+
       function showTab(name) {
         cur = name;
         tabs.forEach(function (t) {
@@ -172,9 +209,9 @@
         hint.innerHTML = '<button type="button" class="text-cyan-400 hover:text-cyan-300 font-semibold" data-switch="' +
           (cur === "register" ? "login" : "register") + '">' +
           T(cur === "register" ? "Вже маєте акаунт? Увійдіть" : "Новий клієнт? Зареєструйтеся") + "</button>";
-        var m = document.getElementById("auth-msg");
-        m.classList.add("hidden");
+        hideMsg();
         if (cur === "register") document.getElementById("reg-code-box").classList.add("hidden");
+        if (cur === "login") closeRecover();
       }
 
       tabs.forEach(function (t) {
@@ -200,6 +237,7 @@
         btn.style.opacity = busy ? "0.6" : "1";
       }
 
+      /* ---------------- login ---------------- */
       document.getElementById("login-form").addEventListener("submit", function (e) {
         e.preventDefault();
         var email = document.getElementById("login-email").value.trim();
@@ -221,6 +259,89 @@
           .finally(function () { btnState(btn, false); });
       });
 
+      /* ---------------- recovery ---------------- */
+      var recoverEmail = "";
+      function openRecover() {
+        hideMsg();
+        document.getElementById("login-main").classList.add("hidden");
+        document.getElementById("recover-box").classList.remove("hidden");
+        document.getElementById("recover-email-step").classList.remove("hidden");
+        document.getElementById("recover-code-step").classList.add("hidden");
+        document.getElementById("recover-email").focus();
+      }
+      function closeRecover() {
+        document.getElementById("recover-box").classList.add("hidden");
+        document.getElementById("login-main").classList.remove("hidden");
+      }
+      document.getElementById("forgot-btn").addEventListener("click", openRecover);
+      document.getElementById("recover-back").addEventListener("click", closeRecover);
+
+      document.getElementById("recover-send").addEventListener("click", function () {
+        var email = document.getElementById("recover-email").value.trim();
+        if (!email) return;
+        var btn = this;
+        btnState(btn, true);
+        post("/api/auth/recover", { email: email })
+          .then(function (res) {
+            if (res.status === 200) {
+              recoverEmail = email;
+              document.getElementById("recover-email-step").classList.add("hidden");
+              document.getElementById("recover-code-step").classList.remove("hidden");
+              document.getElementById("recover-code").focus();
+              showMsg(T("Код надіслано на %s", email), true);
+            } else if (res.status === 404) {
+              showMsg(T("Цю пошту не знайдено"), false);
+            } else {
+              showMsg(T("Не вдалося відправити код. Спробуйте пізніше"), false);
+            }
+          })
+          .catch(function () { showMsg(T("Помилка з'єднання"), false); })
+          .finally(function () { btnState(btn, false); });
+      });
+
+      document.getElementById("recover-resend").addEventListener("click", function () {
+        var email = recoverEmail || document.getElementById("recover-email").value.trim();
+        if (!email) return;
+        var btn = this;
+        btnState(btn, true);
+        post("/api/auth/recover", { email: email })
+          .then(function (res) {
+            if (res.status === 200) showMsg(T("Код надіслано на %s", email), true);
+            else if (res.status === 404) showMsg(T("Цю пошту не знайдено"), false);
+            else showMsg(T("Не вдалося відправити код. Спробуйте пізніше"), false);
+          })
+          .catch(function () { showMsg(T("Помилка з'єднання"), false); })
+          .finally(function () { btnState(btn, false); });
+      });
+
+      document.getElementById("recover-confirm").addEventListener("click", function () {
+        var code = document.getElementById("recover-code").value.trim();
+        var pw = document.getElementById("recover-password").value;
+        var pw2 = document.getElementById("recover-password2").value;
+        if (pw !== pw2) { showMsg(T("Паролі не збігаються"), false); return; }
+        if (pw.length < 8) { showMsg(T("Пароль занадто короткий (мін. 8 символів)"), false); return; }
+        var btn = this;
+        btnState(btn, true);
+        post("/api/auth/recover/confirm", { email: recoverEmail, code: code, password: pw })
+          .then(function (res) {
+            if (res.status === 200) {
+              showMsg(T("Пароль змінено! Увійдіть з новим паролем"), true);
+              document.getElementById("recover-code-step").classList.add("hidden");
+              document.getElementById("recover-email-step").classList.remove("hidden");
+              setTimeout(function () { closeRecover(); }, 2500);
+            } else if (res.status === 400 && res.d.detail === "wrong code") {
+              showMsg(T("Невірний код. Спробуйте ще раз"), false);
+            } else if (res.status === 400 && res.d.detail === "code expired") {
+              showMsg(T("Код протерміновано. Надішліть новий"), false);
+            } else {
+              showMsg(T("Невірний код. Спробуйте ще раз"), false);
+            }
+          })
+          .catch(function () { showMsg(T("Помилка з'єднання"), false); })
+          .finally(function () { btnState(btn, false); });
+      });
+
+      /* ---------------- register ---------------- */
       var regEmail = "";
       document.getElementById("reg-form").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -287,11 +408,15 @@
           .finally(function () { btnState(btn, false); });
       });
 
-      var codeInput = document.getElementById("reg-code");
-      codeInput.addEventListener("input", function () {
-        this.value = this.value.replace(/[^\d]/g, "").slice(0, 6);
-        if (this.value.length === 6) document.getElementById("reg-confirm").click();
-      });
+      function bindCodeAuto(elId, btnId) {
+        var input = document.getElementById(elId);
+        input.addEventListener("input", function () {
+          this.value = this.value.replace(/[^\d]/g, "").slice(0, 6);
+          if (this.value.length === 6) document.getElementById(btnId).click();
+        });
+      }
+      bindCodeAuto("reg-code", "reg-confirm");
+      bindCodeAuto("recover-code", "recover-confirm");
     })();
   </script>
 </body>

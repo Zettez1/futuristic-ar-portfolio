@@ -328,6 +328,16 @@ class LoginPayload(BaseModel):
     password: str
 
 
+class RecoverPayload(BaseModel):
+    email: str
+
+
+class RecoverConfirmPayload(BaseModel):
+    email: str
+    code: str
+    password: str
+
+
 @app.post("/api/auth/register")
 def auth_register(payload: RegPayload) -> dict:
     email = (payload.email or "").strip().lower()
@@ -409,6 +419,63 @@ def auth_login(payload: LoginPayload) -> dict:
     resp = JSONResponse({"ok": True, "user": {"email": email, "name": name, "picture": u.get("picture", "")}})
     _set_session_cookie(resp, {"email": email, "name": name, "picture": u.get("picture", "")})
     return resp
+
+
+@app.post("/api/auth/recover")
+def auth_recover(payload: RecoverPayload) -> dict:
+    """Step 1 of password recovery: send a 6-digit code to the user's email."""
+    email = (payload.email or "").strip().lower()
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise HTTPException(400, "invalid email")
+    users = _read_users()
+    u = next((x for x in users if x.get("email") == email), None)
+    if not u or not u.get("pw_hash"):
+        raise HTTPException(404, "email not found")
+    code = f"{secrets.randbelow(900000) + 100000}"
+    _pending_verify[email] = {"code": code, "exp": time.time() + VERIFY_TTL, "mode": "recover"}
+    ok, info = _mail_send(
+        email,
+        "FastStart Digital — відновлення пароля",
+        _mail_frame(
+            "<p>Код для відновлення пароля:</p>"
+            f"<div style='font-size:30px;font-weight:800;letter-spacing:8px;color:#22d3ee;"
+            f"text-align:center;padding:12px;border:1px dashed #334155;border-radius:10px'>{code}</div>"
+            "<p style='color:#8b93b2;font-size:13px'>Код дійсний 10 хвилин. Якщо ви не запитували "
+            "відновлення пароля — проігноруйте цей лист.</p>",
+        ),
+    )
+    if not ok:
+        _pending_verify.pop(email, None)
+        raise HTTPException(502, f"mail send failed: {info}")
+    return {"ok": True, "email": email}
+
+
+@app.post("/api/auth/recover/confirm")
+def auth_recover_confirm(payload: RecoverConfirmPayload) -> dict:
+    """Step 2: code + new password -> update the account password."""
+    email = (payload.email or "").strip().lower()
+    code = (payload.code or "").strip()
+    pw = payload.password or ""
+    if len(pw) < 8:
+        raise HTTPException(400, "password too short")
+    p = _pending_verify.get(email)
+    if not p or p.get("mode") != "recover":
+        raise HTTPException(400, "no pending verification")
+    if int(time.time()) > p["exp"]:
+        _pending_verify.pop(email, None)
+        raise HTTPException(400, "code expired")
+    if code != p["code"]:
+        raise HTTPException(400, "wrong code")
+    _pending_verify.pop(email, None)
+    salt, h = _hash_password(pw)
+    users = _read_users()
+    u = next((x for x in users if x.get("email") == email), None)
+    if not u:
+        raise HTTPException(404, "email not found")
+    u["pw_salt"] = salt
+    u["pw_hash"] = h
+    _write_users(users)
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------- leads ----
