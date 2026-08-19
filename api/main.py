@@ -256,6 +256,12 @@ def auth_google_callback(request: Request):
                 with urllib.request.urlopen(tok_req, timeout=20) as tr:
                     tok = json.loads(tr.read().decode("utf-8"))
                 break
+            except urllib.error.HTTPError as e:
+                body = e.read().decode("utf-8", "replace")[:500]
+                print(f"[auth] token exchange attempt {attempt + 1} HTTP {e.code}: {body}")
+                last_err = e
+                if attempt < 2 and e.code != 400:
+                    time.sleep(1)
             except Exception as e:
                 last_err = e
                 print(f"[auth] token exchange attempt {attempt + 1} failed: {type(e).__name__}: {e}")
