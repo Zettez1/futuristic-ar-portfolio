@@ -40,6 +40,7 @@
   var couponClaimed = false;
   var couponDragging = false;
   var hintTimer = null;
+  var couponToastTimer = null;
 
   function initCoupon() {
     if (couponClaimed || !state.user) return;
@@ -80,6 +81,7 @@
     startHintLoop();
 
     var startX, startY, viewLeft, viewTop;
+    var lastX = 0, lastY = 0;
 
     function onPointerDown(e) {
       if (couponClaimed) return;
@@ -96,6 +98,8 @@
 
       startX = e.clientX;
       startY = e.clientY;
+      lastX = e.clientX;
+      lastY = e.clientY;
 
       document.addEventListener("pointermove", onPointerMove);
       document.addEventListener("pointerup", onPointerUp);
@@ -109,16 +113,14 @@
         if (x >= dr.left && x <= dr.right && y >= dr.top && y <= dr.bottom) return true;
       }
       var cr = couponEl.getBoundingClientRect();
-      var cx = cr.left + cr.width / 2;
-      var cy = cr.top + cr.height / 2;
-      return cx >= dr.left && cx <= dr.right && cy >= dr.top && cy <= dr.bottom;
+      return !(cr.right < dr.left || cr.left > dr.right || cr.bottom < dr.top || cr.top > dr.bottom);
     }
 
     function claimIfOver() {
       var drop = document.getElementById("coupon-drop");
       if (!drop) return false;
       drop.classList.remove("coupon-drop-hover");
-      if (!overDrop(undefined, undefined)) return false;
+      if (!overDrop(lastX, lastY) && !overDrop(undefined, undefined)) return false;
       couponDragging = false;
       couponEl.classList.remove("coupon-dragging");
       document.removeEventListener("pointermove", onPointerMove);
@@ -130,6 +132,8 @@
     function onPointerMove(e) {
       if (!couponDragging) return;
       e.preventDefault();
+      lastX = e.clientX;
+      lastY = e.clientY;
       var dx = e.clientX - startX;
       var dy = e.clientY - startY;
       var newLeft = viewLeft + dx;
@@ -270,7 +274,24 @@
     var drop = document.getElementById("coupon-drop");
     if (drop) drop.classList.remove("coupon-drop-hover");
     if (couponHint) { positionHint(); }
+    couponToast(T("Не вдалося активувати знижку. Спробуйте ще раз."));
     setTimeout(showHint, 1000);
+  }
+
+  function couponToast(msg) {
+    var t = document.getElementById("coupon-toast");
+    if (!t) {
+      t = document.createElement("div");
+      t.id = "coupon-toast";
+      t.className = "coupon-toast";
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(couponToastTimer);
+    couponToastTimer = setTimeout(function () {
+      t.classList.remove("show");
+    }, 4000);
   }
 
   function showCouponBadge() {

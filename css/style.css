@@ -1181,6 +1181,26 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
   color: #34d399;
   padding: 10px;
 }
+.coupon-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 800;
+  background: rgba(190, 18, 60, 0.95);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  max-width: calc(100vw - 40px);
+  text-align: center;
+}
+.coupon-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* auth page */
 .auth-wrap { max-width: 400px; margin: 0 auto; width: 100%; }
