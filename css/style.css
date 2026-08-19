@@ -1051,7 +1051,7 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
 /* coupon 5% */
 .coupon-chip {
   position: absolute;
-  z-index: 600;
+  z-index: 45;
   width: 54px;
   height: 54px;
   border-radius: 14px;
@@ -1114,7 +1114,7 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
 }
 .coupon-hint {
   position: fixed;
-  z-index: 601;
+  z-index: 44;
   display: flex;
   flex-direction: column;
   align-items: center;
