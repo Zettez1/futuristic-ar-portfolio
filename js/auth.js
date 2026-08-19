@@ -7,6 +7,19 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   };
 
+  var dbgCtx = {
+    uid: Math.random().toString(36).slice(2, 10),
+    t0: Date.now(),
+    lastPts: [],
+  };
+  function dbg(e, extra) {
+    var m = "[dbg?e=1] " + JSON.stringify({ uid: dbgCtx.uid, ms: Date.now() - dbgCtx.t0, e: e, x: extra || null });
+    console.log(m);
+    if (navigator.sendBeacon) {
+      try { navigator.sendBeacon("/api/debug/log", new Blob([JSON.stringify({ e: m })], { type: "application/json" })); } catch (err) {}
+    }
+  }
+
   var host = document.querySelector("#navbar .flex.items-center.gap-3") ||
     document.querySelector("[data-lang-host]");
   if (!host) return;
@@ -48,8 +61,9 @@
     var dropZone = document.getElementById("coupon-drop");
     if (!dropZone) return;
     dropZoneBound = true;
-    dropZone.addEventListener("click", function () {
-      if (couponClaimed) {
+dropZone.addEventListener("click", function (ev) {
+        dbg("zone-click", { loggedIn: !!state.user });
+        if (couponClaimed) {
         couponToast(T("Знижку вже активовано!"), true);
         return;
       }
@@ -108,6 +122,7 @@
 
     function onPointerDown(e) {
       if (couponClaimed) return;
+      dbg("pointerdown", { x: e.clientX, y: e.clientY });
       e.preventDefault();
       couponDragging = true;
 
@@ -145,7 +160,10 @@
       var drop = document.getElementById("coupon-drop");
       if (!drop) return false;
       drop.classList.remove("coupon-drop-hover");
-      if (!overDrop(lastX, lastY) && !overDrop(undefined, undefined)) return false;
+      var overCursor = overDrop(lastX, lastY);
+      var overRect = overDrop(undefined, undefined);
+      dbg("claimIfOver", { cursor: overCursor, rect: overRect, lx: lastX, ly: lastY });
+      if (!overCursor && !overRect) return false;
       couponDragging = false;
       couponEl.classList.remove("coupon-dragging");
       document.removeEventListener("pointermove", onPointerMove);
@@ -186,6 +204,7 @@
 
     function onPointerUp(e) {
       if (!couponDragging) return;
+      dbg("pointerup", { x: e.clientX, y: e.clientY });
       if (claimIfOver()) return;
 
       couponDragging = false;
@@ -246,8 +265,10 @@
   }
 
   function claimCoupon() {
+    dbg("claim-start", { loggedIn: !!state.user, couponClaimed: couponClaimed });
     fetch("/api/coupon/claim", { method: "POST", credentials: "same-origin" })
       .then(function (r) {
+        dbg("claim-resp", { status: r.status });
         return r.json().catch(function () { return { status: r.status }; });
       })
       .then(function (d) {
@@ -286,7 +307,7 @@
           restoreCoupon();
         }
       })
-      .catch(function () { restoreCoupon(); });
+      .catch(function (err) { dbg("claim-fail", String(err && err.message)); restoreCoupon(); });
   }
 
   function restoreCoupon() {

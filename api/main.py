@@ -1113,6 +1113,16 @@ def coupon_status(request: Request) -> dict:
     return {"ok": True, "claimed": bool(u and u.get("coupon_5"))}
 
 
+@app.post("/api/debug/log")
+def debug_log(request: Request) -> dict:
+    try:
+        b = request.json()
+    except Exception:
+        b = {}
+    print(f"[dbg] {b.get('e', '?')}")
+    return {"ok": True}
+
+
 @app.post("/api/coupon/claim")
 def coupon_claim(request: Request) -> dict:
     """Claim the one-time 5% discount coupon."""
