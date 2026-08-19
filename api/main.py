@@ -25,6 +25,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+import socket as _socket
 from collections import deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -55,6 +56,34 @@ async def _lifespan(app: FastAPI):
 
 
 app = FastAPI(title="FastStart Digital Portfolio", version="1.1.0", lifespan=_lifespan)
+
+
+# Outbound connects to Google API occasionally stall on IPv6 in Railway;
+# force IPv4 and short connect timeouts for urllib.
+_orig_create_connection = _socket.create_connection
+
+def _ipv4_create_connection(address, timeout=_socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
+    try:
+        host, port = address
+        infos = _socket.getaddrinfo(host, port, _socket.AF_INET, _socket.SOCK_STREAM)
+        family, socktype, proto, _, sockaddr = infos[0]
+        sock = _socket.socket(family, socktype, proto)
+        try:
+            sock.settimeout(timeout if timeout is not _socket._GLOBAL_DEFAULT_TIMEOUT else 20)
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(sockaddr)
+            return sock
+        except Exception:
+            sock.close()
+            raise
+    except Exception as e:
+        if not isinstance(e, (OSError,)):
+            raise
+        # fall back to original (covers odd address tuples)
+        return _orig_create_connection(address, timeout, source_address)
+
+_socket.create_connection = _ipv4_create_connection
 
 app.add_middleware(
     CORSMiddleware,
