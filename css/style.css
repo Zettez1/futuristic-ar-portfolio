@@ -1200,6 +1200,7 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
   max-width: calc(100vw - 40px);
   text-align: center;
 }
+.coupon-toast.ok { background: rgba(5, 150, 105, 0.95); }
 .coupon-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* auth page */

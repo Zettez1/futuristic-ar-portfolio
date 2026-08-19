@@ -109,11 +109,13 @@
       var drop = document.getElementById("coupon-drop");
       if (!drop) return false;
       var dr = drop.getBoundingClientRect();
+      var margin = 40;
+      var l = dr.left - margin, r = dr.right + margin, t = dr.top - margin, b = dr.bottom + margin;
       if (x !== undefined && y !== undefined) {
-        if (x >= dr.left && x <= dr.right && y >= dr.top && y <= dr.bottom) return true;
+        if (x >= l && x <= r && y >= t && y <= b) return true;
       }
       var cr = couponEl.getBoundingClientRect();
-      return !(cr.right < dr.left || cr.left > dr.right || cr.bottom < dr.top || cr.top > dr.bottom);
+      return !(cr.right < l || cr.left > r || cr.bottom < t || cr.top > b);
     }
 
     function claimIfOver() {
@@ -186,6 +188,19 @@
 
     couponEl.addEventListener("pointerdown", onPointerDown);
 
+    var dropZone = document.getElementById("coupon-drop");
+    if (dropZone && !dropZone.dataset.fsdClaimBound) {
+      dropZone.dataset.fsdClaimBound = "1";
+      dropZone.addEventListener("click", function () {
+        if (couponClaimed || !couponEl) return;
+        couponDragging = false;
+        couponEl.classList.remove("coupon-dragging");
+        document.removeEventListener("pointermove", onPointerMove);
+        document.removeEventListener("pointerup", onPointerUp);
+        claimCoupon();
+      });
+    }
+
     function onScrollWhileDrag() {
       if (!couponDragging) return;
       claimIfOver();
@@ -255,6 +270,7 @@
             drop.innerHTML = '<div class="coupon-drop-ok">5% ' + T("знижку активовано!") + "</div>";
           }
           showCouponBadge();
+          couponToast(T("Знижку 5% активовано!"), true);
         } else {
           restoreCoupon();
         }
@@ -278,7 +294,7 @@
     setTimeout(showHint, 1000);
   }
 
-  function couponToast(msg) {
+  function couponToast(msg, ok) {
     var t = document.getElementById("coupon-toast");
     if (!t) {
       t = document.createElement("div");
@@ -287,6 +303,7 @@
       document.body.appendChild(t);
     }
     t.textContent = msg;
+    t.classList.toggle("ok", !!ok);
     t.classList.add("show");
     clearTimeout(couponToastTimer);
     couponToastTimer = setTimeout(function () {
