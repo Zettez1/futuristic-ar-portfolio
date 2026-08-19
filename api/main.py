@@ -264,6 +264,10 @@ def auth_google_callback(request: Request):
 @app.get("/api/auth/me")
 def auth_me(request: Request) -> dict:
     u = _read_session(request)
+    if u:
+        users = _read_users()
+        db_u = next((x for x in users if x.get("email") == (u.get("email") or "").lower()), None)
+        u["coupon_5"] = bool(db_u and db_u.get("coupon_5"))
     return {"ok": bool(u), "user": u}
 
 
@@ -396,8 +400,9 @@ def auth_register(payload: RegPayload, request: Request) -> dict:
         "FastStart Digital — код підтвердження",
         _mail_frame(
             "<p>Ваш код підтвердження для реєстрації:</p>"
-            f"<div style='font-size:30px;font-weight:800;letter-spacing:8px;color:#22d3ee;"
-            f"text-align:center;padding:12px;border:1px dashed #334155;border-radius:10px'>{code}</div>"
+            f"<div style='font-size:30px;font-weight:800;letter-spacing:8px;color:#ffffff;"
+            f"text-align:center;padding:14px;border:1px dashed #334155;border-radius:10px;"
+            f"background:rgba(34,211,238,0.15)'>{code}</div>"
             "<p style='color:#8b93b2;font-size:13px'>Код дійсний 10 хвилин. Якщо ви не реєструвались у "
             "FastStart Digital — проігноруйте цей лист.</p>",
         ),
@@ -477,8 +482,9 @@ def auth_recover(payload: RecoverPayload, request: Request) -> dict:
         "FastStart Digital — відновлення пароля",
         _mail_frame(
             "<p>Код для відновлення пароля:</p>"
-            f"<div style='font-size:30px;font-weight:800;letter-spacing:8px;color:#22d3ee;"
-            f"text-align:center;padding:12px;border:1px dashed #334155;border-radius:10px'>{code}</div>"
+            f"<div style='font-size:30px;font-weight:800;letter-spacing:8px;color:#ffffff;"
+            f"text-align:center;padding:14px;border:1px dashed #334155;border-radius:10px;"
+            f"background:rgba(34,211,238,0.15)'>{code}</div>"
             "<p style='color:#8b93b2;font-size:13px'>Код дійсний 10 хвилин. Якщо ви не запитували "
             "відновлення пароля — проігноруйте цей лист.</p>",
         ),
@@ -970,7 +976,10 @@ def list_projects(request: Request, limit: int = 100) -> dict:
                 if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email]
     projects = rows[-limit:][::-1]
     dev_count = sum(1 for p in projects if (p.get("status") or "").strip() == "в розробці")
-    return {"count": len(projects), "dev_count": dev_count, "admin": is_admin, "projects": projects}
+    users = _read_users()
+    db_u = next((x for x in users if x.get("email") == email), None)
+    coupon_5 = bool(db_u and db_u.get("coupon_5"))
+    return {"count": len(projects), "dev_count": dev_count, "admin": is_admin, "coupon_5": coupon_5, "projects": projects}
 
 
 @app.patch("/api/projects/status")
@@ -991,6 +1000,39 @@ def set_project_status(request: Request, item: dict) -> dict:
             raise HTTPException(404, "project not found")
         target["status"] = status
         LEADS_FILE.write_text(json.dumps(rows, ensure_ascii=False, indent=2), "utf-8")
+    return {"ok": True}
+
+
+# --------------------------------------------------------- coupon 5% ----
+@app.get("/api/coupon/status")
+def coupon_status(request: Request) -> dict:
+    """Check if the current user has claimed the 5% coupon."""
+    session = _read_session(request)
+    if not session:
+        return {"ok": True, "claimed": False}
+    email = (session.get("email") or "").lower()
+    users = _read_users()
+    u = next((x for x in users if x.get("email") == email), None)
+    return {"ok": True, "claimed": bool(u and u.get("coupon_5"))}
+
+
+@app.post("/api/coupon/claim")
+def coupon_claim(request: Request) -> dict:
+    """Claim the one-time 5% discount coupon."""
+    session = _read_session(request)
+    if not session:
+        raise HTTPException(401, "auth required")
+    email = (session.get("email") or "").lower()
+    with _lock:
+        users = _read_users()
+        u = next((x for x in users if x.get("email") == email), None)
+        if not u:
+            raise HTTPException(404, "user not found")
+        if u.get("coupon_5"):
+            raise HTTPException(409, "already claimed")
+        u["coupon_5"] = True
+        u["coupon_5_claimed"] = datetime.now(timezone.utc).isoformat()
+        USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), "utf-8")
     return {"ok": True}
 
 

@@ -102,7 +102,11 @@
   "Пароль змінено! Увійдіть з новим паролем": { en: "Password changed! Log in with the new password", ru: "Пароль изменён! Войдите с новым паролем", sk: "Heslo zmenené! Prihláste sa novým heslom", pl: "Hasło zmienione! Zaloguj się nowym hasłem", de: "Passwort geändert! Melden Sie sich mit dem neuen Passwort an" },
   "Назад до входу": { en: "Back to log in", ru: "Назад ко входу", sk: "Späť na prihlásenie", pl: "Wróć do logowania", de: "Zurück zur Anmeldung" },
   "Новий пароль (мін. 8 символів)": { en: "New password (min 8 characters)", ru: "Новый пароль (мин. 8 символов)", sk: "Nové heslo (min. 8 znakov)", pl: "Nowe hasło (min. 8 znaków)", de: "Neues Passwort (mind. 8 Zeichen)" },
-  "Повторіть новий пароль": { en: "Repeat new password", ru: "Повторите новый пароль", sk: "Zopakujte nové heslo", pl: "Powtórz nowe hasło", de: "Neues Passwort wiederholen" }
+  "Повторіть новий пароль": { en: "Repeat new password", ru: "Повторите новый пароль", sk: "Zopakujte nové heslo", pl: "Powtórz nowe hasło", de: "Neues Passwort wiederholen" },
+  "Перетягніть купон сюди": { en: "Drag coupon here", ru: "Перетащите купон сюда", sk: "Pretiahnite kupón sem", pl: "Przeciągnij kupon tutaj", de: "Gutschein hierher ziehen" },
+  "Перетягніть для знижки 5%": { en: "Drag for 5% discount", ru: "Перетащите для скидки 5%", sk: "Pretiahnite pre zľavu 5%", pl: "Przeciągnij, aby uzyskać 5% zniżki", de: "Ziehen Sie für 5% Rabatt" },
+  "знижку активовано!": { en: "discount activated!", ru: "скидка активирована!", sk: "zľava aktivovaná!", pl: "rabat aktywowany!", de: "Rabatt aktiviert!" },
+  "Знижка 5% активована": { en: "5% discount activated", ru: "Скидка 5% активирована", sk: "Zľava 5% aktivovaná", pl: "Rabat 5% aktywowany", de: "5% Rabatt aktiviert" }
   };
   window.FSD_I18N_DICT = Object.assign({}, window.FSD_I18N_DICT, D);
 })();
