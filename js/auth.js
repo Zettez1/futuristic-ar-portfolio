@@ -117,6 +117,17 @@
       document.addEventListener("pointerup", onPointerUp);
     }
 
+    function overDrop(x, y) {
+      var drop = document.getElementById("coupon-drop");
+      if (!drop) return false;
+      var dr = drop.getBoundingClientRect();
+      if (x !== undefined && y !== undefined) {
+        if (x >= dr.left && x <= dr.right && y >= dr.top && y <= dr.bottom) return true;
+      }
+      var cr = couponEl.getBoundingClientRect();
+      return !(cr.right < dr.left || cr.left > dr.right || cr.bottom < dr.top || cr.top > dr.bottom);
+    }
+
     function onPointerMove(e) {
       if (!couponDragging) return;
       e.preventDefault();
@@ -134,10 +145,7 @@
 
       var drop = document.getElementById("coupon-drop");
       if (drop) {
-        var dr = drop.getBoundingClientRect();
-        var cr = couponEl.getBoundingClientRect();
-        var overlap = !(cr.right < dr.left || cr.left > dr.right || cr.bottom < dr.top || cr.top > dr.bottom);
-        drop.classList.toggle("coupon-drop-hover", overlap);
+        drop.classList.toggle("coupon-drop-hover", overDrop(e.clientX, e.clientY));
       }
     }
 
@@ -150,11 +158,8 @@
 
       var drop = document.getElementById("coupon-drop");
       if (drop) {
-        var dr = drop.getBoundingClientRect();
-        var cr = couponEl.getBoundingClientRect();
-        var overlap = !(cr.right < dr.left || cr.left > dr.right || cr.bottom < dr.top || cr.top > dr.bottom);
         drop.classList.remove("coupon-drop-hover");
-        if (overlap) {
+        if (overDrop(e.clientX, e.clientY)) {
           claimCoupon();
           return;
         }
@@ -183,6 +188,15 @@
       couponEl.classList.remove("coupon-dragging");
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+
+      var drop = document.getElementById("coupon-drop");
+      if (drop) {
+        drop.classList.remove("coupon-drop-hover");
+        if (overDrop(undefined, undefined)) {
+          claimCoupon();
+          return;
+        }
+      }
 
       var vpLeft = parseFloat(couponEl.style.left) || 0;
       var vpTop = parseFloat(couponEl.style.top) || 0;
@@ -271,7 +285,7 @@
     if (existing) return;
     var badge = document.createElement("span");
     badge.className = "coupon-badge";
-    badge.textContent = "5%";
+    badge.textContent = "-5%";
     badge.title = T("Знижка 5% активована");
     box.appendChild(badge);
   }

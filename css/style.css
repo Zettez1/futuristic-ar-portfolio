@@ -1105,6 +1105,12 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
   margin-left: 4px;
   vertical-align: middle;
+  animation: couponBadgeGlow 2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(251,191,36,0.5);
+}
+@keyframes couponBadgeGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(251,191,36,0.45); }
+  50% { box-shadow: 0 0 16px rgba(251,191,36,0.95); }
 }
 .coupon-hint {
   position: fixed;
