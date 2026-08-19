@@ -5,6 +5,13 @@
   var D = {
   "на": { en: "into", ru: "в", sk: "na", pl: "w", de: "in" },
   "AI-агент": { en: "AI agent", ru: "ИИ-агент", sk: "AI agent", pl: "Agent AI", de: "KI-Agent" },
+  "AR-перегляд товару для інтернет-магазину": { en: "AR product view for an online store", ru: "AR-просмотр товара для интернет-магазина", sk: "AR zobrazenie produktu pre internetový obchod", pl: "Podgląd AR produktu dla sklepu internetowego", de: "AR-Produktansicht für den Online-Shop" },
+  "Дмитро Мельник": { en: "Dmytro Melnyk", ru: "Дмитрий Мельник", sk: "Dmytro Melnyk", pl: "Dmytro Melnyk", de: "Dmytro Melnyk" },
+  "Олена Кравченко": { en: "Olena Kravchenko", ru: "Елена Кравченко", sk: "Olena Kravčenko", pl: "Olena Kravchenko", de: "Olena Kravchenko" },
+  "Сергій Гончар": { en: "Serhii Honchar", ru: "Сергей Гончар", sk: "Serhij Hončar", pl: "Serhij Honczar", de: "Serhii Honchar" },
+  "ДМ": { en: "DM", ru: "ДМ", sk: "DM", pl: "DM", de: "DM" },
+  "ОК": { en: "OK", ru: "ЕК", sk: "OK", pl: "OK", de: "OK" },
+  "СГ": { en: "SH", ru: "СГ", sk: "SH", pl: "SH", de: "SH" },
   "AI-агент для вашого бізнесу": { en: "AI agent for your business", ru: "ИИ-агент для вашего бизнеса", sk: "AI agent pre váš biznis", pl: "Agent AI dla Twojego biznesu", de: "KI-Agent für Ihr Unternehmen" },
   "Інтеграції: CRM, платежі, Telegram": { en: "Integrations: CRM, payments, Telegram", ru: "Интеграции: CRM, платежи, Telegram", sk: "Integrácie: CRM, platby, Telegram", pl: "Integracje: CRM, płatności, Telegram", de: "Integrationen: CRM, Zahlungen, Telegram" },
   "Інтеграція у сайт чи каталог": { en: "Integration into a website or catalog", ru: "Интеграция в сайт или каталог", sk: "Integrácia do webu alebo katalógu", pl: "Integracja ze stroną lub katalogiem", de: "Integration in Website oder Katalog" },
