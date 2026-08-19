@@ -202,30 +202,11 @@ def auth_google_callback(request: Request):
     email = (user.get("email") or "").lower()
     now = datetime.now(timezone.utc).isoformat()
     # register-or-login: first Google login creates a client account (users.json)
-    registered = False
-    with _lock:
-        users = []
-        if USERS_FILE.exists():
-            try:
-                users = json.loads(USERS_FILE.read_text("utf-8"))
-            except json.JSONDecodeError:
-                users = []
-        existing = next((u for u in users if u.get("email") == email), None)
-        if existing:
-            existing["last_login"] = now
-            existing["name"] = user.get("name", existing.get("name", ""))
-            existing["picture"] = user.get("picture", existing.get("picture", ""))
-        else:
-            users.append({
-                "email": email,
-                "name": user.get("name", ""),
-                "picture": user.get("picture", ""),
-                "created": now,
-                "last_login": now,
-                "admin": email in AUTH_ADMIN_EMAILS,
-            })
-            registered = True
-        USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), "utf-8")
+    registered = _upsert_user({
+        "email": email,
+        "name": user.get("name", ""),
+        "picture": user.get("picture", ""),
+    })
     res = RedirectResponse("/?auth=registered" if registered else "/?auth=ok", status_code=303)
     _set_session_cookie(res, {
         "email": email,
@@ -264,6 +245,169 @@ def auth_me(request: Request) -> dict:
 def auth_logout() -> JSONResponse:
     resp = JSONResponse({"ok": True})
     _clear_session_cookie(resp)
+    return resp
+
+
+# --------------------------------------------------- email/password auth ----
+VERIFY_TTL = 600            # code lifetime, seconds
+_pending_verify: dict[str, dict] = {}   # email -> {code, exp, salt, hash}
+
+
+def _read_users() -> list:
+    with _lock:
+        if USERS_FILE.exists():
+            try:
+                return json.loads(USERS_FILE.read_text("utf-8"))
+            except json.JSONDecodeError:
+                pass
+    return []
+
+
+def _write_users(users: list) -> None:
+    with _lock:
+        USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), "utf-8")
+
+
+def _upsert_user(rec: dict) -> bool:
+    """Create or update a user record (by email). Returns True if newly created."""
+    now = datetime.now(timezone.utc).isoformat()
+    with _lock:
+        users = []
+        if USERS_FILE.exists():
+            try:
+                users = json.loads(USERS_FILE.read_text("utf-8"))
+            except json.JSONDecodeError:
+                users = []
+        existing = next((u for u in users if u.get("email") == rec["email"]), None)
+        if existing:
+            for k in ("name", "picture"):
+                if rec.get(k):
+                    existing[k] = rec[k]
+            existing["verified"] = True
+            existing["last_login"] = now
+            existing["admin"] = rec["email"] in AUTH_ADMIN_EMAILS
+            if rec.get("pw_hash") and not existing.get("pw_hash"):
+                existing["pw_salt"] = rec["pw_salt"]
+                existing["pw_hash"] = rec["pw_hash"]
+            USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), "utf-8")
+            return False
+        rec.setdefault("verified", True)
+        rec.setdefault("created", now)
+        rec.setdefault("last_login", now)
+        rec["admin"] = rec["email"] in AUTH_ADMIN_EMAILS
+        users.append(rec)
+        USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), "utf-8")
+        return True
+
+
+def _hash_password(pw: str) -> tuple[str, str]:
+    salt = secrets.token_hex(16)
+    h = hashlib.pbkdf2_hmac("sha256", pw.encode("utf-8"), salt.encode("utf-8"), 120_000).hex()
+    return salt, h
+
+
+def _check_password(pw: str, salt: str, h: str) -> bool:
+    if not salt or not h:
+        return False
+    return hmac.compare_digest(
+        hashlib.pbkdf2_hmac("sha256", pw.encode("utf-8"), salt.encode("utf-8"), 120_000).hex(), h)
+
+
+class RegPayload(BaseModel):
+    email: str
+    password: str
+
+
+class VerifyPayload(BaseModel):
+    email: str
+    code: str
+
+
+class LoginPayload(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/api/auth/register")
+def auth_register(payload: RegPayload) -> dict:
+    email = (payload.email or "").strip().lower()
+    pw = payload.password or ""
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise HTTPException(400, "invalid email")
+    if len(pw) < 8:
+        raise HTTPException(400, "password too short")
+    with _lock:
+        users = []
+        if USERS_FILE.exists():
+            try:
+                users = json.loads(USERS_FILE.read_text("utf-8"))
+            except json.JSONDecodeError:
+                users = []
+        if any(u.get("email") == email for u in users):
+            raise HTTPException(409, "email exists")
+    code = f"{secrets.randbelow(900000) + 100000}"
+    salt, h = _hash_password(pw)
+    _pending_verify[email] = {"code": code, "exp": time.time() + VERIFY_TTL, "salt": salt, "hash": h}
+    ok, info = _mail_send(
+        email,
+        "FastStart Digital — код підтвердження",
+        _mail_frame(
+            "<p>Ваш код підтвердження для реєстрації:</p>"
+            f"<div style='font-size:30px;font-weight:800;letter-spacing:8px;color:#22d3ee;"
+            f"text-align:center;padding:12px;border:1px dashed #334155;border-radius:10px'>{code}</div>"
+            "<p style='color:#8b93b2;font-size:13px'>Код дійсний 10 хвилин. Якщо ви не реєструвались у "
+            "FastStart Digital — проігноруйте цей лист.</p>",
+        ),
+    )
+    if not ok:
+        _pending_verify.pop(email, None)
+        raise HTTPException(502, f"mail send failed: {info}")
+    return {"ok": True, "email": email}
+
+
+@app.post("/api/auth/verify")
+def auth_verify(payload: VerifyPayload) -> dict:
+    email = (payload.email or "").strip().lower()
+    code = (payload.code or "").strip()
+    p = _pending_verify.get(email)
+    if not p:
+        raise HTTPException(400, "no pending verification")
+    if int(time.time()) > p["exp"]:
+        _pending_verify.pop(email, None)
+        raise HTTPException(400, "code expired")
+    if code != p["code"]:
+        raise HTTPException(400, "wrong code")
+    _pending_verify.pop(email, None)
+    name = email.split("@")[0]
+    _upsert_user({
+        "email": email,
+        "name": name,
+        "picture": "",
+        "pw_salt": p["salt"],
+        "pw_hash": p["hash"],
+    })
+    resp = JSONResponse({"ok": True, "user": {"email": email, "name": name, "picture": ""}})
+    _set_session_cookie(resp, {"email": email, "name": name, "picture": ""})
+    return resp
+
+
+@app.post("/api/auth/login")
+def auth_login(payload: LoginPayload) -> dict:
+    email = (payload.email or "").strip().lower()
+    pw = payload.password or ""
+    users = _read_users()
+    u = next((x for x in users if x.get("email") == email), None)
+    if not u:
+        raise HTTPException(401, "bad credentials")
+    if not u.get("pw_hash"):
+        raise HTTPException(401, "use google login")
+    if not _check_password(pw, u.get("pw_salt", ""), u.get("pw_hash", "")):
+        raise HTTPException(401, "bad credentials")
+    u["last_login"] = datetime.now(timezone.utc).isoformat()
+    _write_users(users)
+    name = u.get("name") or email.split("@")[0]
+    resp = JSONResponse({"ok": True, "user": {"email": email, "name": name, "picture": u.get("picture", "")}})
+    _set_session_cookie(resp, {"email": email, "name": name, "picture": u.get("picture", "")})
     return resp
 
 

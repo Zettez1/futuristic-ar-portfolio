@@ -73,7 +73,27 @@
   "Акаунт створено!": { en: "Account created!", ru: "Аккаунт создан!", sk: "Účet vytvorený!", pl: "Konto utworzone!", de: "Konto erstellt!" },
   "Новий клієнт? Зареєструйтеся": { en: "New client? Register", ru: "Новый клиент? Зарегистрируйтесь", sk: "Nový klient? Zaregistrujte sa", pl: "Nowy klient? Zarejestruj się", de: "Neuer Kunde? Registrieren" },
   "Вже маєте акаунт? Увійдіть": { en: "Already have an account? Log in", ru: "Уже есть аккаунт? Войдите", sk: "Už máte účet? Prihláste sa", pl: "Masz już konto? Zaloguj się", de: "Schon ein Konto? Anmelden" },
-  "Захищено Google OAuth. Паролі не зберігаються на нашому сервері.": { en: "Secured by Google OAuth. Passwords are never stored on our servers.", ru: "Защищено Google OAuth. Пароли не хранятся на нашем сервере.", sk: "Chránené Google OAuth. Heslá sa na našom serveri neukladajú.", pl: "Zabezpieczone przez Google OAuth. Hasła nie są przechowywane na naszym serwerze.", de: "Geschützt durch Google OAuth. Passwörter werden nie auf unseren Servern gespeichert." }
+  "Захищено Google OAuth. Паролі не зберігаються на нашому сервері.": { en: "Secured by Google OAuth. Passwords are never stored on our servers.", ru: "Защищено Google OAuth. Пароли не хранятся на нашем сервере.", sk: "Chránené Google OAuth. Heslá sa na našom serveri neukladajú.", pl: "Zabezpieczone przez Google OAuth. Hasła nie są przechowywane na naszym serwerze.", de: "Geschützt durch Google OAuth. Passwörter werden nie auf unseren Servern gespeichert." },
+  "Ваша пошта": { en: "Your email", ru: "Ваша почта", sk: "Váš e-mail", pl: "Twój e-mail", de: "Ihre E-Mail" },
+  "Пароль": { en: "Password", ru: "Пароль", sk: "Heslo", pl: "Hasło", de: "Passwort" },
+  "Повторіть пароль": { en: "Repeat password", ru: "Повторите пароль", sk: "Zopakujte heslo", pl: "Powtórz hasło", de: "Passwort wiederholen" },
+  "Код із листа": { en: "Code from email", ru: "Код из письма", sk: "Kód z e-mailu", pl: "Kod z e-maila", de: "Code aus der E-Mail" },
+  "або": { en: "or", ru: "или", sk: "alebo", pl: "lub", de: "oder" },
+  "Відправити код": { en: "Send code", ru: "Отправить код", sk: "Odoslať kód", pl: "Wyślij kod", de: "Code senden" },
+  "Підтвердити": { en: "Confirm", ru: "Подтвердить", sk: "Potvrdiť", pl: "Potwierdź", de: "Bestätigen" },
+  "Надіслати ще раз": { en: "Send again", ru: "Отправить ещё раз", sk: "Odoslať znova", pl: "Wyślij ponownie", de: "Erneut senden" },
+  "Код надіслано на %s": { en: "Code sent to %s", ru: "Код отправлен на %s", sk: "Kód odoslaný na %s", pl: "Kod wysłany na %s", de: "Code an %s gesendet" },
+  "Ця пошта вже зареєстрована": { en: "This email is already registered", ru: "Эта почта уже зарегистрирована", sk: "Tento e-mail je už zaregistrovaný", pl: "Ten e-mail jest już zarejestrowany", de: "Diese E-Mail ist bereits registriert" },
+  "Невірна пошта": { en: "Invalid email", ru: "Неверная почта", sk: "Neplatný e-mail", pl: "Nieprawidłowy e-mail", de: "Ungültige E-Mail" },
+  "Пароль занадто короткий (мін. 8 символів)": { en: "Password too short (min 8 characters)", ru: "Пароль слишком короткий (мин. 8 символов)", sk: "Heslo je príliš krátke (min. 8 znakov)", pl: "Hasło za krótkie (min. 8 znaków)", de: "Passwort zu kurz (mind. 8 Zeichen)" },
+  "Паролі не збігаються": { en: "Passwords do not match", ru: "Пароли не совпадают", sk: "Heslá sa nezhodujú", pl: "Hasła nie są zgodne", de: "Passwörter stimmen nicht überein" },
+  "Невірний код. Спробуйте ще раз": { en: "Wrong code. Try again", ru: "Неверный код. Попробуйте ещё раз", sk: "Nesprávny kód. Skúste to znova", pl: "Błędny kod. Spróbuj ponownie", de: "Falscher Code. Versuchen Sie es erneut" },
+  "Код протерміновано. Надішліть новий": { en: "Code expired. Request a new one", ru: "Код просрочен. Отправьте новый", sk: "Kód vypršal. Pošlite nový", pl: "Kod wygasł. Wyślij nowy", de: "Code abgelaufen. Fordern Sie einen neuen an" },
+  "Помилка з'єднання": { en: "Connection error", ru: "Ошибка соединения", sk: "Chyba spojenia", pl: "Błąd połączenia", de: "Verbindungsfehler" },
+  "Невірна пошта або пароль": { en: "Wrong email or password", ru: "Неверная почта или пароль", sk: "Nesprávny e-mail alebo heslo", pl: "Nieprawidłowy e-mail lub hasło", de: "Falsche E-Mail oder falsches Passwort" },
+  "Цей акаунт створено через Google. Увійдіть через Google": { en: "This account was created with Google. Please log in with Google", ru: "Этот аккаунт создан через Google. Войдите через Google", sk: "Tento účet bol vytvorený cez Google. Prihláste sa cez Google", pl: "To konto zostało utworzone przez Google. Zaloguj się przez Google", de: "Dieses Konto wurde mit Google erstellt. Bitte mit Google anmelden" },
+  "Не вдалося відправити код. Спробуйте пізніше": { en: "Failed to send the code. Try again later", ru: "Не удалось отправить код. Попробуйте позже", sk: "Nepodarilo sa odoslať kód. Skúste neskôr", pl: "Nie udało się wysłać kodu. Spróbuj później", de: "Code konnte nicht gesendet werden. Versuchen Sie es später" },
+  "Захищено Google OAuth. Паролі зберігаються в зашифрованому вигляді.": { en: "Secured by Google OAuth. Passwords are stored encrypted.", ru: "Защищено Google OAuth. Пароли хранятся в зашифрованном виде.", sk: "Chránené Google OAuth. Heslá sú uložené šifrované.", pl: "Zabezpieczone przez Google OAuth. Hasła są przechowywane w formie zaszyfrowanej.", de: "Geschützt durch Google OAuth. Passwörter werden verschlüsselt gespeichert." }
   };
   window.FSD_I18N_DICT = Object.assign({}, window.FSD_I18N_DICT, D);
 })();
