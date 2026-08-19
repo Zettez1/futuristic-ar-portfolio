@@ -135,6 +135,11 @@ AUTH_COOKIE = "fsd_session"
 AUTH_STATE_COOKIE = "fsd_oauth_state"
 SESSION_TTL = 7 * 24 * 3600
 
+# OAuth codes are single-use. Cloudflare/клієнти іноді повторюють callback —
+# тоді повторний обмін дає invalid_grant, а користувач уже увійшов.
+# Зберігаємо код → дані користувача на 10 хв, щоб повторний callback видав сесію.
+_USED_OAUTH_CODES: dict[str, dict] = {}
+
 
 def _auth_key() -> str:
     # Fixed from env when possible (survives restarts); fallback: per-process random.
@@ -274,6 +279,17 @@ def auth_google_callback(request: Request):
                 if attempt < 2:
                     time.sleep(1)
         if tok is None:
+            # Код Google одноразовий: якщо callback повторився (Cloudflare retry,
+            # double-click тощо), перший обмін міг уже створити сесію — видаємо її.
+            cached = _USED_OAUTH_CODES.get(code)
+            if cached:
+                res = RedirectResponse("/?auth=ok", status_code=303)
+                _set_session_cookie(res, {
+                    "email": cached["email"],
+                    "name": cached["name"],
+                    "picture": cached["picture"],
+                })
+                return res
             raise HTTPException(502, f"token exchange failed: {type(last_err).__name__}: {last_err}")
         access_token = tok.get("access_token")
         if not access_token:
@@ -302,6 +318,12 @@ def auth_google_callback(request: Request):
         raise HTTPException(502, "Google auth upstream error")
     email = (user.get("email") or "").lower()
     now = datetime.now(timezone.utc).isoformat()
+    # remember code → user so a retried callback still issues a session
+    _USED_OAUTH_CODES[code] = {
+        "email": email,
+        "name": user.get("name", ""),
+        "picture": user.get("picture", ""),
+    }
     # register-or-login: first Google login creates a client account (users.json)
     registered = _upsert_user({
         "email": email,
