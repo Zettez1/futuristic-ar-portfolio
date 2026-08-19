@@ -52,15 +52,11 @@
     couponEl.setAttribute("title", T("Перетягніть для знижки 5%"));
     couponEl.style.position = "absolute";
 
-    var chipRect = (box && box.querySelector(".fsd-acc"))
-      ? box.getBoundingClientRect()
-      : host.getBoundingClientRect();
     var vw = window.innerWidth;
-    var left = chipRect.right + 10;
-    if (left + 54 > vw - 8) left = chipRect.left - 54 - 10;
+    var vh = window.innerHeight;
     couponEl.style.position = "fixed";
-    couponEl.style.left = Math.max(8, left) + "px";
-    couponEl.style.top = chipRect.top + "px";
+    couponEl.style.left = (vw - 54 - 18) + "px";
+    couponEl.style.top = Math.max(84, (vh * 0.10)) + "px";
 
     document.body.appendChild(couponEl);
 
@@ -80,7 +76,7 @@
       });
     }
 
-    setTimeout(showHint, 1500);
+    setTimeout(function () { showHint(); }, 800);
     startHintLoop();
 
     var startX, startY, viewLeft, viewTop;
@@ -208,11 +204,10 @@
   }
 
   function showHint() {
-    if (couponClaimed || couponDragging || !couponHint) return;
+    if (couponClaimed || !couponHint) return;
     positionHint();
     couponHint.classList.add("show");
-    if (hintTimer) clearTimeout(hintTimer);
-    hintTimer = setTimeout(hideHint, 5000);
+    if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
   }
 
   function hideHint() {
