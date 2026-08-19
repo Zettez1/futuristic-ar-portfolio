@@ -51,6 +51,7 @@
     couponEl.className = "coupon-chip";
     couponEl.textContent = "5%";
     couponEl.setAttribute("title", T("Перетягніть для знижки 5%"));
+    couponEl.style.position = "absolute";
 
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem(COUPON_POS_KEY)); } catch (e) {}
@@ -60,7 +61,7 @@
     } else {
       var navRect = host.getBoundingClientRect();
       couponEl.style.left = (navRect.right - 10) + "px";
-      couponEl.style.top = (navRect.bottom + 10) + "px";
+      couponEl.style.top = (window.scrollY + navRect.bottom + 10) + "px";
     }
 
     document.body.appendChild(couponEl);
@@ -86,7 +87,7 @@
     setTimeout(showHint, 1500);
     startHintLoop();
 
-    var startX, startY, origLeft, origTop;
+    var startX, startY, viewLeft, viewTop;
 
     function onPointerDown(e) {
       if (couponClaimed) return;
@@ -95,17 +96,16 @@
       couponDragging = true;
 
       var rect = couponEl.getBoundingClientRect();
-      origLeft = rect.left;
-      origTop = rect.top;
+      viewLeft = rect.left;
+      viewTop = rect.top;
 
-      couponEl.style.left = origLeft + "px";
-      couponEl.style.top = origTop + "px";
-      couponEl.style.transition = "none";
+      couponEl.classList.add("coupon-dragging");
+      couponEl.style.left = viewLeft + "px";
+      couponEl.style.top = viewTop + "px";
 
       startX = e.clientX;
       startY = e.clientY;
 
-      couponEl.classList.add("coupon-dragging");
       document.addEventListener("pointermove", onPointerMove);
       document.addEventListener("pointerup", onPointerUp);
     }
@@ -115,8 +115,8 @@
       e.preventDefault();
       var dx = e.clientX - startX;
       var dy = e.clientY - startY;
-      var newLeft = origLeft + dx;
-      var newTop = origTop + dy;
+      var newLeft = viewLeft + dx;
+      var newTop = viewTop + dy;
 
       newLeft = Math.max(0, Math.min(window.innerWidth - 54, newLeft));
       newTop = Math.max(0, Math.min(window.innerHeight - 54, newTop));
@@ -153,9 +153,16 @@
         }
       }
 
-      var finalLeft = parseFloat(couponEl.style.left) || 0;
-      var finalTop = parseFloat(couponEl.style.top) || 0;
-      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: finalLeft, y: finalTop })); } catch (e) {}
+      var vpLeft = parseFloat(couponEl.style.left) || 0;
+      var vpTop = parseFloat(couponEl.style.top) || 0;
+      var pageLeft = vpLeft;
+      var pageTop = window.scrollY + vpTop;
+
+      couponEl.style.position = "absolute";
+      couponEl.style.left = pageLeft + "px";
+      couponEl.style.top = pageTop + "px";
+
+      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: pageLeft, y: pageTop })); } catch (e) {}
 
       positionHint();
       setTimeout(showHint, 2000);
@@ -169,9 +176,17 @@
       couponEl.classList.remove("coupon-dragging");
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
-      var finalLeft = parseFloat(couponEl.style.left) || 0;
-      var finalTop = parseFloat(couponEl.style.top) || 0;
-      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: finalLeft, y: finalTop })); } catch (e) {}
+
+      var vpLeft = parseFloat(couponEl.style.left) || 0;
+      var vpTop = parseFloat(couponEl.style.top) || 0;
+      var pageLeft = vpLeft;
+      var pageTop = window.scrollY + vpTop;
+
+      couponEl.style.position = "absolute";
+      couponEl.style.left = pageLeft + "px";
+      couponEl.style.top = pageTop + "px";
+
+      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: pageLeft, y: pageTop })); } catch (e) {}
       positionHint();
       setTimeout(showHint, 1500);
     }
