@@ -198,13 +198,19 @@ def auth_google_start(request: Request):
     if not _oauth_ready():
         raise HTTPException(503, "Google OAuth is not configured (missing env)")
     state = secrets.token_urlsafe(24)
-    url = ("https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
+    params = {
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": AUTH_REDIRECT_URI,
         "response_type": "code",
         "scope": "openid email profile",
         "state": state,
-    }))
+    }
+    mode = request.query_params.get("mode", "none")
+    if mode == "select":
+        params["prompt"] = "select_account"
+    else:
+        params["prompt"] = "none"
+    url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
     resp = RedirectResponse(url, status_code=302)
     resp.set_cookie(AUTH_STATE_COOKIE, state, max_age=300,
                     httponly=True, samesite="lax", secure=True, path="/")
@@ -220,6 +226,11 @@ def auth_google_callback(request: Request):
     code = request.query_params.get("code", "")
     state = request.query_params.get("state", "")
     saved = request.cookies.get(AUTH_STATE_COOKIE, "")
+    err = request.query_params.get("error", "")
+    if err:
+        if err == "interaction_required":
+            return RedirectResponse("/api/auth/google?mode=select", status_code=307)
+        raise HTTPException(400, f"Google OAuth error: {err}")
     if not code or not state or not saved or not hmac.compare_digest(state, saved):
         raise HTTPException(400, "invalid OAuth state")
     if not _oauth_ready():
