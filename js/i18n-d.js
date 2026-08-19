@@ -107,7 +107,8 @@
   "Перетягніть для знижки 5%": { en: "Drag for 5% discount", ru: "Перетащите для скидки 5%", sk: "Pretiahnite pre zľavu 5%", pl: "Przeciągnij, aby uzyskać 5% zniżki", de: "Ziehen Sie für 5% Rabatt" },
   "знижку активовано!": { en: "discount activated!", ru: "скидка активирована!", sk: "zľava aktivovaná!", pl: "rabat aktywowany!", de: "Rabatt aktiviert!" },
   "Знижка 5% активована": { en: "5% discount activated", ru: "Скидка 5% активирована", sk: "Zľava 5% aktivovaná", pl: "Rabat 5% aktywowany", de: "5% Rabatt aktiviert" },
-  "Тягніть вниз": { en: "Drag down", ru: "Тяните вниз", sk: "Potiahnite dole", pl: "Przeciągnij w dół", de: "Nach unten ziehen" }
+  "Тягніть вниз": { en: "Drag down", ru: "Тяните вниз", sk: "Potiahnite dole", pl: "Przeciągnij w dół", de: "Nach unten ziehen" },
+  "Знижка": { en: "Discount", ru: "Скидка", sk: "Zľava", pl: "Rabat", de: "Rabatt" }
   };
   window.FSD_I18N_DICT = Object.assign({}, window.FSD_I18N_DICT, D);
 })();

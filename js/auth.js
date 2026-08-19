@@ -49,16 +49,23 @@
     couponEl = document.createElement("div");
     couponEl.id = "coupon-chip";
     couponEl.className = "coupon-chip";
-    couponEl.textContent = "5%";
+    couponEl.innerHTML = '<div style="line-height:1.1">-5%</div><div style="font-size:8px;font-weight:700;letter-spacing:0.05em;opacity:0.8">' + T("Знижка") + '</div>';
     couponEl.setAttribute("title", T("Перетягніть для знижки 5%"));
     couponEl.style.position = "absolute";
 
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem(COUPON_POS_KEY)); } catch (e) {}
-    if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
-      couponEl.style.left = saved.x + "px";
-      couponEl.style.top = saved.y + "px";
-    } else {
+    if (saved && typeof saved.x === "number" && typeof saved.y === "number" && saved.ts) {
+      var age = Date.now() - saved.ts;
+      if (age < 3600000) {
+        couponEl.style.left = saved.x + "px";
+        couponEl.style.top = saved.y + "px";
+      } else {
+        saved = null;
+        try { localStorage.removeItem(COUPON_POS_KEY); } catch (e) {}
+      }
+    }
+    if (!saved) {
       var navRect = host.getBoundingClientRect();
       couponEl.style.left = (navRect.right - 10) + "px";
       couponEl.style.top = (window.scrollY + navRect.bottom + 10) + "px";
@@ -162,7 +169,7 @@
       couponEl.style.left = pageLeft + "px";
       couponEl.style.top = pageTop + "px";
 
-      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: pageLeft, y: pageTop })); } catch (e) {}
+      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: pageLeft, y: pageTop, ts: Date.now() })); } catch (e) {}
 
       positionHint();
       setTimeout(showHint, 2000);
@@ -186,7 +193,7 @@
       couponEl.style.left = pageLeft + "px";
       couponEl.style.top = pageTop + "px";
 
-      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: pageLeft, y: pageTop })); } catch (e) {}
+      try { localStorage.setItem(COUPON_POS_KEY, JSON.stringify({ x: pageLeft, y: pageTop, ts: Date.now() })); } catch (e) {}
       positionHint();
       setTimeout(showHint, 1500);
     }
