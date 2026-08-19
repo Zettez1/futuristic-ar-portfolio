@@ -42,7 +42,22 @@
   "PH|Олександр": { en: "e.g. Oleksandr", ru: "например Александр", sk: "napr. Oleksandr", pl: "np. Oleksandr", de: "z. B. Oleksandr" },
   "PH|@username або +380...": { en: "e.g. @username or +380...", ru: "например @username или +380...", sk: "napr. @username alebo +380...", pl: "np. @username lub +380...", de: "z. B. @username oder +380..." },
   "PH|Інтернет-магазин, лендінг із WebAR-візуалізацією товару, AI-чат для підтримки…": { en: "e.g. online store, landing with WebAR product visualization, AI chat for support…", ru: "например интернет-магазин, лендинг с WebAR-визуализацией товара, AI-чат для поддержки…", sk: "napr. e-shop, landing s WebAR vizualizáciou produktu, AI chat pre podporu…", pl: "np. sklep internetowy, landing z wizualizacją WebAR produktu, czat AI do wsparcia…", de: "z. B. Onlineshop, Landingpage mit WebAR-Produktvisualisierung, KI-Chat für Support…" },
-  "PH|Ім'я, контакт (Telegram / телефон / email), які ви вказуєте у формі заявки або чат-агенті;": { en: "e.g. name and contact (Telegram / phone / email) from the request form or chat agent;", ru: "например имя, контакт (Telegram / телефон / email), которые вы указываете в форме заявки или чат-агенте;", sk: "napr. meno a kontakt (Telegram / telefón / email), ktoré uvediete vo formulári dopytu alebo chat agentovi;", pl: "np. imię i kontakt (Telegram / telefon / e-mail) z formularza zapytania lub czatu;", de: "z. B. Name und Kontakt (Telegram / Telefon / E-Mail) aus dem Anfrageformular oder Chat-Agent;" }
+  "PH|Ім'я, контакт (Telegram / телефон / email), які ви вказуєте у формі заявки або чат-агенті;": { en: "e.g. name and contact (Telegram / phone / email) from the request form or chat agent;", ru: "например имя, контакт (Telegram / телефон / email), которые вы указываете в форме заявки или чат-агенте;", sk: "napr. meno a kontakt (Telegram / telefón / email), ktoré uvediete vo formulári dopytu alebo chat agentovi;", pl: "np. imię i kontakt (Telegram / telefon / e-mail) z formularza zapytania lub czatu;", de: "z. B. Name und Kontakt (Telegram / Telefon / E-Mail) aus dem Anfrageformular oder Chat-Agent;" },
+  "Увійти": { en: "Sign in", ru: "Войти", sk: "Prihlásiť sa", pl: "Zaloguj się", de: "Anmelden" },
+  "Вийти": { en: "Sign out", ru: "Выйти", sk: "Odhlásiť sa", pl: "Wyloguj się", de: "Abmelden" },
+  "Заявки": { en: "Leads", ru: "Заявки", sk: "Dopyty", pl: "Zapytania", de: "Anfragen" },
+  "Оновити": { en: "Refresh", ru: "Обновить", sk: "Obnoviť", pl: "Odśwież", de: "Aktualisieren" },
+  "Немає заявок": { en: "No leads", ru: "Нет заявок", sk: "Žiadne dopyty", pl: "Brak zapytań", de: "Keine Anfragen" },
+  "Помилка завантаження": { en: "Load error", ru: "Ошибка загрузки", sk: "Chyba načítania", pl: "Błąd ładowania", de: "Fehler beim Laden" },
+  "Доступ заборонено": { en: "Access denied", ru: "Доступ запрещён", sk: "Prístup zamietnutý", pl: "Brak dostępu", de: "Zugriff verweigert" },
+  "Час": { en: "Time", ru: "Время", sk: "Čas", pl: "Czas", de: "Zeit" },
+  "Ім'я": { en: "Name", ru: "Имя", sk: "Meno", pl: "Imię", de: "Name" },
+  "Контакт": { en: "Contact", ru: "Контакт", sk: "Kontakt", pl: "Kontakt", de: "Kontakt" },
+  "Канал": { en: "Channel", ru: "Канал", sk: "Kanál", pl: "Kanał", de: "Kanal" },
+  "Тип": { en: "Type", ru: "Тип", sk: "Typ", pl: "Typ", de: "Typ" },
+  "Бюджет": { en: "Budget", ru: "Бюджет", sk: "Rozpočet", pl: "Budżet", de: "Budget" },
+  "Повідомлення": { en: "Message", ru: "Сообщение", sk: "Správa", pl: "Wiadomość", de: "Nachricht" },
+  "Джерело": { en: "Source", ru: "Источник", sk: "Zdroj", pl: "Źródło", de: "Quelle" }
   };
   window.FSD_I18N_DICT = Object.assign({}, window.FSD_I18N_DICT, D);
 })();

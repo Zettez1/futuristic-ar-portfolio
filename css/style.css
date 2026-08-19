@@ -954,3 +954,73 @@ select.field option { background: #0a0d1c; color: #eef4ff; }
 }
 .lang-switch:hover { border-color: rgba(34, 211, 238, 0.5); background: rgba(255, 255, 255, 0.09); }
 .lang-switch option { background: #0b1020; color: #e2e8f0; }
+
+/* admin auth chip */
+.fsd-auth { display: inline-flex; align-items: center; gap: 8px; }
+.fsd-av {
+  width: 26px; height: 26px; border-radius: 50%; object-fit: cover;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(34,211,238,0.25), rgba(99,102,241,0.25));
+  color: #e2e8f0; font-size: 12px; font-weight: 700; border: 1px solid rgba(34,211,238,0.4);
+  flex: none;
+}
+.fsd-auth-name {
+  max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; font-weight: 600; color: #cbd5e1;
+}
+.fsd-auth-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  font-family: inherit;
+}
+.fsd-auth-btn:hover { border-color: rgba(34, 211, 238, 0.5); background: rgba(255, 255, 255, 0.09); color: #e2e8f0; }
+a.fsd-auth-btn { text-decoration: none; display: inline-block; }
+a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
+.fsd-auth-note {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: #fda4af;
+  background: rgba(251, 113, 133, 0.08); border: 1px solid rgba(251, 113, 133, 0.3);
+  padding: 6px 10px; border-radius: 10px;
+}
+
+/* leads modal */
+.fsd-modal {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(4, 5, 12, 0.75); backdrop-filter: blur(6px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 80px 16px 24px;
+}
+.fsd-modal-panel {
+  width: 100%; max-width: 1100px; max-height: calc(100vh - 110px);
+  display: flex; flex-direction: column;
+  background: #0b1020; border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+.fsd-modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.fsd-modal-body { overflow: auto; padding: 16px 18px; }
+.fsd-leads { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.fsd-leads th {
+  position: sticky; top: 0; background: #0f1526; text-align: left;
+  color: #67e8f9; font-weight: 600; padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12); white-space: nowrap;
+}
+.fsd-leads td { padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); vertical-align: top; color: #cbd5e1; }
+.fsd-leads tr:hover td { background: rgba(34, 211, 238, 0.04); }
+.fsd-leads .f-t { white-space: nowrap; color: #94a3b8; }
+.fsd-leads .f-msg { max-width: 300px; }
+@media (max-width: 900px) {
+  .fsd-auth-name { display: none; }
+  .fsd-modal { padding-top: 76px; }
+  .fsd-leads { font-size: 11.5px; }
+}

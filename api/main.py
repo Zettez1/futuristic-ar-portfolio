@@ -9,12 +9,16 @@ Live Python quote engine for the interactive tools section.
 """
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import io
 import json
 import math
 import mimetypes
 import os
 import re
+import secrets
 import subprocess
 import sys
 import threading
@@ -25,9 +29,11 @@ from collections import deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -56,6 +62,163 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------- google auth ----
+# Admin auth via Google OAuth. Secrets come from Railway env:
+#   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, AUTH_SECRET, AUTH_ADMIN_EMAILS,
+#   AUTH_REDIRECT_URI (optional override).
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+AUTH_REDIRECT_URI = os.getenv(
+    "AUTH_REDIRECT_URI",
+    "https://web-frontend-production-78d2.up.railway.app/api/auth/google/callback",
+)
+AUTH_ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("AUTH_ADMIN_EMAILS", "").split(",") if e.strip()}
+AUTH_COOKIE = "fsd_session"
+AUTH_STATE_COOKIE = "fsd_oauth_state"
+SESSION_TTL = 7 * 24 * 3600
+
+
+def _auth_key() -> str:
+    # Fixed from env when possible (survives restarts); fallback: per-process random.
+    s = os.getenv("AUTH_SECRET", "")
+    if not s:
+        s = os.environ.get("AUTH_SECRET_RUNTIME", "")
+        if not s:
+            s = secrets.token_hex(32)
+            os.environ["AUTH_SECRET_RUNTIME"] = s
+    return s
+
+
+def _sign(b64: str) -> str:
+    return hmac.new(_auth_key().encode(), b64.encode(), hashlib.sha256).hexdigest()
+
+
+def _make_session(user: dict) -> str:
+    payload = {
+        "e": user["email"],
+        "n": user.get("name", ""),
+        "p": user.get("picture", ""),
+        "exp": int(time.time()) + SESSION_TTL,
+    }
+    raw = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode()
+    b64 = base64.urlsafe_b64encode(raw).decode().rstrip("=")
+    return b64 + "." + _sign(b64)
+
+
+def _read_session(request: Request) -> dict | None:
+    cookie = request.cookies.get(AUTH_COOKIE)
+    if not cookie or "." not in cookie:
+        return None
+    b64, sig = cookie.rsplit(".", 1)
+    if not hmac.compare_digest(sig, _sign(b64)):
+        return None
+    try:
+        raw = base64.urlsafe_b64decode(b64 + "=" * (-len(b64) % 4))
+        p = json.loads(raw)
+    except Exception:
+        return None
+    if int(p.get("exp", 0)) < int(time.time()):
+        return None
+    return {"email": p.get("e"), "name": p.get("n"), "picture": p.get("p")}
+
+
+def _set_session_cookie(resp, user: dict):
+    resp.set_cookie(AUTH_COOKIE, _make_session(user), max_age=SESSION_TTL,
+                    httponly=True, samesite="lax", secure=True, path="/")
+
+
+def _clear_session_cookie(resp):
+    resp.delete_cookie(AUTH_COOKIE, path="/")
+
+
+def _oauth_ready() -> bool:
+    return bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
+
+
+@app.get("/api/auth/google")
+def auth_google_start():
+    if not _oauth_ready():
+        raise HTTPException(503, "Google OAuth is not configured (missing env)")
+    state = secrets.token_urlsafe(24)
+    url = ("https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": AUTH_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "prompt": "select_account",
+    }))
+    resp = RedirectResponse(url, status_code=302)
+    resp.set_cookie(AUTH_STATE_COOKIE, state, max_age=300,
+                    httponly=True, samesite="lax", secure=True, path="/")
+    return resp
+
+
+@app.get("/api/auth/google/callback")
+def auth_google_callback(request: Request):
+    code = request.query_params.get("code", "")
+    state = request.query_params.get("state", "")
+    saved = request.cookies.get(AUTH_STATE_COOKIE, "")
+    if not code or not state or not saved or not hmac.compare_digest(state, saved):
+        raise HTTPException(400, "invalid OAuth state")
+    if not _oauth_ready():
+        raise HTTPException(503, "Google OAuth is not configured (missing env)")
+    try:
+        token_body = urlencode({
+            "code": code,
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "redirect_uri": AUTH_REDIRECT_URI,
+            "grant_type": "authorization_code",
+        })
+        tok_req = urllib.request.Request(
+            "https://oauth2.googleapis.com/token",
+            data=token_body.encode(),
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            method="POST",
+        )
+        with urllib.request.urlopen(tok_req, timeout=15) as tr:
+            tok = json.loads(tr.read().decode("utf-8"))
+        access_token = tok.get("access_token")
+        if not access_token:
+            raise HTTPException(502, "token exchange failed")
+        info_req = urllib.request.Request(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": "Bearer " + access_token},
+        )
+        with urllib.request.urlopen(info_req, timeout=15) as ir:
+            user = json.loads(ir.read().decode("utf-8"))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(502, "Google auth upstream error")
+    email = (user.get("email") or "").lower()
+    if AUTH_ADMIN_EMAILS and email not in AUTH_ADMIN_EMAILS:
+        resp = RedirectResponse("/?auth=denied", status_code=303)
+        _clear_session_cookie(resp)
+        return resp
+    resp = RedirectResponse("/?auth=ok", status_code=303)
+    _set_session_cookie(resp, {
+        "email": email,
+        "name": user.get("name", ""),
+        "picture": user.get("picture", ""),
+    })
+    return resp
+
+
+@app.get("/api/auth/me")
+def auth_me(request: Request) -> dict:
+    u = _read_session(request)
+    return {"ok": bool(u), "user": u}
+
+
+@app.post("/api/auth/logout")
+def auth_logout() -> JSONResponse:
+    resp = JSONResponse({"ok": True})
+    _clear_session_cookie(resp)
+    return resp
 
 
 # ---------------------------------------------------------------- leads ----
@@ -466,8 +629,10 @@ def health() -> dict:
 
 
 @app.get("/api/leads")
-def list_leads(limit: int = 50) -> dict:
-    """All leads in plain sight — for demo/CRM review. Protect in production."""
+def list_leads(request: Request, limit: int = 50) -> dict:
+    """Admin-only: requires a valid Google session cookie (admin email allowlist)."""
+    if not _read_session(request):
+        raise HTTPException(401, "auth required")
     with _lock:
         rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
     return {"count": len(rows), "leads": rows[-limit:][::-1]}
