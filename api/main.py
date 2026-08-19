@@ -197,6 +197,12 @@ def _oauth_ready() -> bool:
 def auth_google_start(request: Request):
     if not _oauth_ready():
         raise HTTPException(503, "Google OAuth is not configured (missing env)")
+    auth_cookie = request.cookies.get(AUTH_COOKIE, "")
+    if auth_cookie and _read_session(request):
+        nxt = request.cookies.get("fsd_next", "") or request.query_params.get("next", "")
+        resp = RedirectResponse(nxt if nxt.startswith("/") else "/", status_code=302)
+        resp.delete_cookie("fsd_next", path="/")
+        return resp
     state = secrets.token_urlsafe(24)
     params = {
         "client_id": GOOGLE_CLIENT_ID,
