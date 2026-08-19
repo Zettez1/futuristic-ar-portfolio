@@ -559,6 +559,7 @@ _LANG_INS = {
     "uk": "\n\nНапиши відповідь повністю українською мовою.",
     "ru": "\n\nНапиши ответ полностью на русском языке.",
     "en": "\n\nReply entirely in English.",
+    "sk": "\n\nOdpovedaj celé po slovensky.",
     "es": "\n\nResponde enteramente en español.",
     "fr": "\n\nRéponds entièrement en français.",
     "de": "\n\nAntworte vollständig auf Deutsch.",
@@ -579,6 +580,7 @@ _LANG_INS = {
 
 _LANG_STAY = {
     "en": "Do not switch to any other language at all.",
+    "sk": "Neprechádzaj do žiadneho iného jazyka.",
     "es": "No cambies a ningún otro idioma en absoluto.",
     "fr": "Ne passe jamais à une autre langue.",
     "de": "Wechsle niemals in eine andere Sprache.",
@@ -680,8 +682,9 @@ def _try_provider(url, key, model, text, lang, timeout=25):
     return reply
 
 
-def llm_reply(text: str) -> str | None:
-    lang = client_lang(text)
+def llm_reply(text: str, lang: str = "") -> str | None:
+    if not lang:
+        lang = client_lang(text)
     qwen_last = None
     if CHAT_QWEN_KEY:
         qwen_last = _try_provider(
@@ -701,13 +704,17 @@ def llm_reply(text: str) -> str | None:
 # ----------------------------------------------------------------- chat ----
 class ChatMessage(BaseModel):
     message: str
+    lang: str = ""
 
 
 @app.post("/api/chat")
 def chat(message: ChatMessage) -> dict:
     """NOVA agent: Qwen -> NVIDIA -> deterministic rules."""
     text = message.message.lower().strip()
-    llm = llm_reply(message.message)
+    ui_lang = message.lang.strip().lower()
+    if ui_lang not in ("uk", "en", "ru", "sk", "pl", "de"):
+        ui_lang = ""
+    llm = llm_reply(message.message, ui_lang)
     if llm:
         # innerHTML-safe: escape tags, keep line breaks
         llm = llm.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")[:600]

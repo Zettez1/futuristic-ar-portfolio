@@ -77,7 +77,7 @@
     fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text })
+      body: JSON.stringify({ message: text, lang: (window.FSD_CUR ? FSD_CUR() : "uk") })
     }).then(function (r) { return r.json(); })
       .then(function (d) { cb(d && d.reply ? d.reply : fallbackReply()); })
       .catch(function () { cb(fallbackReply()); });
@@ -211,7 +211,7 @@
         state.step++;
         state.projectType = matched.v;
         typing(function () {
-          addMsg(T("Чудово! Тоді середній чек для «%s» — <b>%s</b> без урахування матеріалів.", state.projectType, budgetGuess(state.projectType)), "bot");
+          addMsg(T("Чудово! Тоді середній чек для «%s» — <b>%s</b> без урахування матеріалів.", T(state.projectType), budgetGuess(state.projectType)), "bot");
           setTimeout(function () {
             addMsg(T("Який орієнтовний бюджет закладаєте?"), "bot");
             setChips(BUDGET_KEYS.map(function (k) { return T(k); }));
