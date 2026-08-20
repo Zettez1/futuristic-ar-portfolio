@@ -296,6 +296,7 @@ return (
         type: fd.get("type"),
         budget: fd.get("budget"),
         message: fd.get("message"),
+        website: fd.get("website"), // honeypot: hidden field, must stay empty
         source: "lead-form",
         page: location.pathname,
         ts: new Date().toISOString()

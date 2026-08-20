@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /auth.html
+Disallow: /api/
+Disallow: /data/
+Disallow: /BTrade/
+
+Sitemap: https://fast-start-digital.com/sitemap.xml

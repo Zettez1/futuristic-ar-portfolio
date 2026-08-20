@@ -575,6 +575,15 @@ body::before {
 }
 .field::placeholder { color: #5b6b84; }
 select.field option { background: #0a0d1c; color: #eef4ff; }
+.hp-wrap {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.hp-label { display: none; }
 .channel-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .channel-pill {
   position: relative;

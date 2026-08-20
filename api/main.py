@@ -87,10 +87,115 @@ _socket.create_connection = _ipv4_create_connection
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://fast-start-digital.com",
+        "https://web-frontend-production-78d2.up.railway.app",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --------------------------------------------------------------- rate limit ----
+# In-memory sliding-window limiter per client IP. Cloudflare/railway terminate
+# TLS, so the real client is the first value of X-Forwarded-For.
+_RATE_LIMITS = {
+    "GET": {
+        "/api/lead": 30,
+        "/api/chat": 30,
+        "/api/calc/quote": 120,
+        "/api/bot/logs": 150,    # browser polls every 2s (60/min); 2 tabs + margin
+        "/api/bot/status": 150,
+        "/api/bot/": 60,
+        "/api/auth/": 60,
+        "/api/coupon/": 60,
+        "/api/mail/unsubscribe": 10,
+        "/api/projects": 60,
+    },
+    "POST": {
+        "/api/lead": 10,
+        "/api/chat": 60,
+        "/api/classify": 60,
+        "/api/debug/log": 30,
+        "/api/auth/": 30,
+        "/api/coupon/claim": 10,
+        "/api/mail/unsubscribe": 10,
+    },
+}
+_RATE_WINDOW = 60.0
+_rate_hits: dict[tuple[str, str], deque[float]] = {}
+_rate_lock = threading.Lock()
+
+
+def _rate_limit_path(path: str, table: dict[str, int]) -> str | None:
+    """Longest registered path that is a prefix of `path`, else None."""
+    best = None
+    for p in table:
+        if path.startswith(p) and (best is None or len(p) > len(best)):
+            best = p
+    return best
+
+
+def _client_ip(request: Request) -> str:
+    ff = request.headers.get("x-forwarded-for")
+    if ff:
+        first = ff.split(",")[0].strip()
+        if first:
+            return first
+    return request.client.host if request.client else "unknown"
+
+
+@app.middleware("http")
+async def _rate_limiter(request: Request, call_next):
+    if request.method in _RATE_LIMITS:
+        rule = _rate_limit_path(request.url.path, _RATE_LIMITS[request.method])
+        if rule:
+            limit = _RATE_LIMITS[request.method][rule]
+            now = time.monotonic()
+            key = (request.method, rule, _client_ip(request))
+            with _rate_lock:
+                hits = _rate_hits.setdefault(key, deque())
+                while hits and hits[0] < now - _RATE_WINDOW:
+                    hits.popleft()
+                if len(hits) >= limit:
+                    return JSONResponse({"error": "rate limited"}, status_code=429)
+                hits.append(now)
+                if len(_rate_hits) > 4096:
+                    stale = [k for k, v in _rate_hits.items() if not v or v[-1] < now - _RATE_WINDOW]
+                    for k in stale:
+                        _rate_hits.pop(k, None)
+    return await call_next(request)
+
+
+# ---------------------------------------------------------- security headers ----
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' https://cdnjs.cloudflare.com https://unpkg.com https://challenges.cloudflare.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data: blob:; "
+    "connect-src 'self' https://challenges.cloudflare.com; "
+    "frame-src https://challenges.cloudflare.com; "
+    "worker-src 'self' blob:; "
+    "object-src 'none'; base-uri 'self'; form-action 'self'; "
+    "frame-ancestors 'none'"
+)
+
+
+@app.middleware("http")
+async def _security_headers(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return await call_next(request)
+    response = await call_next(request)
+    response.headers.setdefault("Content-Security-Policy", _CSP)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    if request.url.scheme == "https":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload"
+        )
+    return response
 
 
 # ---------------------------------------------------------------- google auth ----
@@ -632,6 +737,7 @@ class Lead(BaseModel):
     ts: str | None = None
     email: str | None = None   # client Google email (if submitted while logged in or found in contact)
     status: str = "нова"       # нова / в розробці / завершено
+    website: str | None = None  # honeypot: must stay empty; bots fill it
 
 
 CHANNEL_LABELS = {
@@ -1044,6 +1150,8 @@ def list_leads(request: Request, limit: int = 50) -> dict:
 
 @app.post("/api/lead")
 def create_lead(request: Request, lead: Lead) -> dict:
+    if lead.website:  # honeypot filled → silently drop the bot
+        return {"ok": True, "accepted": True}
     data = lead.model_dump(exclude_none=True)
     session = _read_session(request)
     if session and session.get("email"):
@@ -1846,10 +1954,52 @@ STATIC_DIR = BASE_DIR / "static"
 if (BASE_DIR / "index.html").exists():
     STATIC_DIR = BASE_DIR
 
+# Paths that must never be served by the public static mount. The repo root
+# is mounted (html=True), so without this every file under /data, /BTrade and
+# /api would be downloadable (leads, users, .env secrets, python source).
+_FORBIDDEN_STATIC_PREFIXES = (
+    "/data/",
+    "/btrade/",
+    "/api/",
+    "/.git/",
+    "/.github/",
+    "/__pycache__/",
+)
+_FORBIDDEN_STATIC_SUFFIXES = (
+    ".py",
+    ".pyc",
+    ".pem",
+    ".key",
+    ".crt",
+    ".p12",
+    ".sqlite",
+    ".sqlite3",
+    ".db",
+)
+
 
 class ModelStaticFiles(StaticFiles):
     """Models must never be cached: stale 304 replies keep old
-    'application/octet-stream' content-type and break AR Quick Look."""
+    'application/octet-stream' content-type and break AR Quick Look.
+    Also blocks sensitive files/dirs from public serving."""
+
+    def lookup_path(self, path, scope=None):
+        # Starlette passes OS-normalized paths ("data\leads.json" on Windows);
+        # normalize to URL-style so our prefix/suffix rules always match.
+        norm = (path or "").replace("\\", "/").lstrip("/")
+        parts = [p for p in norm.split("/") if p and p != "."]
+        # any dotfile component (".env", ".env.mexc-paper", ".git") is private
+        if any(p.startswith(".") for p in parts):
+            return "", None
+        low = "/" + "/".join(parts)
+        if low.startswith(_FORBIDDEN_STATIC_PREFIXES) or low.endswith(_FORBIDDEN_STATIC_SUFFIXES):
+            return "", None
+        # Starlette <0.41.3 removed the `scope` argument from the signature;
+        # accept but ignore it so we stay compatible with both versions.
+        try:
+            return super().lookup_path(path, scope)
+        except TypeError:
+            return super().lookup_path(path)
 
     def file_response(self, full_path, stat_result, scope, status_code=200):
         response = super().file_response(full_path, stat_result, scope, status_code)
