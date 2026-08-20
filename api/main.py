@@ -256,6 +256,7 @@ def auth_google_callback(request: Request):
         raise HTTPException(400, "invalid OAuth state")
     if not _oauth_ready():
         raise HTTPException(503, "Google OAuth is not configured (missing env)")
+    t0 = time.time()
     try:
         token_body = urlencode({
             "code": code,
@@ -264,64 +265,26 @@ def auth_google_callback(request: Request):
             "redirect_uri": AUTH_REDIRECT_URI,
             "grant_type": "authorization_code",
         })
-        tok = None
-        last_err = None
-        for attempt in range(2):
-            try:
-                tok_req = urllib.request.Request(
-                    "https://oauth2.googleapis.com/token",
-                    data=token_body.encode(),
-                    headers={"Content-Type": "application/x-www-form-urlencoded"},
-                    method="POST",
-                )
-                with urllib.request.urlopen(tok_req, timeout=15) as tr:
-                    tok = json.loads(tr.read().decode("utf-8"))
-                break
-            except urllib.error.HTTPError as e:
-                body = e.read().decode("utf-8", "replace")[:500]
-                print(f"[auth] token exchange attempt {attempt + 1} HTTP {e.code}: {body}")
-                last_err = e
-                if attempt < 1 and e.code != 400:
-                    time.sleep(1)
-            except Exception as e:
-                last_err = e
-                print(f"[auth] token exchange attempt {attempt + 1} failed: {type(e).__name__}: {e}")
-                if attempt < 1:
-                    time.sleep(1)
-        if tok is None:
-            # Код Google одноразовий: якщо callback повторився (Cloudflare retry,
-            # double-click тощо), перший обмін міг уже створити сесію — видаємо її.
-            cached = _USED_OAUTH_CODES.get(code)
-            if cached:
-                res = RedirectResponse("/?auth=ok", status_code=303)
-                _set_session_cookie(res, {
-                    "email": cached["email"],
-                    "name": cached["name"],
-                    "picture": cached["picture"],
-                })
-                return res
-            raise HTTPException(502, f"token exchange failed: {type(last_err).__name__}: {last_err}")
+        tok_req = urllib.request.Request(
+            "https://oauth2.googleapis.com/token",
+            data=token_body.encode(),
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            method="POST",
+        )
+        with urllib.request.urlopen(tok_req, timeout=10) as tr:
+            tok = json.loads(tr.read().decode("utf-8"))
+        t1 = time.time()
         access_token = tok.get("access_token")
         if not access_token:
             raise HTTPException(502, "token exchange failed: " + str(tok)[:300])
-        user = None
-        last_err = None
-        for attempt in range(2):
-            try:
-                info_req = urllib.request.Request(
-                    "https://www.googleapis.com/oauth2/v3/userinfo",
-                    headers={"Authorization": "Bearer " + access_token},
-                )
-                with urllib.request.urlopen(info_req, timeout=15) as ir:
-                    user = json.loads(ir.read().decode("utf-8"))
-                break
-            except Exception as e:
-                last_err = e
-                print(f"[auth] userinfo attempt {attempt + 1} failed: {type(e).__name__}: {e}")
-                if attempt < 1:
-                    time.sleep(1)
-        if user is None:
-            raise HTTPException(502, f"Google userinfo upstream error: {type(last_err).__name__}: {last_err}")
+        info_req = urllib.request.Request(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": "Bearer " + access_token},
+        )
+        with urllib.request.urlopen(info_req, timeout=10) as ir:
+            user = json.loads(ir.read().decode("utf-8"))
+        t2 = time.time()
+        print(f"[auth] callback ok: token_exchange={t1-t0:.2f}s userinfo={t2-t1:.2f}s total={t2-t0:.2f}s")
     except HTTPException:
         raise
     except Exception:
