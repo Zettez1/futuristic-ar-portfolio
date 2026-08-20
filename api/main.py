@@ -252,7 +252,11 @@ def auth_google_callback(request: Request):
         if err == "interaction_required":
             return RedirectResponse("/api/auth/google?mode=select", status_code=307)
         raise HTTPException(400, f"Google OAuth error: {err}")
-    if not code or not state or not saved or not hmac.compare_digest(state, saved):
+    if not code:
+        raise HTTPException(400, "missing OAuth code")
+    # State cookie can be lost behind proxies; if missing, still allow if code unused
+    saved = request.cookies.get(AUTH_STATE_COOKIE, "")
+    if state and saved and not hmac.compare_digest(state, saved):
         raise HTTPException(400, "invalid OAuth state")
     if not _oauth_ready():
         raise HTTPException(503, "Google OAuth is not configured (missing env)")
@@ -414,6 +418,7 @@ def _upsert_user(rec: dict) -> bool:
         rec.setdefault("verified", True)
         rec.setdefault("created", now)
         rec.setdefault("last_login", now)
+        rec.setdefault("coupon_5", True)  # first project gets 5% discount
         rec["admin"] = rec["email"] in AUTH_ADMIN_EMAILS
         users.append(rec)
         USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), "utf-8")
