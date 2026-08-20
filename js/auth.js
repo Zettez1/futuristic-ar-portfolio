@@ -99,6 +99,9 @@
     var badge = dev > 0
       ? '<span class="fsd-badge">' + dev + '</span>'
       : "";
+    var adminLink = state.projects && state.projects.admin
+      ? '<a class="fsd-item" href="/admin.html" style="display:flex;text-decoration:none">⚙️ ' + T("Адмін-панель") + "</a>"
+      : "";
     return '<div class="fsd-menu">' +
       '<div class="fsd-discount">' +
       '<span class="coupon-badge">-5%</span>' +
@@ -106,6 +109,7 @@
       "</div>" +
       '<div class="fsd-discount-note">' + T("Знижка 5% на перший проєкт вже застосована до вашого акаунта") + "</div>" +
       '<button type="button" class="fsd-item" data-action="projects">' + T("Проекти") + badge + "</button>" +
+      adminLink +
       '<button type="button" class="fsd-item" data-action="logout">' + T("Вийти") + "</button>" +
       "</div>";
   }
@@ -180,6 +184,69 @@
       return '<select class="fsd-status-sel" data-ts="' + esc(p.ts) + '">' + opts + "</select>";
     }
 
+    function progressHtml(p) {
+      var pr = typeof p.progress === "number" ? p.progress : 0;
+      return '<div class="fsd-progress"><div class="fsd-progress-bar" style="width:' + pr + '%"></div></div>' +
+        '<span class="fsd-progress-label">' + pr + "%</span>";
+    }
+
+    function chatBlock() {
+      var wrap = document.createElement("div");
+      wrap.className = "fsd-chat-wrap";
+      wrap.innerHTML = '<div class="fsd-chat-divider"><span>' + T("Чат з командою") + '</span></div>' +
+        '<div class="fsd-chat-box"><div class="fsd-chat-msgs" aria-live="polite"></div>' +
+        '<div class="fsd-chat-inputs"><input class="fsd-chat-input" type="text" maxlength="2000" placeholder="' +
+        esc(T("Ваше повідомлення…")) + '" /><button class="fsd-chat-send">' + esc(T("Надіслати")) + "</button></div></div>";
+      var box = wrap.querySelector(".fsd-chat-msgs");
+      var inp = wrap.querySelector(".fsd-chat-input");
+      var sendBtn = wrap.querySelector(".fsd-chat-send");
+      var loading = true;
+
+      function renderMsgs(t) {
+        var msgs = (t && t.messages) || [];
+        if (!msgs.length) {
+          box.innerHTML = '<div class="fsd-chat-empty">' + esc(T("Напишіть нам — відповімо протягом доби.")) + "</div>";
+          return;
+        }
+        box.innerHTML = msgs.map(function (m) {
+          var mine = m.from === "client";
+          return '<div class="fsd-msg ' + (mine ? "mine" : "theirs") + '"><span class="fsd-msg-tx">' +
+            esc(m.text) + '</span><span class="fsd-msg-ts">' + fmtWhen(m.ts) + "</span></div>";
+        }).join("");
+        box.scrollTop = box.scrollHeight;
+      }
+
+      function load() {
+        return fetch("/api/chat/my", { credentials: "same-origin" })
+          .then(function (r) { return r.json(); })
+          .then(function (d) { renderMsgs(d.thread); })
+          .catch(function () {});
+      }
+
+      function send() {
+        var text = inp.value.trim();
+        if (!text) return;
+        inp.value = "";
+        fetch("/api/chat/my/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ text: text }),
+        }).then(function (r) { return r.json(); }).then(function () { return load(); }).catch(function () {});
+      }
+
+      sendBtn.addEventListener("click", send);
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+      load();
+      return wrap;
+    }
+
+    function fmtWhen(ts) {
+      if (!ts) return "";
+      var d = new Date(ts);
+      return isNaN(d) ? "" : d.toLocaleString("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    }
+
     function fill() {
       body.innerHTML = '<div class="text-slate-400">…</div>';
       fetch("/api/projects", { credentials: "same-origin" })
@@ -206,14 +273,16 @@
               "<td>" + statusTd(p) + "</td>" +
               "<td>" + esc(p.type || "—") + "</td>" +
               "<td>" + esc(p.budget || "—") + "</td>" +
+              "<td>" + progressHtml(p) + "</td>" +
               "<td>" + E(when) + "</td>" +
               "<td class='f-msg'>" + esc(p.message || "—") + "</td>" +
               "</tr>";
           }).join("");
           body.innerHTML = "<table class='fsd-leads'><thead><tr>" +
             "<th>" + T("Статус") + "</th><th>" + T("Тип") + "</th><th>" + T("Бюджет") + "</th>" +
-            "<th>" + T("Час") + "</th><th>" + T("Повідомлення") + "</th></tr></thead><tbody>" +
+            "<th>" + T("Прогрес") + "</th><th>" + T("Час") + "</th><th>" + T("Повідомлення") + "</th></tr></thead><tbody>" +
             rows + "</tbody></table>";
+          body.appendChild(chatBlock());
           if (isAdmin) {
             body.querySelectorAll("select.fsd-status-sel").forEach(function (sel) {
               sel.addEventListener("change", function () {

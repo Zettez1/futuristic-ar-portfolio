@@ -110,15 +110,20 @@ _RATE_LIMITS = {
         "/api/coupon/": 60,
         "/api/mail/unsubscribe": 10,
         "/api/projects": 60,
+        "/api/admin/": 90,
+        "/api/chat/my": 120,
+        "/api/leads": 90,
     },
     "POST": {
         "/api/lead": 10,
         "/api/chat": 60,
+        "/api/chat/my/send": 30,
         "/api/classify": 60,
         "/api/debug/log": 30,
         "/api/auth/": 30,
         "/api/coupon/claim": 10,
         "/api/mail/unsubscribe": 10,
+        "/api/admin/": 60,
     },
 }
 _RATE_WINDOW = 60.0
@@ -185,7 +190,9 @@ _CSP = (
 async def _security_headers(request: Request, call_next):
     if request.method == "OPTIONS":
         return await call_next(request)
+    t0 = time.monotonic()
     response = await call_next(request)
+    await _record_activity(request, response, (time.monotonic() - t0) * 1000.0)
     response.headers.setdefault("Content-Security-Policy", _CSP)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -1200,6 +1207,347 @@ def set_project_status(request: Request, item: dict) -> dict:
         target["status"] = status
         LEADS_FILE.write_text(json.dumps(rows, ensure_ascii=False, indent=2), "utf-8")
     return {"ok": True}
+
+
+# ------------------------------------------------------------- admin panel ----
+# Private admin area (hidden from clients): hidden /admin.html page in the
+# static root, JS/admin.js talks to these endpoints. All endpoints require a
+# session whose email is in AUTH_ADMIN_EMAILS — same pattern as /api/leads.
+# Chats: per-client threads stored in data/chats.json. A thread is bound to the
+# client's account email (and optionally to a lead by ts). Visitors activity is
+# kept in an in-memory ring buffer (lost on restart — acceptable for a demo).
+
+CHATS_FILE = DATA_DIR / "chats.json"
+_chat_lock = threading.Lock()
+ACTIVITY_MAX = 2000
+_activity_buf: deque[dict] = deque(maxlen=ACTIVITY_MAX)
+_activity_lock = threading.Lock()
+
+
+def _require_admin(request: Request) -> dict:
+    session = _read_session(request)
+    email = (session.get("email") or "").lower() if session else ""
+    if not session or email not in AUTH_ADMIN_EMAILS:
+        raise HTTPException(401, "auth required")
+    return session
+
+
+def _read_chats() -> list[dict]:
+    with _chat_lock:
+        if not CHATS_FILE.exists():
+            return []
+        try:
+            return json.loads(CHATS_FILE.read_text("utf-8"))
+        except json.JSONDecodeError:
+            return []
+
+
+def _write_chats(chats: list[dict]) -> None:
+    with _chat_lock:
+        CHATS_FILE.write_text(json.dumps(chats, ensure_ascii=False, indent=2), "utf-8")
+
+
+def _thread_id_for(email: str, lead_ts: str | None = None) -> str:
+    key = "u:" + (email or "").strip().lower()
+    if lead_ts and not email:
+        key = "l:" + lead_ts
+    return "c_" + hashlib.sha1(key.encode("utf-8")).hexdigest()[:16]
+
+
+def _get_thread(thread_id: str) -> dict | None:
+    return next((t for t in _read_chats() if t.get("id") == thread_id), None)
+
+
+def _save_thread(thread: dict) -> None:
+    chats = _read_chats()
+    for i, t in enumerate(chats):
+        if t.get("id") == thread["id"]:
+            chats[i] = thread
+            break
+    else:
+        chats.append(thread)
+    _write_chats(chats)
+
+
+@app.get("/api/admin/stats")
+def admin_stats(request: Request) -> dict:
+    _require_admin(request)
+    with _lock:
+        leads = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+    users = _read_users()
+    chats = _read_chats()
+    threads = [t for t in chats if t.get("status") != "closed"]
+    with _activity_lock:
+        act = list(_activity_buf)
+    now = datetime.now(timezone.utc)
+    day_ago = now.timestamp() - 86400
+    act_24h = [a for a in act if a.get("ts", 0) >= day_ago]
+    return {
+        "ok": True,
+        "leads_total": len(leads),
+        "leads_new": sum(1 for l in leads if (l.get("status") or "") == "нова"),
+        "leads_dev": sum(1 for l in leads if (l.get("status") or "") == "в розробці"),
+        "leads_done": sum(1 for l in leads if (l.get("status") or "") == "завершено"),
+        "users_total": len(users),
+        "users_registered": sum(1 for u in users if u.get("verified")),
+        "threads": len(threads),
+        "unread_admin": sum(t.get("unread_admin") or 0 for t in chats),
+        "visitors_24h": len({a.get("ip") for a in act_24h}),
+        "pageviews_24h": len(act_24h),
+        "bot_online": (lambda s: s.get("running") if s else False)(_bot_state),
+        "admin_email": _read_session(request).get("email"),
+        "leads_preview": leads[-6:][::-1],
+    }
+
+
+@app.get("/api/admin/leads")
+def admin_leads(request: Request, limit: int = 200) -> dict:
+    _require_admin(request)
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+    return {"ok": True, "count": len(rows), "leads": rows[-limit:][::-1]}
+
+
+@app.get("/api/admin/activity")
+def admin_activity(request: Request, limit: int = 500) -> dict:
+    _require_admin(request)
+    with _activity_lock:
+        act = list(_activity_buf)
+    return {"ok": True, "count": len(act), "activity": act[-limit:][::-1]}
+
+
+# --------------------------------------------------------- admin chat ----
+@app.get("/api/admin/chats")
+def admin_chats(request: Request) -> dict:
+    _require_admin(request)
+    chats = _read_chats()
+    chats.sort(key=lambda t: t.get("updated", ""), reverse=True)
+    out = []
+    for t in chats:
+        msgs = t.get("messages", [])
+        out.append({
+            "id": t["id"],
+            "email": t.get("email"),
+            "name": t.get("name"),
+            "contact": t.get("contact"),
+            "lead_ts": t.get("lead_ts"),
+            "lead_type": t.get("lead_type"),
+            "status": t.get("status", "open"),
+            "updated": t.get("updated"),
+            "unread_admin": t.get("unread_admin", 0),
+            "last_message": msgs[-1]["text"][:200] if msgs else "",
+            "last_from": msgs[-1]["from"] if msgs else "",
+            "count": len(msgs),
+        })
+    return {"ok": True, "threads": out}
+
+
+@app.get("/api/admin/chat")
+def admin_chat_get(request: Request, id: str = "") -> dict:
+    _require_admin(request)
+    t = _get_thread(id)
+    if not t:
+        raise HTTPException(404, "thread not found")
+    if t.get("unread_admin"):
+        t["unread_admin"] = 0
+        _save_thread(t)
+    return {"ok": True, "thread": t}
+
+
+class ChatSend(BaseModel):
+    thread_id: str
+    text: str
+
+
+@app.post("/api/admin/chat/send")
+def admin_chat_send(request: Request, msg: ChatSend) -> dict:
+    _require_admin(request)
+    text = (msg.text or "").strip()[:2000]
+    if not text:
+        raise HTTPException(400, "empty message")
+    t = _get_thread(msg.thread_id)
+    if not t:
+        raise HTTPException(404, "thread not found")
+    now = datetime.now(timezone.utc).isoformat()
+    t.setdefault("messages", []).append({"from": "admin", "text": text, "ts": now})
+    t["updated"] = now
+    t["unread_client"] = t.get("unread_client", 0) + 1
+    if t.get("status") == "closed":
+        t["status"] = "open"
+    _save_thread(t)
+    return {"ok": True}
+
+
+class AdminOpenThread(BaseModel):
+    email: str = ""
+    lead_ts: str = ""
+
+
+@app.post("/api/admin/chat/open")
+def admin_chat_open(request: Request, body: AdminOpenThread) -> dict:
+    _require_admin(request)
+    email = (body.email or "").strip().lower()
+    lead_ts = body.lead_ts or ""
+    if not email and not lead_ts:
+        raise HTTPException(400, "email or lead_ts required")
+    t = None
+    if email:
+        t = next((x for x in _read_chats() if (x.get("email") or "").lower() == email), None)
+    if not t and lead_ts:
+        t = next((x for x in _read_chats() if x.get("lead_ts") == lead_ts), None)
+    if not t:
+        lead = None
+        if lead_ts:
+            with _lock:
+                rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+            lead = next((r for r in rows if r.get("ts") == lead_ts), None)
+        name = (lead or {}).get("name") or ""
+        contact = (lead or {}).get("contact") or (email or "")
+        thread = {
+            "id": _thread_id_for(email, lead_ts),
+            "email": email or "",
+            "name": name,
+            "contact": contact,
+            "lead_ts": lead_ts or "",
+            "lead_type": (lead or {}).get("type") or "",
+            "status": "open",
+            "created": datetime.now(timezone.utc).isoformat(),
+            "updated": datetime.now(timezone.utc).isoformat(),
+            "unread_admin": 0,
+            "unread_client": 0,
+            "messages": [],
+        }
+        _save_thread(thread)
+        t = thread
+    return {"ok": True, "thread": t}
+
+
+# ----------------------------------------------- client-to-team chat ----
+@app.get("/api/chat/my")
+def client_chat_my(request: Request) -> dict:
+    session = _read_session(request)
+    if not session:
+        raise HTTPException(401, "auth required")
+    email = (session.get("email") or "").lower()
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+    lead = next((r for r in rows
+                 if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email), None)
+    tid = _thread_id_for(email, (lead or {}).get("ts") or "")
+    t = next((x for x in _read_chats() if x.get("id") == tid), None)
+    if not t:
+        t = {
+            "id": tid,
+            "email": email,
+            "name": session.get("name") or "",
+            "contact": "",
+            "lead_ts": (lead or {}).get("ts") or "",
+            "lead_type": (lead or {}).get("type") or "",
+            "status": "open",
+            "created": datetime.now(timezone.utc).isoformat(),
+            "updated": datetime.now(timezone.utc).isoformat(),
+            "unread_admin": 0,
+            "unread_client": 0,
+            "messages": [],
+        }
+        _save_thread(t)
+    if t.get("unread_client"):
+        t["unread_client"] = 0
+        _save_thread(t)
+    return {"ok": True, "thread": t, "project": lead}
+
+
+class ClientChatSend(BaseModel):
+    text: str
+
+
+@app.post("/api/chat/my/send")
+def client_chat_send(request: Request, msg: ClientChatSend) -> dict:
+    session = _read_session(request)
+    if not session:
+        raise HTTPException(401, "auth required")
+    text = (msg.text or "").strip()[:2000]
+    if not text:
+        raise HTTPException(400, "empty message")
+    email = (session.get("email") or "").lower()
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+    lead = next((r for r in rows
+                 if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email), None)
+    tid = _thread_id_for(email, (lead or {}).get("ts") or "")
+    t = next((x for x in _read_chats() if x.get("id") == tid), None)
+    if not t:
+        t = {
+            "id": tid,
+            "email": email,
+            "name": session.get("name") or "",
+            "contact": "",
+            "lead_ts": (lead or {}).get("ts") or "",
+            "lead_type": (lead or {}).get("type") or "",
+            "status": "open",
+            "created": datetime.now(timezone.utc).isoformat(),
+            "updated": datetime.now(timezone.utc).isoformat(),
+            "unread_admin": 0,
+            "unread_client": 0,
+            "messages": [],
+        }
+    now = datetime.now(timezone.utc).isoformat()
+    t.setdefault("messages", []).append({"from": "client", "text": text, "ts": now})
+    t["updated"] = now
+    t["unread_admin"] = t.get("unread_admin", 0) + 1
+    if t.get("status") == "closed":
+        t["status"] = "open"
+    _save_thread(t)
+    threading.Thread(target=_tg_notify_chat, args=(t, text), daemon=True).start()
+    return {"ok": True, "thread_id": t["id"]}
+
+
+def _tg_notify_chat(t: dict, text: str) -> None:
+    owner = _tg_owner()
+    if not owner:
+        return
+    name = t.get("name") or t.get("email") or "клієнт"
+    _tg_send(owner["chat_id"],
+             f"💬 Нове повідомлення в чаті\n{name}: {text[:300]}")
+
+
+@app.patch("/api/admin/project")
+def admin_project_patch(request: Request, item: dict) -> dict:
+    """Admin-only: edit a lead/project: status, progress, note. Payload:
+    {ts, status?, progress?, note?}"""
+    _require_admin(request)
+    ts = item.get("ts")
+    if not ts:
+        raise HTTPException(400, "missing ts")
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+        target = next((r for r in rows if r.get("ts") == ts), None)
+        if not target:
+            raise HTTPException(404, "project not found")
+        if item.get("status"):
+            target["status"] = item["status"]
+        if item.get("progress") is not None and isinstance(item["progress"], int):
+            target["progress"] = max(0, min(100, item["progress"]))
+        if item.get("note") is not None:
+            target["note"] = str(item["note"])[:2000]
+        LEADS_FILE.write_text(json.dumps(rows, ensure_ascii=False, indent=2), "utf-8")
+    return {"ok": True}
+
+
+# visitor activity ring buffer (in-memory)
+async def _record_activity(request: Request, response, elapsed_ms: float) -> None:
+    if request.url.path.startswith(("/api/", "/css/", "/js/", "/models/", "/favicon", "/robots")):
+        return
+    session = _read_session(request)
+    with _activity_lock:
+        _activity_buf.append({
+            "ts": time.time(),
+            "ip": _client_ip(request),
+            "path": request.url.path,
+            "email": (session or {}).get("email") or "",
+            "ua": (request.headers.get("user-agent") or "")[:120],
+            "ms": round(elapsed_ms),
+        })
 
 
 # --------------------------------------------------------- coupon 5% ----

@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /auth.html
+Disallow: /admin.html
 Disallow: /api/
 Disallow: /data/
 Disallow: /BTrade/

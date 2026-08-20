@@ -1170,6 +1170,59 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
 .fsd-leads tr:hover td { background: rgba(34, 211, 238, 0.04); }
 .fsd-leads .f-t { white-space: nowrap; color: #94a3b8; }
 .fsd-leads .f-msg { max-width: 300px; }
+.fsd-progress {
+  position: relative; width: 96px; height: 6px; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08); overflow: hidden;
+}
+.fsd-progress-bar {
+  height: 100%; border-radius: 6px;
+  background: linear-gradient(90deg, #22d3ee, #a78bfa);
+  transition: width 0.3s;
+}
+.fsd-progress-label { display: block; margin-top: 4px; font-size: 11px; color: #94a3b8; }
+.fsd-chat-wrap { margin-top: 18px; }
+.fsd-chat-divider {
+  display: flex; align-items: center; gap: 10px; color: #67e8f9;
+  font-weight: 600; font-size: 13px; margin-bottom: 10px;
+}
+.fsd-chat-divider::before, .fsd-chat-divider::after {
+  content: ""; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08);
+}
+.fsd-chat-box {
+  background: rgba(4, 7, 16, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px; padding: 12px;
+}
+.fsd-chat-msgs {
+  max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+  padding-right: 4px;
+}
+.fsd-chat-empty { color: #64748b; font-size: 12.5px; padding: 14px 4px; }
+.fsd-msg {
+  max-width: 82%; padding: 8px 12px; border-radius: 12px; font-size: 13px;
+  line-height: 1.45; word-wrap: break-word;
+}
+.fsd-msg.mine {
+  align-self: flex-end; background: rgba(34, 211, 238, 0.14);
+  border: 1px solid rgba(34, 211, 238, 0.3); color: #e2e8f0;
+}
+.fsd-msg.theirs {
+  align-self: flex-start; background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;
+}
+.fsd-msg-tx { display: block; }
+.fsd-msg-ts { display: block; margin-top: 4px; font-size: 10px; color: #64748b; text-align: right; }
+.fsd-chat-inputs { display: flex; gap: 8px; margin-top: 10px; }
+.fsd-chat-input {
+  flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0; border-radius: 10px; padding: 9px 12px; font-size: 13px; outline: none;
+}
+.fsd-chat-input:focus { border-color: rgba(34, 211, 238, 0.6); }
+.fsd-chat-send {
+  background: rgba(34, 211, 238, 0.14); color: #67e8f9; border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s; white-space: nowrap;
+}
+.fsd-chat-send:hover { background: rgba(34, 211, 238, 0.24); }
 @media (max-width: 900px) {
   .fsd-auth-name { display: none; }
   .fsd-modal { padding-top: 76px; }
