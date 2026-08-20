@@ -247,7 +247,6 @@ dropZone.addEventListener("click", function (ev) {
 
     function onScrollWhileDrag() {
       if (!couponDragging) return;
-      claimIfOver();
       window.setTimeout(positionHint, 0);
     }
     window.addEventListener("scroll", onScrollWhileDrag, { passive: true });
@@ -280,39 +279,28 @@ dropZone.addEventListener("click", function (ev) {
 
   function claimCoupon() {
     dbg("claim-start", { loggedIn: !!state.user, couponClaimed: couponClaimed, pos: couponEl ? couponEl.style.left + "," + couponEl.style.top : "none" });
-    var beat = false;
-    if (navigator.sendBeacon) {
-      try { beat = navigator.sendBeacon("/api/coupon/claim", new Blob(["coupon"], { type: "text/plain" })); } catch (err) {}
-    }
-    if (!beat) {
-      fetch("/api/coupon/claim", { method: "POST", credentials: "same-origin" })
-        .then(function (r) {
-          dbg("claim-resp", { status: r.status });
-          return r.json().catch(function () { return { status: r.status }; });
-        })
-        .then(function (d) {
-          if (d && (d.ok || d.status === 409)) claimSuccess();
-          else restoreCoupon();
-        })
-        .catch(function (err) { dbg("claim-fail", String(err && err.message)); restoreCoupon(); });
-      return;
-    }
-    dbg("claim-beacon-sent");
-    claimSuccess();
-    setTimeout(function () {
-      fetch("/api/coupon/status", { credentials: "same-origin" })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (d && d.ok && d.claimed) {
-            dbg("claim-verified");
-          } else {
-            dbg("claim-not-verified", d || {});
-            couponClaimed = false;
-            restoreCoupon();
-          }
-        })
-        .catch(function () { dbg("verify-fail"); });
-    }, 1200);
+    fetch("/api/coupon/claim", { method: "POST", credentials: "same-origin", keepalive: true })
+      .then(function (r) {
+        dbg("claim-resp", { status: r.status });
+        if (r.status === 401) {
+          couponToast(T("Спочатку увійдіть в акаунт"));
+          restoreCoupon();
+          return null;
+        }
+        return r.json().catch(function () { return { status: r.status }; });
+      })
+      .then(function (d) {
+        if (!d) return;
+        if (d.ok || d.status === 409) claimSuccess();
+        else {
+          dbg("claim-failed", d || {});
+          restoreCoupon();
+        }
+      })
+      .catch(function (err) {
+        dbg("claim-fail", String(err && err.message));
+        restoreCoupon();
+      });
   }
 
   function claimSuccess() {
