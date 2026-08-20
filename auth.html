@@ -163,27 +163,19 @@
       var T = window.FSD_T || function (s) { return s; };
 
       var turnstileToken = { login: "", register: "", recover: "" };
-      var pendingGoogle = null; // "login" | "register" | null
-      window.onTurnstileLogin = function (t) {
-        turnstileToken.login = t;
-        if (pendingGoogle === "login") { pendingGoogle = null; goGoogle("login"); }
-      };
-      window.onTurnstileRegister = function (t) {
-        turnstileToken.register = t;
-        if (pendingGoogle === "register") { pendingGoogle = null; goGoogle("register"); }
-      };
+      window.onTurnstileLogin = function (t) { turnstileToken.login = t; };
+      window.onTurnstileRegister = function (t) { turnstileToken.register = t; };
       window.onTurnstileRecover = function (t) { turnstileToken.recover = t; };
 
       function goGoogle(kind) {
         var tok = kind === "login" ? turnstileToken.login : turnstileToken.register;
         if (!tok) {
-          pendingGoogle = kind;
           showMsg(T("Спершу пройдіть перевірку «Я не робот» вище"), false);
           return;
         }
         var btn = document.getElementById(kind === "login" ? "google-login" : "google-register");
         if (btn) { btn.disabled = true; btn.style.opacity = "0.6"; btn.innerHTML = '<span class="spinner" style="display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle"></span>' + T("Перенаправлення…"); }
-        var url = "/api/auth/google?mode=none&token=" + encodeURIComponent(tok);
+        var url = "/api/auth/google?mode=select&token=" + encodeURIComponent(tok);
         var n = qp("next") || "";
         if (n) url += "&next=" + encodeURIComponent(n);
         location.href = url;

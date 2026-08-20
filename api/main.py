@@ -226,7 +226,7 @@ def auth_google_start(request: Request):
         "scope": "openid email profile",
         "state": state,
     }
-    mode = request.query_params.get("mode", "none")
+    mode = request.query_params.get("mode", "select")
     if mode == "none":
         params["prompt"] = "none"
     else:
