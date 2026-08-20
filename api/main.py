@@ -801,7 +801,8 @@ def _save_lead(payload: dict) -> None:
         LEADS_FILE.write_text(json.dumps(rows, ensure_ascii=False, indent=2), "utf-8")
     print(f"[LEAD] {payload.get('type','?')} | {payload.get('name','?')} | {payload.get('contact','?')} | {payload.get('budget','?')}")
     threading.Thread(target=_tg_notify_lead, args=(payload,), daemon=True).start()
-    threading.Thread(target=_mk_thanks, args=(payload,), daemon=True).start()
+    if (payload.get("source") or "") != "admin":  # admin-created projects are not new site applications
+        threading.Thread(target=_mk_thanks, args=(payload,), daemon=True).start()
 
 
 def _mk_thanks(lead: dict) -> None:
@@ -1218,6 +1219,72 @@ def set_project_status(request: Request, item: dict) -> dict:
 # Chats: per-client threads stored in data/chats.json. A thread is bound to the
 # client's account email (and optionally to a lead by ts). Visitors activity is
 # kept in an in-memory ring buffer (lost on restart — acceptable for a demo).
+# Projects: admin creates/updates client projects in leads.json (source="admin");
+# a project is bound to the client by the `email` field (or contact email).
+
+class AdminProject(BaseModel):
+    name: str = ""
+    contact: str = ""
+    email: str = ""
+    type: str = ""
+    budget: str = ""
+    message: str = ""
+    source: str = "admin"
+    status: str = "нова"
+    progress: int | None = None
+    note: str = ""
+    ts: str | None = None
+
+
+@app.post("/api/admin/project")
+def admin_project_create(request: Request, p: AdminProject) -> dict:
+    """Admin starts a new project (bound to the client by email)."""
+    _require_admin(request)
+    name = (p.name or "").strip()[:120]
+    if not name:
+        raise HTTPException(400, "client name required")
+    email = (p.email or "").strip().lower()
+    contact = (p.contact or "").strip()[:200]
+    if not email:
+        email = _extract_email(contact) or ""
+    if not email:
+        raise HTTPException(400, "client email required (project must be bound to a client)")
+    status = (p.status or "").strip()
+    if status not in ("нова", "в розробці", "завершено"):
+        status = "нова"
+    row = {
+        "name": name,
+        "contact": contact,
+        "email": email,
+        "type": (p.type or "").strip()[:200],
+        "budget": (p.budget or "").strip()[:200],
+        "message": (p.message or "").strip()[:2000],
+        "source": "admin",
+        "status": status,
+        "progress": max(0, min(100, p.progress if p.progress is not None else 0)),
+        "note": (p.note or "").strip()[:2000],
+        "ts": datetime.now(timezone.utc).isoformat(),
+    }
+    _save_lead(row)
+    tid = _thread_id_for(email, "")
+    t = next((x for x in _read_chats() if x.get("id") == tid), None)
+    if not t:
+        t = {
+            "id": tid,
+            "email": email,
+            "name": name,
+            "contact": contact,
+            "lead_ts": "",
+            "lead_type": row["type"],
+            "status": "open",
+            "created": datetime.now(timezone.utc).isoformat(),
+            "updated": datetime.now(timezone.utc).isoformat(),
+            "unread_admin": 0,
+            "unread_client": 0,
+            "messages": [],
+        }
+        _save_thread(t)
+    return {"ok": True, "ts": row.get("ts"), "email": email, "thread_id": t["id"]}
 
 CHATS_FILE = DATA_DIR / "chats.json"
 ATTACH_DIR = DATA_DIR / "attachments"
@@ -1283,19 +1350,42 @@ def admin_stats(request: Request) -> dict:
     threads = [t for t in chats if t.get("status") != "closed"]
     with _activity_lock:
         act = list(_activity_buf)
-    now = datetime.now(timezone.utc)
-    day_ago = now.timestamp() - 86400
+    now_ts = time.time()
+    day_ago = now_ts - 86400
+    week_ago = now_ts - 7 * 86400
     act_24h = [a for a in act if a.get("ts", 0) >= day_ago]
+    def _ts_epoch(s: str | None) -> float:
+        try:
+            return datetime.fromisoformat(s).timestamp()
+        except Exception:
+            return 0
+    leads_today = [l for l in leads if _ts_epoch(l.get("ts")) >= now_ts - 86400]
+    leads_week = [l for l in leads if _ts_epoch(l.get("ts")) >= week_ago]
+    by_source: dict[str, int] = {}
+    for l in leads:
+        src = (l.get("source") or "site").strip() or "site"
+        by_source[src] = by_source.get(src, 0) + 1
+    clients = [u for u in users if u.get("verified")]
+    client_emails = {c["email"] for c in clients}
+    bound = sum(1 for l in leads if (l.get("email") or "").lower() in client_emails)
+    unbound = [l for l in leads if not (l.get("email") or "").lower() in client_emails]
+    sum_msg = sum(len(t.get("messages", [])) for t in chats)
     return {
         "ok": True,
         "leads_total": len(leads),
         "leads_new": sum(1 for l in leads if (l.get("status") or "") == "нова"),
         "leads_dev": sum(1 for l in leads if (l.get("status") or "") == "в розробці"),
         "leads_done": sum(1 for l in leads if (l.get("status") or "") == "завершено"),
+        "leads_today": len(leads_today),
+        "leads_week": len(leads_week),
+        "by_source": by_source,
         "users_total": len(users),
-        "users_registered": sum(1 for u in users if u.get("verified")),
+        "users_registered": len(clients),
+        "clients_bound_projects": bound,
+        "clients_unbound_leads": len(unbound),
         "threads": len(threads),
         "unread_admin": sum(t.get("unread_admin") or 0 for t in chats),
+        "messages_total": sum_msg,
         "visitors_24h": len({a.get("ip") for a in act_24h}),
         "pageviews_24h": len(act_24h),
         "bot_online": (lambda s: s.get("running") if s else False)(_bot_state),

@@ -1,26 +1,26 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
   <meta name="theme-color" content="#04050c" />
-  <title>РђРґРјС–РЅ В· FastStart Digital</title>
+  <title>Адмін · FastStart Digital</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/css/tailwind.css?v=25" />
-  <link rel="stylesheet" href="/css/admin.css?v=2" />
+  <link rel="stylesheet" href="/css/admin.css?v=3" />
 </head>
 <body class="adm-body">
   <header class="adm-top">
     <div class="adm-top-inner">
       <div class="adm-brand">
         <span class="adm-logo-dot"></span>
-        FastStart Digital <span class="adm-brand-sub">В· Р°РґРјС–РЅС–СЃС‚СЂСѓРІР°РЅРЅСЏ</span>
+        FastStart Digital <span class="adm-brand-sub">· адміністрування</span>
       </div>
       <div class="adm-top-right">
         <span id="adm-user" class="adm-user"></span>
-        <a href="/" class="adm-btn adm-btn-ghost" id="adm-view-site">РќР° СЃР°Р№С‚</a>
-        <button class="adm-btn adm-btn-ghost" id="adm-logout">Р’РёР№С‚Рё</button>
+        <a href="/" class="adm-btn adm-btn-ghost" id="adm-view-site">На сайт</a>
+        <button class="adm-btn adm-btn-ghost" id="adm-logout">Вийти</button>
       </div>
     </div>
   </header>
@@ -28,39 +28,58 @@
   <main class="adm-main">
     <div id="adm-denied" class="adm-denied hidden">
       <div class="adm-denied-card">
-        <div class="adm-denied-ico">рџ”’</div>
-        <h1>Р”РѕСЃС‚СѓРї Р»РёС€Рµ РґР»СЏ Р°РґРјС–РЅС–СЃС‚СЂР°С‚РѕСЂР°</h1>
-        <p>РЈРІС–Р№РґС–С‚СЊ РїС–Рґ РѕР±Р»С–РєРѕРІРёРј Р·Р°РїРёСЃРѕРј, СЏРєРёР№ РІС…РѕРґРёС‚СЊ Сѓ СЃРїРёСЃРѕРє Р°РґРјС–РЅС–СЃС‚СЂР°С‚РѕСЂС–РІ.</p>
-        <a href="/auth.html?next=/admin.html" class="adm-btn adm-btn-primary">РЈРІС–Р№С‚Рё С‡РµСЂРµР· Google</a>
+        <div class="adm-denied-ico">🔒</div>
+        <h1>Доступ лише для адміністратора</h1>
+        <p>Увійдіть під обліковим записом, який входить у список адміністраторів.</p>
+        <a href="/auth.html?next=/admin.html" class="adm-btn adm-btn-primary">Увійти через Google</a>
       </div>
     </div>
 
     <div id="adm-app" class="hidden">
       <div class="adm-nav">
-        <button class="adm-tab adm-tab-active" data-tab="overview">РћРіР»СЏРґ</button>
-        <button class="adm-tab" data-tab="leads">Р—Р°СЏРІРєРё</button>
-        <button class="adm-tab" data-tab="chat">Р§Р°С‚Рё <span id="adm-chat-badge" class="adm-badge hidden">0</span></button>
-        <button class="adm-tab" data-tab="activity">РђРєС‚РёРІРЅС–СЃС‚СЊ</button>
+        <button class="adm-tab adm-tab-active" data-tab="overview">Огляд</button>
+        <button class="adm-tab" data-tab="board">Доска</button>
+        <button class="adm-tab" data-tab="leads">Заявки</button>
+        <button class="adm-tab" data-tab="chat">Чати <span id="adm-chat-badge" class="adm-badge hidden">0</span></button>
+        <button class="adm-tab" data-tab="activity">Активність</button>
+        <button class="adm-tab adm-tab-new" data-tab="newproj">＋ Проєкт</button>
       </div>
 
       <section id="tab-overview" class="adm-tab-panel">
         <div class="adm-stats-grid" id="adm-stats"></div>
-        <div class="adm-panel">
-          <h2 class="adm-panel-title">РћСЃС‚Р°РЅРЅС– Р·Р°СЏРІРєРё</h2>
-          <div class="adm-table-wrap"><table class="adm-table" id="adm-leads-preview"></table></div>
+        <div class="adm-grid-2">
+          <div class="adm-panel">
+            <h2 class="adm-panel-title">Останні заявки</h2>
+            <div class="adm-table-wrap"><table class="adm-table" id="adm-leads-preview"></table></div>
+          </div>
+          <div class="adm-panel">
+            <h2 class="adm-panel-title">Джерела заявок</h2>
+            <div id="adm-sources"></div>
+          </div>
         </div>
+      </section>
+
+      <section id="tab-board" class="adm-tab-panel hidden">
+        <div class="adm-board-head">
+          <h2 class="adm-panel-title">Доска проєктів <span class="adm-hint">(перетягуйте картки між колонками)</span></h2>
+          <div class="adm-filter">
+            <input type="text" id="adm-board-search" class="adm-select" placeholder="Пошук: клієнт, email, тип…" />
+          </div>
+        </div>
+        <div class="adm-board" id="adm-board"></div>
       </section>
 
       <section id="tab-leads" class="adm-tab-panel hidden">
         <div class="adm-panel">
           <div class="adm-panel-head">
-            <h2 class="adm-panel-title">Р—Р°СЏРІРєРё С‚Р° РїСЂРѕС”РєС‚Рё</h2>
+            <h2 class="adm-panel-title">Заявки та проєкти</h2>
             <div class="adm-filter">
+              <input type="text" id="adm-leads-search" class="adm-select" placeholder="Пошук…" />
               <select id="adm-filter-status" class="adm-select">
-                <option value="">РЈСЃС– СЃС‚Р°С‚СѓСЃРё</option>
-                <option value="РЅРѕРІР°">РЅРѕРІР°</option>
-                <option value="РІ СЂРѕР·СЂРѕР±С†С–">РІ СЂРѕР·СЂРѕР±С†С–</option>
-                <option value="Р·Р°РІРµСЂС€РµРЅРѕ">Р·Р°РІРµСЂС€РµРЅРѕ</option>
+                <option value="">Усі статуси</option>
+                <option value="нова">нова</option>
+                <option value="в розробці">в розробці</option>
+                <option value="завершено">завершено</option>
               </select>
             </div>
           </div>
@@ -72,13 +91,13 @@
         <div class="adm-chat-layout">
           <div class="adm-chat-list" id="adm-threads"></div>
           <div class="adm-chat-window" id="adm-chat-window">
-            <div class="adm-chat-empty" id="adm-chat-empty">РћР±РµСЂС–С‚СЊ РґС–Р°Р»РѕРі Р»С–РІРѕСЂСѓС‡, С‰РѕР± РІС–РґРїРѕРІС–СЃС‚Рё РєР»С–С”РЅС‚Сѓ.</div>
+            <div class="adm-chat-empty" id="adm-chat-empty">Оберіть діалог ліворуч, щоб відповісти клієнту.</div>
             <div class="adm-chat-head hidden" id="adm-chat-head"></div>
             <div class="adm-chat-msgs hidden" id="adm-chat-msgs"></div>
             <div class="adm-chat-compose hidden" id="adm-chat-compose">
-              <label class="adm-chat-file" id="adm-chat-attach" title="РџСЂРёРєСЂС–РїРёС‚Рё С„Р°Р№Р»">рџ“Ћ<input type="file" id="adm-chat-file" hidden /></label>
-              <input type="text" id="adm-chat-input" class="adm-chat-input" placeholder="Р’С–РґРїРѕРІС–РґСЊ РєР»С–С”РЅС‚СѓвЂ¦" maxlength="2000" />
-              <button class="adm-btn adm-btn-primary" id="adm-chat-send">РќР°РґС–СЃР»Р°С‚Рё</button>
+              <label class="adm-chat-file" id="adm-chat-attach" title="Прикріпити файл">📎<input type="file" id="adm-chat-file" hidden /></label>
+              <input type="text" id="adm-chat-input" class="adm-chat-input" placeholder="Відповідь клієнту…" maxlength="2000" />
+              <button class="adm-btn adm-btn-primary" id="adm-chat-send">Надіслати</button>
             </div>
             <div class="adm-pending hidden" id="adm-pending"></div>
           </div>
@@ -87,10 +106,63 @@
 
       <section id="tab-activity" class="adm-tab-panel hidden">
         <div class="adm-panel">
-          <h2 class="adm-panel-title">РђРєС‚РёРІРЅС–СЃС‚СЊ РІС–РґРІС–РґСѓРІР°С‡С–РІ <span class="adm-hint">(РѕСЃС‚Р°РЅРЅС– 2000 РїРѕРґС–Р№, Сѓ РїР°РјКјСЏС‚С– РїСЂРѕС†РµСЃСѓ)</span></h2>
+          <h2 class="adm-panel-title">Активність відвідувачів <span class="adm-hint">(останні 2000 подій, у памʼяті процесу)</span></h2>
           <div class="adm-table-wrap"><table class="adm-table" id="adm-activity"></table></div>
         </div>
       </section>
+    </div>
+
+    <div id="adm-proj-modal" class="adm-modal hidden">
+      <div class="adm-modal-card">
+        <div class="adm-modal-head">
+          <h2>Новий проєкт для клієнта</h2>
+          <button type="button" class="adm-modal-close" id="adm-proj-close">✕</button>
+        </div>
+        <div class="adm-modal-body">
+          <label class="adm-fld">Клієнт (імʼя)<input id="adm-p-name" class="adm-input" maxlength="120" placeholder="Імʼя або компанія" /></label>
+          <label class="adm-fld">Email клієнта *<input id="adm-p-email" class="adm-input" maxlength="200" placeholder="client@example.com" /></label>
+          <label class="adm-fld">Контакт (телеграм/телефон)<input id="adm-p-contact" class="adm-input" maxlength="200" placeholder="@nick або +380…" /></label>
+          <div class="adm-fld-row">
+            <label class="adm-fld">Тип проєкту
+              <select id="adm-p-type" class="adm-input adm-sel">
+                <option value="">— виберіть —</option>
+                <option>Сайт-візитка</option>
+                <option>Корпоративний сайт</option>
+                <option>Інтернет-магазин</option>
+                <option>Лендінг</option>
+                <option>3D / WebAR</option>
+                <option>AI-агент / автоматизація</option>
+                <option>Чат-бот</option>
+                <option>Інше</option>
+              </select>
+            </label>
+            <label class="adm-fld">Бюджет
+              <select id="adm-p-budget" class="adm-input adm-sel">
+                <option value="">—</option>
+                <option>до 5 000</option>
+                <option>5 000 - 15 000</option>
+                <option>15 000 - 50 000</option>
+                <option>50 000 - 150 000</option>
+                <option>150 000+</option>
+              </select>
+            </label>
+          </div>
+          <label class="adm-fld">Статус
+            <select id="adm-p-status" class="adm-input adm-sel">
+              <option value="нова">нова</option>
+              <option value="в розробці">в розробці</option>
+              <option value="завершено">завершено</option>
+            </select>
+          </label>
+          <label class="adm-fld">Замовлення / ТЗ<textarea id="adm-p-message" class="adm-area" maxlength="2000" rows="3" placeholder="Що потрібно зробити…"></textarea></label>
+          <label class="adm-fld">Задача (далі — у правці)<textarea id="adm-p-note" class="adm-area" maxlength="2000" rows="2" placeholder="Перші задачі…"></textarea></label>
+          <div class="adm-modal-err hidden" id="adm-proj-err"></div>
+          <div class="adm-modal-actions">
+            <button class="adm-btn" id="adm-proj-cancel">Скасувати</button>
+            <button class="adm-btn adm-btn-primary" id="adm-proj-save">Створити проєкт</button>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -99,6 +171,6 @@
   <script src="/js/i18n-c.js?v=1" defer></script>
   <script src="/js/i18n-d.js?v=13" defer></script>
   <script src="/js/i18n.js?v=3" defer></script>
-  <script src="/js/admin.js?v=2" defer></script>
+  <script src="/js/admin.js?v=3" defer></script>
 </body>
 </html>

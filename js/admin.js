@@ -75,9 +75,11 @@
       p.classList.toggle("hidden", p.id !== "tab-" + name);
     });
     if (name === "overview") loadOverview();
+    if (name === "board") loadBoard();
     if (name === "leads") loadLeads();
     if (name === "chat") loadThreads();
     if (name === "activity") loadActivity();
+    if (name === "newproj") openProjectModal();
   }
 
   /* ---------------- overview ---------------- */
@@ -88,9 +90,14 @@
         { l: "Нові", v: s.leads_new, c: "stats-green" },
         { l: "У розробці", v: s.leads_dev, c: "stats-amber" },
         { l: "Завершено", v: s.leads_done, c: "stats-purple" },
-        { l: "Клієнтів (акаунтів)", v: s.users_total, c: "stats-blue" },
+        { l: "За 24 год", v: s.leads_today, c: "stats-cyan" },
+        { l: "За 7 днів", v: s.leads_week, c: "stats-blue" },
+        { l: "Клієнтів (акаунтів)", v: s.users_registered, c: "stats-blue" },
+        { l: "Проєктів у клієнтів", v: s.clients_bound_projects, c: "stats-green" },
+        { l: "Заявок без клієнта", v: s.clients_unbound_leads, c: "stats-red" },
         { l: "Діалогів", v: s.threads, c: "stats-cyan" },
         { l: "Непрочитані", v: s.unread_admin, c: "stats-red" },
+        { l: "Повідомлень усього", v: s.messages_total, c: "stats-gray" },
         { l: "Відвідувачів/24год", v: s.visitors_24h, c: "stats-green" },
         { l: "Переглядів/24год", v: s.pageviews_24h, c: "stats-gray" },
         { l: "BTrade-бот", v: s.bot_online ? "онлайн" : "офлайн", c: s.bot_online ? "stats-green" : "stats-gray" },
@@ -99,6 +106,16 @@
         return '<div class="adm-stat ' + c.c + '"><div class="adm-stat-v">' + esc(c.v) +
           '</div><div class="adm-stat-l">' + esc(c.l) + '</div></div>';
       }).join("");
+      var sources = s.by_source || {};
+      var total = Object.keys(sources).reduce(function (n, k) { return n + sources[k]; }, 0) || 1;
+      $("adm-sources").innerHTML = Object.keys(sources).length
+        ? Object.keys(sources).sort(function (a, b) { return sources[b] - sources[a]; }).map(function (k) {
+            var pct = Math.round(sources[k] / total * 100);
+            return '<div class="adm-src"><div class="adm-src-row"><span class="adm-src-name">' + esc(k) +
+              '</span><span class="adm-src-n">' + sources[k] + " (" + pct + "%)</span></div>" +
+              '<div class="adm-progress"><div class="adm-progress-bar" style="width:' + pct + '%"></div></div></div>';
+          }).join("")
+        : '<div class="adm-empty">Ще немає заявок</div>';
       var t = $("adm-leads-preview");
       t.innerHTML = s.leads_total
         ? '<thead><tr><th>Клієнт</th><th>Контакт</th><th>Тип</th><th>Бюджет</th><th>Статус</th><th>Дата</th></tr></thead><tbody>' +
@@ -123,12 +140,100 @@
     return "new";
   }
 
+  /* ---------------- board (kanban) ---------------- */
+  var BOARD_STATUSES = ["нова", "в розробці", "завершено"];
+  var BOARD = [];
+
+  function boardCard(l) {
+    var em = (l.email || "").trim();
+    var unbound = !em ? '<span class="adm-board-unbound" title="Немає email — клієнт не побачить проєкт">без клієнта</span>' : "";
+    var prog = typeof l.progress === "number" ? l.progress : 0;
+    return '<div class="adm-card" draggable="true" data-ts="' + esc(l.ts) + '" data-status="' + esc(l.status || "нова") + '">' +
+      '<div class="adm-card-top"><span class="adm-card-type">' + esc(l.type || "Проєкт") + "</span>" +
+      '<span class="adm-card-budget">' + esc(l.budget || "—") + "</span></div>" +
+      '<div class="adm-card-name">' + esc(l.name || "?") + " " + unbound + "</div>" +
+      (l.email ? '<div class="adm-card-email">@ ' + esc(l.email) + "</div>" :
+        (l.contact ? '<div class="adm-card-email">' + esc(l.contact) + "</div>" : "")) +
+      (l.note ? '<div class="adm-card-note">' + esc(l.note) + "</div>" : "") +
+      '<div class="adm-progress"><div class="adm-progress-bar" style="width:' + prog + '%"></div></div>' +
+      '<div class="adm-card-foot"><span class="adm-card-prog">' + prog + "%</span>" +
+      '<span class="adm-card-date">' + fmtTs(l.ts) + '</span>' +
+      '<button class="adm-btn adm-btn-xs" data-open-chat="' + esc(l.ts) + '" data-email="' + esc(l.email || "") + '">Чат</button>' +
+      "</div></div>";
+  }
+
+  function loadBoard() {
+    var q = ($("adm-board-search").value || "").trim().toLowerCase();
+    api("/api/admin/leads?limit=500").then(function (d) {
+      BOARD = d.leads;
+      var shown = q
+        ? d.leads.filter(function (l) {
+            return [l.name, l.email, l.contact, l.type, l.budget, l.note, l.status]
+              .some(function (v) { return (v || "").toLowerCase().indexOf(q) > -1; });
+          })
+        : d.leads;
+      $("adm-board").innerHTML = BOARD_STATUSES.map(function (st) {
+        var items = shown.filter(function (l) { return (l.status || "нова") === st; });
+        return '<div class="adm-col" data-status="' + st + '">' +
+          '<div class="adm-col-head"><span class="adm-dot adm-dot-' + statusClass(st) + '"></span>' +
+          '<span class="adm-col-title">' + esc(st) + '</span>' +
+          '<span class="adm-col-count">' + items.length + "</span></div>" +
+          '<div class="adm-col-body">' + items.map(boardCard).join("") + "</div></div>";
+      }).join("");
+      $("adm-board").querySelectorAll(".adm-card").forEach(function (c) {
+        c.addEventListener("dragstart", function (e) {
+          e.dataTransfer.setData("text/plain", c.dataset.ts);
+          c.classList.add("adm-card-drag");
+          setTimeout(function () { c.classList.add("adm-card-hidden"); }, 0);
+        });
+        c.addEventListener("dragend", function () {
+          c.classList.remove("adm-card-drag", "adm-card-hidden");
+        });
+        c.querySelector("[data-open-chat]").addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          api("/api/admin/chat/open", {
+            method: "POST",
+            body: JSON.stringify({ email: ev.target.dataset.email, lead_ts: ev.target.dataset.openChat })
+          }).then(function (d) {
+            openThread(d.thread.id);
+            switchTab("chat");
+          }).catch(function (e) { flash(e.message); });
+        });
+      });
+      $("adm-board").querySelectorAll(".adm-col").forEach(function (col) {
+        col.addEventListener("dragover", function (e) { e.preventDefault(); col.classList.add("adm-col-over"); });
+        col.addEventListener("dragleave", function () { col.classList.remove("adm-col-over"); });
+        col.addEventListener("drop", function (e) {
+          e.preventDefault();
+          col.classList.remove("adm-col-over");
+          var ts = e.dataTransfer.getData("text/plain");
+          if (!ts) return;
+          var status = col.dataset.status;
+          api("/api/admin/project", {
+            method: "PATCH",
+            body: JSON.stringify({ ts: ts, status: status })
+          }).then(function () {
+            loadBoard();
+            flash("Статус → " + status);
+          }).catch(function (e2) { flash(e2.message); loadBoard(); });
+        });
+      });
+    }).catch(function (e) { flash(e.message); });
+  }
+
   /* ---------------- leads ---------------- */
   function loadLeads() {
     var filter = $("adm-filter-status").value;
+    var q = ($("adm-leads-search").value || "").trim().toLowerCase();
     api("/api/admin/leads").then(function (d) {
       var rows = d.leads.filter(function (l) {
-        return !filter || (l.status || "") === filter;
+        if (filter && (l.status || "") !== filter) return false;
+        if (q) {
+          var hay = [l.name, l.email, l.contact, l.type, l.budget, l.message, l.note, l.source]
+            .join(" ").toLowerCase();
+          if (hay.indexOf(q) === -1) return false;
+        }
+        return true;
       });
       var t = $("adm-leads");
       if (!rows.length) {
@@ -136,19 +241,23 @@
         return;
       }
       t.innerHTML =
-        '<thead><tr><th>Дата</th><th>Клієнт</th><th>Контакт</th><th>Тип</th><th>Бюджет</th><th>Статус</th><th>Прогрес</th><th>Джерело</th><th></th></tr></thead><tbody>' +
+        '<thead><tr><th>Дата</th><th>Клієнт</th><th>Email</th><th>Контакт</th><th>Тип</th><th>Бюджет</th><th>Статус</th><th>Прогрес</th><th>Джерело</th><th></th></tr></thead><tbody>' +
         rows.map(function (l) {
+          var em = (l.email || "").trim();
+          var emCell = em
+            ? '<span class="adm-email">' + esc(em) + "</span>"
+            : '<span class="adm-unbound" title="Без email — клієнт не побачить проєкт">без email</span>';
           return '<tr>' +
             '<td class="adm-cell-nowrap">' + fmtTs(l.ts) + '</td>' +
-            '<td>' + esc(l.name || "—") + (l.email ? '<div class="adm-sub">' + esc(l.email) + "</div>" : "") + '</td>' +
+            '<td>' + esc(l.name || "—") + (l.note ? '<div class="adm-sub">📌 ' + esc(l.note) + "</div>" : "") + '</td>' +
+            '<td>' + emCell + '</td>' +
             '<td>' + esc(l.contact || "—") + '</td>' +
             '<td>' + esc(l.type || "—") + '</td>' +
             '<td>' + esc(l.budget || "—") + '</td>' +
             '<td><select class="adm-select adm-status-sel" data-ts="' + esc(l.ts) + '">' +
             ["нова", "в розробці", "завершено"].map(function (s) {
               return '<option' + (s === (l.status || "нова") ? " selected" : "") + ">" + s + "</option>";
-            }).join("") + '</select>' +
-            (l.note ? '<div class="adm-sub">' + esc(l.note) + "</div>" : "") + '</td>' +
+            }).join("") + '</select></td>' +
             '<td><div class="adm-progress-w"><input type="range" min="0" max="100" step="5" value="' +
             (typeof l.progress === "number" ? l.progress : 0) + '" class="adm-range" data-ts="' + esc(l.ts) +
             '"><span class="adm-range-v" data-ts="' + esc(l.ts) + '">' +
@@ -188,6 +297,54 @@
           }).catch(function (e) { flash(e.message); });
         });
       });
+    }).catch(function (e) { flash(e.message); });
+  }
+
+  /* ---------------- new project (admin) ---------------- */
+  function openProjectModal() {
+    $("adm-proj-modal").classList.remove("hidden");
+    $("adm-proj-err").classList.add("hidden");
+  }
+  function closeProjectModal() {
+    $("adm-proj-modal").classList.add("hidden");
+    $("adm-proj-err").classList.add("hidden");
+    ["adm-p-name", "adm-p-email", "adm-p-contact", "adm-p-type", "adm-p-budget",
+     "adm-p-status", "adm-p-message", "adm-p-note"].forEach(function (id) {
+      var el = $(id);
+      if (el && el.tagName === "SELECT") el.selectedIndex = 0;
+      if (el && el.tagName === "INPUT") el.value = "";
+      if (el && el.tagName === "TEXTAREA") el.value = "";
+    });
+  }
+  function saveProject() {
+    var name = $("adm-p-name").value.trim();
+    var email = $("adm-p-email").value.trim();
+    var err = $("adm-proj-err");
+    if (!name) { err.textContent = "Вкажіть імʼя клієнта"; err.classList.remove("hidden"); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      err.textContent = "Вкажіть коректний email клієнта — за ним проєкт привʼяжеться до замовника";
+      err.classList.remove("hidden");
+      return;
+    }
+    api("/api/admin/project", {
+      method: "POST",
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        contact: $("adm-p-contact").value.trim(),
+        type: $("adm-p-type").value,
+        budget: $("adm-p-budget").value,
+        status: $("adm-p-status").value,
+        message: $("adm-p-message").value.trim(),
+        note: $("adm-p-note").value.trim(),
+      })
+    }).then(function () {
+      closeProjectModal();
+      flash("Проєкт створено та привʼязано до клієнта");
+      switchTab("board");
+      loadBoard();
+      loadLeads();
+      loadOverview();
     }).catch(function (e) { flash(e.message); });
   }
 
@@ -334,6 +491,17 @@
       b.addEventListener("click", function () { switchTab(b.dataset.tab); });
     });
     $("adm-filter-status").addEventListener("change", loadLeads);
+    $("adm-leads-search").addEventListener("input", function () { clearTimeout(loadLeads._t); loadLeads._t = setTimeout(loadLeads, 250); });
+    $("adm-board-search").addEventListener("input", function () { clearTimeout(loadBoard._t); loadBoard._t = setTimeout(loadBoard, 250); });
+    $("adm-proj-close").addEventListener("click", closeProjectModal);
+    $("adm-proj-cancel").addEventListener("click", closeProjectModal);
+    $("adm-proj-save").addEventListener("click", saveProject);
+    $("adm-proj-modal").addEventListener("click", function (e) {
+      if (e.target === $("adm-proj-modal")) closeProjectModal();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !$("adm-proj-modal").classList.contains("hidden")) closeProjectModal();
+    });
     $("adm-logout").addEventListener("click", function () {
       api("/api/auth/logout", { method: "POST", body: "{}" })
         .then(function () { location.href = "/"; }).catch(function () { location.href = "/"; });
