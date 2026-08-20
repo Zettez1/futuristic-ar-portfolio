@@ -361,7 +361,14 @@ def auth_me(request: Request) -> dict:
     if u:
         users = _read_users()
         db_u = next((x for x in users if x.get("email") == (u.get("email") or "").lower()), None)
-        u["coupon_5"] = bool(db_u and db_u.get("coupon_5"))
+        if db_u is not None and not db_u.get("coupon_5"):
+            # first-project 5% discount is granted to every account automatically
+            db_u["coupon_5"] = True
+            try:
+                _write_users(users)
+            except Exception:
+                pass
+        u["coupon_5"] = bool(db_u and db_u.get("coupon_5")) or (db_u is not None)
     return {"ok": bool(u), "user": u}
 
 
