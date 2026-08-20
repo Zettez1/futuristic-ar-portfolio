@@ -202,12 +202,10 @@ def _oauth_ready() -> bool:
 def auth_google_start(request: Request):
     if not _oauth_ready():
         raise HTTPException(503, "Google OAuth is not configured (missing env)")
-    auth_cookie = request.cookies.get(AUTH_COOKIE, "")
-    if auth_cookie and _read_session(request):
-        nxt = request.cookies.get("fsd_next", "") or request.query_params.get("next", "")
-        resp = RedirectResponse(nxt if nxt.startswith("/") else "/", status_code=302)
-        resp.delete_cookie("fsd_next", path="/")
-        return resp
+    # Turnstile proof required (when secret configured)
+    tok = request.query_params.get("token", "")
+    if TURNSTILE_SECRET and not _verify_turnstile(tok, request.client.host if request.client else ""):
+        raise HTTPException(400, "turnstile verification failed, please retry")
     state = secrets.token_urlsafe(24)
     params = {
         "client_id": GOOGLE_CLIENT_ID,
@@ -216,11 +214,11 @@ def auth_google_start(request: Request):
         "scope": "openid email profile",
         "state": state,
     }
-    mode = request.query_params.get("mode", "none")
-    if mode == "select":
-        params["prompt"] = "select_account"
-    else:
+    mode = request.query_params.get("mode", "select")
+    if mode == "none":
         params["prompt"] = "none"
+    else:
+        params["prompt"] = "select_account"
     url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
     resp = RedirectResponse(url, status_code=302)
     resp.set_cookie(AUTH_STATE_COOKIE, state, max_age=300,
