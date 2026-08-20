@@ -1329,6 +1329,22 @@ def _get_thread(thread_id: str) -> dict | None:
     return next((t for t in _read_chats() if t.get("id") == thread_id), None)
 
 
+def _client_thread(email: str, lead_ts: str) -> dict | None:
+    """Resolve the client's thread: exact email match first, else by lead ts
+    (covers threads built from email-less leads, e.g. admin opened from a card
+    with only @telegram contact)."""
+    em = (email or "").strip().lower()
+    chats = _read_chats()
+    for t in chats:
+        if (t.get("email") or "").strip().lower() == em:
+            return t
+    if lead_ts:
+        for t in chats:
+            if t.get("lead_ts") == lead_ts:
+                return t
+    return None
+
+
 def _save_thread(thread: dict) -> None:
     chats = _read_chats()
     for i, t in enumerate(chats):
@@ -1534,6 +1550,8 @@ def admin_chat_open(request: Request, body: AdminOpenThread) -> dict:
             with _lock:
                 rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
             lead = next((r for r in rows if r.get("ts") == lead_ts), None)
+        if not email and lead:
+            email = (lead.get("email") or _extract_email(lead.get("contact")) or "").strip().lower()
         name = (lead or {}).get("name") or ""
         contact = (lead or {}).get("contact") or (email or "")
         thread = {
@@ -1567,8 +1585,7 @@ def client_chat_unread(request: Request) -> dict:
         rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
     lead = next((r for r in rows
                  if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email), None)
-    tid = _thread_id_for(email, (lead or {}).get("ts") or "")
-    t = next((x for x in _read_chats() if x.get("id") == tid), None)
+    t = _client_thread(email, (lead or {}).get("ts") or "")
     return {
         "ok": True,
         "unread": t.get("unread_client", 0) if t else 0,
@@ -1588,7 +1605,7 @@ def client_chat_my(request: Request) -> dict:
     lead = next((r for r in rows
                  if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email), None)
     tid = _thread_id_for(email, (lead or {}).get("ts") or "")
-    t = next((x for x in _read_chats() if x.get("id") == tid), None)
+    t = _client_thread(email, (lead or {}).get("ts") or "")
     if not t:
         t = {
             "id": tid,
@@ -1659,7 +1676,7 @@ def client_chat_send(request: Request, msg: ClientChatSend) -> dict:
     lead = next((r for r in rows
                  if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email), None)
     tid = _thread_id_for(email, (lead or {}).get("ts") or "")
-    t = next((x for x in _read_chats() if x.get("id") == tid), None)
+    t = _client_thread(email, (lead or {}).get("ts") or "")
     if not t:
         t = {
             "id": tid,
