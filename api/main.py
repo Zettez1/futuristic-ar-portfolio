@@ -359,16 +359,7 @@ def auth_google_callback(request: Request):
 def auth_me(request: Request) -> dict:
     u = _read_session(request)
     if u:
-        users = _read_users()
-        db_u = next((x for x in users if x.get("email") == (u.get("email") or "").lower()), None)
-        if db_u is not None and not db_u.get("coupon_5"):
-            # first-project 5% discount is granted to every account automatically
-            db_u["coupon_5"] = True
-            try:
-                _write_users(users)
-            except Exception:
-                pass
-        u["coupon_5"] = bool(db_u and db_u.get("coupon_5")) or (db_u is not None)
+        u["coupon_5"] = True  # 5% discount is auto-applied to every account
     return {"ok": bool(u), "user": u}
 
 
@@ -1078,10 +1069,8 @@ def list_projects(request: Request, limit: int = 100) -> dict:
                 if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email]
     projects = rows[-limit:][::-1]
     dev_count = sum(1 for p in projects if (p.get("status") or "").strip() == "в розробці")
-    users = _read_users()
-    db_u = next((x for x in users if x.get("email") == email), None)
-    coupon_5 = bool(db_u and db_u.get("coupon_5"))
-    return {"count": len(projects), "dev_count": dev_count, "admin": is_admin, "coupon_5": coupon_5, "projects": projects}
+    return {"count": len(projects), "dev_count": dev_count, "admin": is_admin,
+            "coupon_5": True, "projects": projects}
 
 
 @app.patch("/api/projects/status")
