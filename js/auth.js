@@ -126,6 +126,10 @@ dropZone.addEventListener("click", function (ev) {
       e.preventDefault();
       couponDragging = true;
 
+      document.addEventListener("touchmove", blockTouchDuringDrag, { passive: false });
+      document.documentElement.classList.add("fsd-coupon-dragging");
+      document.body.classList.add("fsd-coupon-dragging");
+
       var rect = couponEl.getBoundingClientRect();
       viewLeft = rect.left;
       viewTop = rect.top;
@@ -168,6 +172,9 @@ dropZone.addEventListener("click", function (ev) {
       couponEl.classList.remove("coupon-dragging");
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("touchmove", blockTouchDuringDrag);
+      document.documentElement.classList.remove("fsd-coupon-dragging");
+      document.body.classList.remove("fsd-coupon-dragging");
       claimCoupon();
       return true;
     }
@@ -205,6 +212,9 @@ dropZone.addEventListener("click", function (ev) {
     function onPointerUp(e) {
       if (!couponDragging) return;
       dbg("pointerup", { x: e.clientX, y: e.clientY });
+      document.removeEventListener("touchmove", blockTouchDuringDrag);
+      document.documentElement.classList.remove("fsd-coupon-dragging");
+      document.body.classList.remove("fsd-coupon-dragging");
       if (claimIfOver()) return;
 
       couponDragging = false;
@@ -226,6 +236,10 @@ dropZone.addEventListener("click", function (ev) {
 
       positionHint();
       setTimeout(showHint, 2000);
+    }
+
+    function blockTouchDuringDrag(e) {
+      e.preventDefault();
     }
 
     couponEl.addEventListener("pointerdown", onPointerDown);
@@ -266,51 +280,78 @@ dropZone.addEventListener("click", function (ev) {
 
   function claimCoupon() {
     dbg("claim-start", { loggedIn: !!state.user, couponClaimed: couponClaimed, pos: couponEl ? couponEl.style.left + "," + couponEl.style.top : "none" });
-    fetch("/api/coupon/claim", { method: "POST", credentials: "same-origin" })
-      .then(function (r) {
-        dbg("claim-resp", { status: r.status });
-        return r.json().catch(function () { return { status: r.status }; });
-      })
-      .then(function (d) {
-        if (d && (d.ok || d.status === 409)) {
-          couponClaimed = true;
-          if (state.user) state.user.coupon_5 = true;
-          hideHint();
-          if (window.anime && couponEl) {
-            anime({
-              targets: couponEl,
-              scale: [1, 1.3, 0],
-              rotate: [0, 180],
-              opacity: [1, 1, 0],
-              duration: 500,
-              easing: "easeInBack",
-              complete: function () {
-                if (couponEl && couponEl.parentNode) couponEl.parentNode.removeChild(couponEl);
-                if (couponHint && couponHint.parentNode) couponHint.parentNode.removeChild(couponHint);
-                couponEl = null;
-                couponHint = null;
-              },
-            });
+    var beat = false;
+    if (navigator.sendBeacon) {
+      try { beat = navigator.sendBeacon("/api/coupon/claim", new Blob(["coupon"], { type: "text/plain" })); } catch (err) {}
+    }
+    if (!beat) {
+      fetch("/api/coupon/claim", { method: "POST", credentials: "same-origin" })
+        .then(function (r) {
+          dbg("claim-resp", { status: r.status });
+          return r.json().catch(function () { return { status: r.status }; });
+        })
+        .then(function (d) {
+          if (d && (d.ok || d.status === 409)) claimSuccess();
+          else restoreCoupon();
+        })
+        .catch(function (err) { dbg("claim-fail", String(err && err.message)); restoreCoupon(); });
+      return;
+    }
+    dbg("claim-beacon-sent");
+    claimSuccess();
+    setTimeout(function () {
+      fetch("/api/coupon/status", { credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.ok && d.claimed) {
+            dbg("claim-verified");
           } else {
-            if (couponEl && couponEl.parentNode) couponEl.parentNode.removeChild(couponEl);
-            if (couponHint && couponHint.parentNode) couponHint.parentNode.removeChild(couponHint);
-            couponEl = null;
-            couponHint = null;
+            dbg("claim-not-verified", d || {});
+            couponClaimed = false;
+            restoreCoupon();
           }
-          var drop = document.getElementById("coupon-drop");
-          if (drop) {
-            drop.innerHTML = '<div class="coupon-drop-ok">5% ' + T("знижку активовано!") + "</div>";
-          }
-          showCouponBadge();
-          couponToast(T("Знижку 5% активовано!"), true);
-        } else {
-          restoreCoupon();
-        }
-      })
-      .catch(function (err) { dbg("claim-fail", String(err && err.message)); restoreCoupon(); });
+        })
+        .catch(function () { dbg("verify-fail"); });
+    }, 1200);
+  }
+
+  function claimSuccess() {
+    couponClaimed = true;
+    if (state.user) state.user.coupon_5 = true;
+    hideHint();
+    if (window.anime && couponEl) {
+      anime({
+        targets: couponEl,
+        scale: [1, 1.3, 0],
+        rotate: [0, 180],
+        opacity: [1, 1, 0],
+        duration: 500,
+        easing: "easeInBack",
+        complete: function () {
+          if (couponEl && couponEl.parentNode) couponEl.parentNode.removeChild(couponEl);
+          if (couponHint && couponHint.parentNode) couponHint.parentNode.removeChild(couponHint);
+          couponEl = null;
+          couponHint = null;
+        },
+      });
+    } else {
+      if (couponEl && couponEl.parentNode) couponEl.parentNode.removeChild(couponEl);
+      if (couponHint && couponHint.parentNode) couponHint.parentNode.removeChild(couponHint);
+      couponEl = null;
+      couponHint = null;
+    }
+    var drop = document.getElementById("coupon-drop");
+    if (drop) {
+      drop.innerHTML = '<div class="coupon-drop-ok">5% ' + T("знижку активовано!") + "</div>";
+    }
+    showCouponBadge();
+    couponToast(T("Знижку 5% активовано!"), true);
   }
 
   function restoreCoupon() {
+    document.removeEventListener("touchmove", blockTouchDuringDrag);
+    document.documentElement.classList.remove("fsd-coupon-dragging");
+    document.body.classList.remove("fsd-coupon-dragging");
     var vpLeft = parseFloat(couponEl && couponEl.style.left) || 0;
     var vpTop = parseFloat(couponEl && couponEl.style.top) || 0;
     if (couponEl) {

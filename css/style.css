@@ -1049,6 +1049,11 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
 .fsd-status-sel option { background: #0b1020; color: #e2e8f0; }
 
 /* coupon 5% */
+html.fsd-coupon-dragging,
+body.fsd-coupon-dragging {
+  overscroll-behavior-y: none;
+  touch-action: none;
+}
 .coupon-chip {
   position: absolute;
   z-index: 45;
