@@ -266,7 +266,7 @@ def auth_google_callback(request: Request):
         })
         tok = None
         last_err = None
-        for attempt in range(3):
+        for attempt in range(2):
             try:
                 tok_req = urllib.request.Request(
                     "https://oauth2.googleapis.com/token",
@@ -274,19 +274,19 @@ def auth_google_callback(request: Request):
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                     method="POST",
                 )
-                with urllib.request.urlopen(tok_req, timeout=20) as tr:
+                with urllib.request.urlopen(tok_req, timeout=15) as tr:
                     tok = json.loads(tr.read().decode("utf-8"))
                 break
             except urllib.error.HTTPError as e:
                 body = e.read().decode("utf-8", "replace")[:500]
                 print(f"[auth] token exchange attempt {attempt + 1} HTTP {e.code}: {body}")
                 last_err = e
-                if attempt < 2 and e.code != 400:
+                if attempt < 1 and e.code != 400:
                     time.sleep(1)
             except Exception as e:
                 last_err = e
                 print(f"[auth] token exchange attempt {attempt + 1} failed: {type(e).__name__}: {e}")
-                if attempt < 2:
+                if attempt < 1:
                     time.sleep(1)
         if tok is None:
             # Код Google одноразовий: якщо callback повторився (Cloudflare retry,
@@ -306,19 +306,19 @@ def auth_google_callback(request: Request):
             raise HTTPException(502, "token exchange failed: " + str(tok)[:300])
         user = None
         last_err = None
-        for attempt in range(3):
+        for attempt in range(2):
             try:
                 info_req = urllib.request.Request(
                     "https://www.googleapis.com/oauth2/v3/userinfo",
                     headers={"Authorization": "Bearer " + access_token},
                 )
-                with urllib.request.urlopen(info_req, timeout=20) as ir:
+                with urllib.request.urlopen(info_req, timeout=15) as ir:
                     user = json.loads(ir.read().decode("utf-8"))
                 break
             except Exception as e:
                 last_err = e
                 print(f"[auth] userinfo attempt {attempt + 1} failed: {type(e).__name__}: {e}")
-                if attempt < 2:
+                if attempt < 1:
                     time.sleep(1)
         if user is None:
             raise HTTPException(502, f"Google userinfo upstream error: {type(last_err).__name__}: {last_err}")
