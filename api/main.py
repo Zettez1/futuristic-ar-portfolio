@@ -604,7 +604,7 @@ def auth_register(payload: RegPayload, request: Request) -> dict:
         email,
         "FastStart Digital — код підтвердження",
         _mail_frame(
-            "<p>Ваш код підтвердження для реєстрації:</p>"
+            "<p style='color:#f8fafc'>Ваш код підтвердження для реєстрації:</p>"
             f"<div style='font-size:30px;font-weight:800;letter-spacing:8px;color:#ffffff;"
             f"text-align:center;padding:14px;border:1px dashed #334155;border-radius:10px;"
             f"background:rgba(34,211,238,0.15)'>{code}</div>"
@@ -686,7 +686,7 @@ def auth_recover(payload: RecoverPayload, request: Request) -> dict:
         email,
         "FastStart Digital — відновлення пароля",
         _mail_frame(
-            "<p>Код для відновлення пароля:</p>"
+            "<p style='color:#f8fafc'>Код для відновлення пароля:</p>"
             f"<div style='font-size:30px;font-weight:800;letter-spacing:8px;color:#ffffff;"
             f"text-align:center;padding:14px;border:1px dashed #334155;border-radius:10px;"
             f"background:rgba(34,211,238,0.15)'>{code}</div>"
@@ -851,13 +851,13 @@ def _mail_send(to: str, subject: str, html: str) -> tuple[bool, str]:
 
 def _mail_frame(body_html: str) -> str:
     logo = f"{SITE_URL}/LOGO.png"
-    return f"""<!DOCTYPE html><html lang="uk"><head><meta charset="utf-8"></head><body style="margin:0;background:#0b0e1a;font-family:Arial,sans-serif;color:#e5e7eb">
+    return f"""<!DOCTYPE html><html lang="uk"><head><meta charset="utf-8"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><style>:root{{color-scheme:light dark;supported-color-schemes:light dark;}}</style></head><body style="margin:0;background:#0b0e1a;font-family:Arial,sans-serif;color:#e5e7eb">
 <div style="max-width:560px;margin:24px auto;background:#111527;border:1px solid #232a45;border-radius:14px;overflow:hidden">
   <div style="padding:24px;border-bottom:1px solid #232a45;text-align:center">
     <img src="{logo}" alt="FastStart Digital" width="52" height="52" style="border-radius:10px;object-fit:contain">
-    <div style="margin-top:8px;font-weight:700;font-size:15px;letter-spacing:.5px">FASTSTART DIGITAL</div>
+    <div style="margin-top:8px;font-weight:700;font-size:15px;letter-spacing:.5px;color:#f8fafc">FASTSTART DIGITAL</div>
   </div>
-  <div style="padding:24px 28px;font-size:14px;line-height:1.6">{body_html}</div>
+  <div style="padding:24px 28px;font-size:14px;line-height:1.6;color:#e5e7eb">{body_html}</div>
   <div style="padding:16px 28px;border-top:1px solid #232a45;font-size:12px;color:#8b93b2;text-align:center">
     Веб-розробка · 3D/WebAR · AI-агенти<br>
     <a href="{SITE_URL}" style="color:#22d3ee">fast-start-digital.com</a> · t.me/faststart_digital
