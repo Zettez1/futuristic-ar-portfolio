@@ -107,6 +107,11 @@ AUTH_REDIRECT_URI = os.getenv(
 AUTH_ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("AUTH_ADMIN_EMAILS", "").split(",") if e.strip()}
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET", "")
 
+# Turnstile tokens are single-use; the Google OAuth redirect/consent can take
+# several seconds and the client (or proxy) may retry the same URL. Remember
+# recently verified tokens so a duplicate hit passes instead of failing.
+_VERIFIED_TURNSTILE: set[str] = set()
+
 
 def _verify_turnstile(token: str, ip: str = "") -> bool:
     """Verify Cloudflare Turnstile token. Returns True if no secret configured (dev mode)."""
@@ -114,6 +119,8 @@ def _verify_turnstile(token: str, ip: str = "") -> bool:
         return True
     if not token or len(token) > 2048:
         return False
+    if token in _VERIFIED_TURNSTILE:
+        return True
     data = urlencode({
         "secret": TURNSTILE_SECRET,
         "response": token,
@@ -128,9 +135,14 @@ def _verify_turnstile(token: str, ip: str = "") -> bool:
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
             result = json.loads(r.read())
-        return result.get("success", False)
     except Exception:
         return False
+    ok = result.get("success", False)
+    if ok:
+        _VERIFIED_TURNSTILE.add(token)
+        if len(_VERIFIED_TURNSTILE) > 2000:
+            _VERIFIED_TURNSTILE.clear()
+    return ok
 AUTH_COOKIE = "fsd_session"
 AUTH_STATE_COOKIE = "fsd_oauth_state"
 SESSION_TTL = 7 * 24 * 3600
