@@ -8,6 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://accounts.google.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/style.css?v=37" />
   <script src="/js/i18n-a.js?v=1" defer></script>
@@ -180,10 +181,18 @@
           showMsg(T("Спершу пройдіть перевірку «Я не робот» вище"), false);
           return;
         }
-        var url = "/api/auth/google?mode=select&token=" + encodeURIComponent(tok);
+        var btn = document.getElementById(kind === "login" ? "google-login" : "google-register");
+        if (btn) { btn.disabled = true; btn.style.opacity = "0.6"; btn.innerHTML = '<span class="spinner" style="display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle"></span>' + T("Перенаправлення…"); }
+        var url = "/api/auth/google?mode=none&token=" + encodeURIComponent(tok);
         var n = qp("next") || "";
         if (n) url += "&next=" + encodeURIComponent(n);
         location.href = url;
+      }
+      if (!document.getElementById("spin-style")) {
+        var s = document.createElement("style");
+        s.id = "spin-style";
+        s.textContent = "@keyframes spin{to{transform:rotate(360deg)}}";
+        document.head.appendChild(s);
       }
 
       document.getElementById("google-login").addEventListener("click", function () {
