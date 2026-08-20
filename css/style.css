@@ -1223,6 +1223,49 @@ a.fsd-login { border-color: rgba(34, 211, 238, 0.45); color: #67e8f9; }
   transition: background 0.15s; white-space: nowrap;
 }
 .fsd-chat-send:hover { background: rgba(34, 211, 238, 0.24); }
+.fsd-chat-file {
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px; padding: 7px 10px; font-size: 15px; color: #94a3b8;
+  transition: background 0.15s; white-space: nowrap;
+}
+.fsd-chat-file:hover { background: rgba(255, 255, 255, 0.12); }
+.fsd-pending { min-height: 0; }
+.fsd-pending-chip {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 8px;
+  background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.3);
+  color: #a5f3fc; border-radius: 999px; padding: 5px 12px; font-size: 12px;
+}
+.fsd-pending-size { color: #67e8f9; font-size: 11px; }
+.fsd-pending-x {
+  background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 12px;
+  padding: 0 2px; line-height: 1;
+}
+.fsd-pending-x:hover { color: #fda4af; }
+.fsd-pending-err { background: rgba(251, 113, 133, 0.1); border-color: rgba(251, 113, 133, 0.4); color: #fda4af; }
+.fsd-file {
+  display: flex; align-items: center; gap: 8px; text-decoration: none;
+  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 10px; padding: 6px 10px; margin-bottom: 6px; color: #a5f3fc; font-size: 12.5px;
+  max-width: 100%;
+}
+.fsd-file:hover { border-color: rgba(34, 211, 238, 0.5); }
+.fsd-file-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; }
+.fsd-file-ico { font-size: 15px; }
+.fsd-file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fsd-file-size { margin-left: auto; color: #64748b; font-size: 11px; white-space: nowrap; }
+.fsd-env {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 999px; width: 30px; height: 30px; margin-right: 8px; cursor: pointer;
+  transition: background 0.15s; vertical-align: middle;
+}
+.fsd-env:hover { background: rgba(34, 211, 238, 0.22); }
+.fsd-env-n {
+  position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px;
+  background: #f43f5e; color: #fff; font-size: 10px; font-weight: 700; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; line-height: 1;
+}
 @media (max-width: 900px) {
   .fsd-auth-name { display: none; }
   .fsd-modal { padding-top: 76px; }

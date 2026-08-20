@@ -1,26 +1,26 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uk">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
   <meta name="theme-color" content="#04050c" />
-  <title>Адмін · FastStart Digital</title>
+  <title>РђРґРјС–РЅ В· FastStart Digital</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/css/tailwind.css?v=25" />
-  <link rel="stylesheet" href="/css/admin.css?v=1" />
+  <link rel="stylesheet" href="/css/admin.css?v=2" />
 </head>
 <body class="adm-body">
   <header class="adm-top">
     <div class="adm-top-inner">
       <div class="adm-brand">
         <span class="adm-logo-dot"></span>
-        FastStart Digital <span class="adm-brand-sub">· адміністрування</span>
+        FastStart Digital <span class="adm-brand-sub">В· Р°РґРјС–РЅС–СЃС‚СЂСѓРІР°РЅРЅСЏ</span>
       </div>
       <div class="adm-top-right">
         <span id="adm-user" class="adm-user"></span>
-        <a href="/" class="adm-btn adm-btn-ghost" id="adm-view-site">На сайт</a>
-        <button class="adm-btn adm-btn-ghost" id="adm-logout">Вийти</button>
+        <a href="/" class="adm-btn adm-btn-ghost" id="adm-view-site">РќР° СЃР°Р№С‚</a>
+        <button class="adm-btn adm-btn-ghost" id="adm-logout">Р’РёР№С‚Рё</button>
       </div>
     </div>
   </header>
@@ -28,25 +28,25 @@
   <main class="adm-main">
     <div id="adm-denied" class="adm-denied hidden">
       <div class="adm-denied-card">
-        <div class="adm-denied-ico">🔒</div>
-        <h1>Доступ лише для адміністратора</h1>
-        <p>Увійдіть під обліковим записом, який входить у список адміністраторів.</p>
-        <a href="/auth.html?next=/admin.html" class="adm-btn adm-btn-primary">Увійти через Google</a>
+        <div class="adm-denied-ico">рџ”’</div>
+        <h1>Р”РѕСЃС‚СѓРї Р»РёС€Рµ РґР»СЏ Р°РґРјС–РЅС–СЃС‚СЂР°С‚РѕСЂР°</h1>
+        <p>РЈРІС–Р№РґС–С‚СЊ РїС–Рґ РѕР±Р»С–РєРѕРІРёРј Р·Р°РїРёСЃРѕРј, СЏРєРёР№ РІС…РѕРґРёС‚СЊ Сѓ СЃРїРёСЃРѕРє Р°РґРјС–РЅС–СЃС‚СЂР°С‚РѕСЂС–РІ.</p>
+        <a href="/auth.html?next=/admin.html" class="adm-btn adm-btn-primary">РЈРІС–Р№С‚Рё С‡РµСЂРµР· Google</a>
       </div>
     </div>
 
     <div id="adm-app" class="hidden">
       <div class="adm-nav">
-        <button class="adm-tab adm-tab-active" data-tab="overview">Огляд</button>
-        <button class="adm-tab" data-tab="leads">Заявки</button>
-        <button class="adm-tab" data-tab="chat">Чати <span id="adm-chat-badge" class="adm-badge hidden">0</span></button>
-        <button class="adm-tab" data-tab="activity">Активність</button>
+        <button class="adm-tab adm-tab-active" data-tab="overview">РћРіР»СЏРґ</button>
+        <button class="adm-tab" data-tab="leads">Р—Р°СЏРІРєРё</button>
+        <button class="adm-tab" data-tab="chat">Р§Р°С‚Рё <span id="adm-chat-badge" class="adm-badge hidden">0</span></button>
+        <button class="adm-tab" data-tab="activity">РђРєС‚РёРІРЅС–СЃС‚СЊ</button>
       </div>
 
       <section id="tab-overview" class="adm-tab-panel">
         <div class="adm-stats-grid" id="adm-stats"></div>
         <div class="adm-panel">
-          <h2 class="adm-panel-title">Останні заявки</h2>
+          <h2 class="adm-panel-title">РћСЃС‚Р°РЅРЅС– Р·Р°СЏРІРєРё</h2>
           <div class="adm-table-wrap"><table class="adm-table" id="adm-leads-preview"></table></div>
         </div>
       </section>
@@ -54,13 +54,13 @@
       <section id="tab-leads" class="adm-tab-panel hidden">
         <div class="adm-panel">
           <div class="adm-panel-head">
-            <h2 class="adm-panel-title">Заявки та проєкти</h2>
+            <h2 class="adm-panel-title">Р—Р°СЏРІРєРё С‚Р° РїСЂРѕС”РєС‚Рё</h2>
             <div class="adm-filter">
               <select id="adm-filter-status" class="adm-select">
-                <option value="">Усі статуси</option>
-                <option value="нова">нова</option>
-                <option value="в розробці">в розробці</option>
-                <option value="завершено">завершено</option>
+                <option value="">РЈСЃС– СЃС‚Р°С‚СѓСЃРё</option>
+                <option value="РЅРѕРІР°">РЅРѕРІР°</option>
+                <option value="РІ СЂРѕР·СЂРѕР±С†С–">РІ СЂРѕР·СЂРѕР±С†С–</option>
+                <option value="Р·Р°РІРµСЂС€РµРЅРѕ">Р·Р°РІРµСЂС€РµРЅРѕ</option>
               </select>
             </div>
           </div>
@@ -72,20 +72,22 @@
         <div class="adm-chat-layout">
           <div class="adm-chat-list" id="adm-threads"></div>
           <div class="adm-chat-window" id="adm-chat-window">
-            <div class="adm-chat-empty" id="adm-chat-empty">Оберіть діалог ліворуч, щоб відповісти клієнту.</div>
+            <div class="adm-chat-empty" id="adm-chat-empty">РћР±РµСЂС–С‚СЊ РґС–Р°Р»РѕРі Р»С–РІРѕСЂСѓС‡, С‰РѕР± РІС–РґРїРѕРІС–СЃС‚Рё РєР»С–С”РЅС‚Сѓ.</div>
             <div class="adm-chat-head hidden" id="adm-chat-head"></div>
             <div class="adm-chat-msgs hidden" id="adm-chat-msgs"></div>
             <div class="adm-chat-compose hidden" id="adm-chat-compose">
-              <input type="text" id="adm-chat-input" class="adm-chat-input" placeholder="Відповідь клієнту…" maxlength="2000" />
-              <button class="adm-btn adm-btn-primary" id="adm-chat-send">Надіслати</button>
+              <label class="adm-chat-file" id="adm-chat-attach" title="РџСЂРёРєСЂС–РїРёС‚Рё С„Р°Р№Р»">рџ“Ћ<input type="file" id="adm-chat-file" hidden /></label>
+              <input type="text" id="adm-chat-input" class="adm-chat-input" placeholder="Р’С–РґРїРѕРІС–РґСЊ РєР»С–С”РЅС‚СѓвЂ¦" maxlength="2000" />
+              <button class="adm-btn adm-btn-primary" id="adm-chat-send">РќР°РґС–СЃР»Р°С‚Рё</button>
             </div>
+            <div class="adm-pending hidden" id="adm-pending"></div>
           </div>
         </div>
       </section>
 
       <section id="tab-activity" class="adm-tab-panel hidden">
         <div class="adm-panel">
-          <h2 class="adm-panel-title">Активність відвідувачів <span class="adm-hint">(останні 2000 подій, у памʼяті процесу)</span></h2>
+          <h2 class="adm-panel-title">РђРєС‚РёРІРЅС–СЃС‚СЊ РІС–РґРІС–РґСѓРІР°С‡С–РІ <span class="adm-hint">(РѕСЃС‚Р°РЅРЅС– 2000 РїРѕРґС–Р№, Сѓ РїР°РјКјСЏС‚С– РїСЂРѕС†РµСЃСѓ)</span></h2>
           <div class="adm-table-wrap"><table class="adm-table" id="adm-activity"></table></div>
         </div>
       </section>
@@ -97,6 +99,6 @@
   <script src="/js/i18n-c.js?v=1" defer></script>
   <script src="/js/i18n-d.js?v=12" defer></script>
   <script src="/js/i18n.js?v=3" defer></script>
-  <script src="/js/admin.js?v=1" defer></script>
+  <script src="/js/admin.js?v=2" defer></script>
 </body>
 </html>

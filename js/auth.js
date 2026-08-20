@@ -1,4 +1,4 @@
-/* FastStart Digital auth: Google OAuth chip + account dropdown (Projects / Sign out) + projects modal + 5% coupon. */
+/* FastStart Digital auth: Google OAuth chip + account dropdown (Chat / Projects / Sign out) + projects modal + 5% coupon + client chat with file attachments. */
 (function () {
   "use strict";
 
@@ -30,13 +30,15 @@
   box.style.position = "relative";
   host.appendChild(box);
 
-  var state = { user: null, projects: null };
+  var state = { user: null, projects: null, chatUnread: 0, chatHas: false };
   var denied = /[?&]auth=denied/.test(location.search);
   var registeredNote = /[?&]auth=registered/.test(location.search);
 
   window.FSD_AUTH = {
     get user() { return state.user; },
     get isLoggedIn() { return !!state.user; },
+    get chatUnread() { return state.chatUnread; },
+    get chatHas() { return state.chatHas; },
   };
 
   function esc(s) { return E(s); }
@@ -45,6 +47,145 @@
     if (status === "в розробці") return T("В розробці");
     if (status === "завершено") return T("Завершено");
     return T("Нова");
+  }
+
+  function fmtWhen(ts) {
+    if (!ts) return "";
+    var d = new Date(ts);
+    return isNaN(d) ? "" : d.toLocaleString("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function fileSize(n) {
+    if (n == null) return "";
+    if (n < 1024) return n + " B";
+    if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1048576).toFixed(1) + " MB";
+  }
+
+  function msgHtml(m) {
+    var mine = m.from === "client";
+    var body = "";
+    if (m.file) {
+      var url = "/api/chat/file?id=" + encodeURIComponent(m.file.id);
+      var isImg = /^image\//.test(m.file.mime || "");
+      body += '<a class="fsd-file" href="' + url + '" target="_blank" rel="noopener">' +
+        (isImg
+          ? '<img class="fsd-file-thumb" src="' + url + '" alt="' + esc(m.file.name) + '">'
+          : '<span class="fsd-file-ico">📄</span>') +
+        '<span class="fsd-file-name">' + esc(m.file.name) + '</span>' +
+        '<span class="fsd-file-size">' + fileSize(m.file.size) + "</span></a>";
+    }
+    if (m.text) body += '<span class="fsd-msg-tx">' + esc(m.text) + "</span>";
+    return '<div class="fsd-msg ' + (mine ? "mine" : "theirs") + '">' + body +
+      '<span class="fsd-msg-ts">' + fmtWhen(m.ts) + "</span></div>";
+  }
+
+  /* ---- chat box (used in projects modal and standalone chat modal) ---- */
+  function makeChatBox() {
+    var wrap = document.createElement("div");
+    wrap.className = "fsd-chat-wrap";
+    wrap.innerHTML =
+      '<div class="fsd-chat-divider"><span>' + T("Чат з командою") + '</span></div>' +
+      '<div class="fsd-chat-box">' +
+      '<div class="fsd-chat-msgs" aria-live="polite"></div>' +
+      '<div class="fsd-pending"></div>' +
+      '<div class="fsd-chat-inputs">' +
+      '<label class="fsd-chat-file" title="' + esc(T("Прикріпити файл")) + '">📎<input type="file" hidden /></label>' +
+      '<input class="fsd-chat-input" type="text" maxlength="2000" placeholder="' + esc(T("Ваше повідомлення…")) + '" />' +
+      '<button class="fsd-chat-send">' + esc(T("Надіслати")) + "</button>" +
+      "</div></div>";
+    var boxEl = wrap.querySelector(".fsd-chat-msgs");
+    var inp = wrap.querySelector(".fsd-chat-input");
+    var sendBtn = wrap.querySelector(".fsd-chat-send");
+    var fileInp = wrap.querySelector(".fsd-chat-file input");
+    var pendEl = wrap.querySelector(".fsd-pending");
+    var MAX_FILE = 10 * 1024 * 1024;
+    var pending = null;
+
+    function renderMsgs(t) {
+      var msgs = (t && t.messages) || [];
+      if (!msgs.length) {
+        boxEl.innerHTML = '<div class="fsd-chat-empty">' + esc(T("Поставте запитання — відповімо протягом доби.")) + "</div>";
+        return;
+      }
+      boxEl.innerHTML = msgs.map(msgHtml).join("");
+      boxEl.scrollTop = boxEl.scrollHeight;
+    }
+
+    function renderPending() {
+      if (!pending) { pendEl.innerHTML = ""; return; }
+      pendEl.innerHTML = '<span class="fsd-pending-chip">📎 ' + esc(pending.name) +
+        ' <span class="fsd-pending-size">' + fileSize(pending.size) +
+        '</span><button type="button" class="fsd-pending-x" title="' + esc(T("Прибрати")) + '">✕</button></span>';
+    }
+
+    function load() {
+      return fetch("/api/chat/my", { credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          renderMsgs(d.thread);
+          return d.thread || null;
+        });
+    }
+
+    function refreshUnread() {
+      fetch("/api/chat/unread", { credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.ok) updateChatState(d.unread, d.has || false);
+        })
+        .catch(function () {});
+    }
+
+    function send() {
+      var text = inp.value.trim();
+      if (!text && !pending) return;
+      var payload = { text: text };
+      if (pending) {
+        payload.file = pending;
+        pending = null;
+        renderPending();
+      }
+      inp.value = "";
+      fetch("/api/chat/my/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload),
+      }).then(function (r) { return r.json(); }).then(function () {
+        return load();
+      }).then(function () { refreshUnread(); }).catch(function () {});
+    }
+
+    sendBtn.addEventListener("click", send);
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+    fileInp.addEventListener("change", function () {
+      var f = fileInp.files && fileInp.files[0];
+      fileInp.value = "";
+      if (!f) return;
+      if (f.size > MAX_FILE) {
+        pendEl.innerHTML = '<span class="fsd-pending-chip fsd-pending-err">' +
+          esc(T("Файл завеликий (макс 10 МБ).")) + "</span>";
+        setTimeout(function () { renderPending(); }, 4000);
+        return;
+      }
+      var rd = new FileReader();
+      rd.onload = function () {
+        var b64 = String(rd.result).split(",")[1] || "";
+        pending = { name: f.name || "file", mime: f.type || "application/octet-stream", size: f.size, data: b64 };
+        renderPending();
+      };
+      rd.readAsDataURL(f);
+    });
+    pendEl.addEventListener("click", function (e) {
+      if (e.target && e.target.classList && e.target.classList.contains("fsd-pending-x")) {
+        pending = null;
+        renderPending();
+      }
+    });
+
+    load();
+    return wrap;
   }
 
   /* ---- 5% discount (auto-applied to first project) ---- */
@@ -76,6 +217,51 @@
     box.appendChild(badge);
   }
 
+  /* ---- chat envelope (digit bubble near the discount, only when there is an active thread) ---- */
+  function updateChatEnvelope() {
+    var old = box.querySelector(".fsd-env");
+    if (old) old.remove();
+    if (!state.user || !state.chatHas) return;
+    var env = document.createElement("button");
+    env.type = "button";
+    env.className = "fsd-env";
+    env.setAttribute("data-action", "chat");
+    env.title = T("Чат з командою");
+    env.innerHTML = '<svg class="fsd-env-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path d="M4 5h16v14H4z" stroke="#22d3ee" stroke-width="1.7" fill="rgba(34,211,238,0.12)"/><path d="M4 6.5L12 13l8-6.5" stroke="#22d3ee" stroke-width="1.7" fill="none"/></svg>';
+    if (state.chatUnread > 0) {
+      var n = document.createElement("span");
+      n.className = "fsd-env-n";
+      n.textContent = state.chatUnread > 99 ? "99+" : state.chatUnread;
+      env.appendChild(n);
+    }
+    var acc = box.querySelector(".fsd-acc");
+    if (acc && acc.nextSibling) {
+      box.insertBefore(env, acc.nextSibling);
+    } else {
+      box.appendChild(env);
+    }
+  }
+
+  function updateChatState(unread, has) {
+    state.chatUnread = unread;
+    state.chatHas = has;
+    updateChatEnvelope();
+    var menu = box.querySelector(".fsd-menu");
+    if (menu) menuToast();
+  }
+
+  function menuToast() {
+    var menu = box.querySelector(".fsd-menu");
+    if (!menu) return;
+    var it = menu.querySelector('[data-action="chat"]');
+    if (it) {
+      it.innerHTML = '<span class="fsd-item-ico">💬</span>' + T("Чат") + (state.chatUnread > 0
+        ? '<span class="fsd-badge">' + (state.chatUnread > 99 ? "99+" : state.chatUnread) + "</span>"
+        : "");
+    }
+  }
+
   function ensureChip() {
     var u = state.user;
     if (!u) {
@@ -92,6 +278,7 @@
     if (u.coupon_5) {
       showCouponBadge();
     }
+    updateChatEnvelope();
   }
 
   function renderMenu() {
@@ -108,6 +295,8 @@
       '<span class="fsd-discount-text">' + T("Знижка 5% активована") + "</span>" +
       "</div>" +
       '<div class="fsd-discount-note">' + T("Знижка 5% на перший проєкт вже застосована до вашого акаунта") + "</div>" +
+      '<button type="button" class="fsd-item" data-action="chat"><span class="fsd-item-ico">💬</span>' + T("Чат") +
+      (state.chatUnread > 0 ? '<span class="fsd-badge">' + (state.chatUnread > 99 ? "99+" : state.chatUnread) + "</span>" : "") + "</button>" +
       '<button type="button" class="fsd-item" data-action="projects">' + T("Проекти") + badge + "</button>" +
       adminLink +
       '<button type="button" class="fsd-item" data-action="logout">' + T("Вийти") + "</button>" +
@@ -134,12 +323,61 @@
           var tmp = document.createElement("div");
           tmp.innerHTML = renderMenu();
           menu.replaceWith(tmp.firstChild);
+          menuToast();
         }
       })
       .catch(function () {});
   }
 
+  function refreshChatUnread() {
+    return fetch("/api/chat/unread", { credentials: "same-origin" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.ok) updateChatState(d.unread, d.has || false);
+      })
+      .catch(function () {});
+  }
+
   function closeMenu() { toggleMenu(false); }
+
+  function modalShell(titleText) {
+    var overlay = document.createElement("div");
+    overlay.className = "fsd-modal";
+    var panel = document.createElement("div");
+    panel.className = "fsd-modal-panel";
+    var titleRow = document.createElement("div");
+    titleRow.className = "fsd-modal-head";
+    var title = document.createElement("div");
+    title.className = "font-display font-semibold text-white";
+    title.textContent = titleText;
+    var closeBtns = document.createElement("div");
+    closeBtns.className = "flex items-center gap-2";
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "fsd-auth-btn";
+    close.textContent = T("Закрити");
+    closeBtns.appendChild(close);
+    titleRow.appendChild(title);
+    titleRow.appendChild(closeBtns);
+    var body = document.createElement("div");
+    body.className = "fsd-modal-body";
+    panel.appendChild(titleRow);
+    panel.appendChild(body);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    function closeModal() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
+    close.addEventListener("click", closeModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
+    var onKey = function (e) { if (e.key === "Escape" && overlay.parentNode) closeModal(); };
+    document.addEventListener("keydown", onKey);
+    overlay.addEventListener("fsd:lang", function () { closeModal(); document.removeEventListener("keydown", onKey); });
+    return body;
+  }
+
+  function openChat() {
+    var body = modalShell(T("Чат з командою"));
+    body.appendChild(makeChatBox());
+  }
 
   function openLeads() {
     var overlay = document.createElement("div");
@@ -190,63 +428,6 @@
         '<span class="fsd-progress-label">' + pr + "%</span>";
     }
 
-    function chatBlock() {
-      var wrap = document.createElement("div");
-      wrap.className = "fsd-chat-wrap";
-      wrap.innerHTML = '<div class="fsd-chat-divider"><span>' + T("Чат з командою") + '</span></div>' +
-        '<div class="fsd-chat-box"><div class="fsd-chat-msgs" aria-live="polite"></div>' +
-        '<div class="fsd-chat-inputs"><input class="fsd-chat-input" type="text" maxlength="2000" placeholder="' +
-        esc(T("Ваше повідомлення…")) + '" /><button class="fsd-chat-send">' + esc(T("Надіслати")) + "</button></div></div>";
-      var box = wrap.querySelector(".fsd-chat-msgs");
-      var inp = wrap.querySelector(".fsd-chat-input");
-      var sendBtn = wrap.querySelector(".fsd-chat-send");
-      var loading = true;
-
-      function renderMsgs(t) {
-        var msgs = (t && t.messages) || [];
-        if (!msgs.length) {
-          box.innerHTML = '<div class="fsd-chat-empty">' + esc(T("Напишіть нам — відповімо протягом доби.")) + "</div>";
-          return;
-        }
-        box.innerHTML = msgs.map(function (m) {
-          var mine = m.from === "client";
-          return '<div class="fsd-msg ' + (mine ? "mine" : "theirs") + '"><span class="fsd-msg-tx">' +
-            esc(m.text) + '</span><span class="fsd-msg-ts">' + fmtWhen(m.ts) + "</span></div>";
-        }).join("");
-        box.scrollTop = box.scrollHeight;
-      }
-
-      function load() {
-        return fetch("/api/chat/my", { credentials: "same-origin" })
-          .then(function (r) { return r.json(); })
-          .then(function (d) { renderMsgs(d.thread); })
-          .catch(function () {});
-      }
-
-      function send() {
-        var text = inp.value.trim();
-        if (!text) return;
-        inp.value = "";
-        fetch("/api/chat/my/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
-          body: JSON.stringify({ text: text }),
-        }).then(function (r) { return r.json(); }).then(function () { return load(); }).catch(function () {});
-      }
-
-      sendBtn.addEventListener("click", send);
-      inp.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
-      load();
-      return wrap;
-    }
-
-    function fmtWhen(ts) {
-      if (!ts) return "";
-      var d = new Date(ts);
-      return isNaN(d) ? "" : d.toLocaleString("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-    }
-
     function fill() {
       body.innerHTML = '<div class="text-slate-400">…</div>';
       fetch("/api/projects", { credentials: "same-origin" })
@@ -256,7 +437,6 @@
         })
         .then(function (d) {
           state.projects = d;
-          title.textContent = T("Проекти") + " · " + (d.count || 0);
           var couponInfo = "";
           if (d.coupon_5) {
             couponInfo = '<span class="coupon-badge" style="margin-left:8px">-5%</span>';
@@ -282,7 +462,7 @@
             "<th>" + T("Статус") + "</th><th>" + T("Тип") + "</th><th>" + T("Бюджет") + "</th>" +
             "<th>" + T("Прогрес") + "</th><th>" + T("Час") + "</th><th>" + T("Повідомлення") + "</th></tr></thead><tbody>" +
             rows + "</tbody></table>";
-          body.appendChild(chatBlock());
+          body.appendChild(makeChatBox());
           if (isAdmin) {
             body.querySelectorAll("select.fsd-status-sel").forEach(function (sel) {
               sel.addEventListener("change", function () {
@@ -317,13 +497,19 @@
     if (act === "toggle") {
       var opening = !box.querySelector(".fsd-menu");
       toggleMenu(opening);
-      if (opening) refreshProjects();
+      if (opening) {
+        refreshProjects();
+        refreshChatUnread();
+      }
+    } else if (act === "chat") {
+      closeMenu();
+      openChat();
     } else if (act === "projects") {
       closeMenu();
       openLeads();
     } else if (act === "logout") {
       fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" })
-        .then(function () { state.user = null; state.projects = null; toggleMenu(false); ensureChip(); })
+        .then(function () { state.user = null; state.projects = null; state.chatUnread = 0; state.chatHas = false; toggleMenu(false); ensureChip(); })
         .catch(function () {});
     }
   });
@@ -363,4 +549,8 @@
     .then(function (r) { return r.json(); })
     .then(function (d) { state.user = d.ok ? d.user : null; ensureChip(); })
     .catch(function () { state.user = null; ensureChip(); });
+
+  setInterval(function () {
+    if (state.user) refreshChatUnread();
+  }, 20000);
 })();

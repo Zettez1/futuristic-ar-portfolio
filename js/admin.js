@@ -41,6 +41,31 @@
       d.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
   }
 
+  function fileSize(n) {
+    if (n == null) return "";
+    if (n < 1024) return n + " B";
+    if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1048576).toFixed(1) + " MB";
+  }
+
+  function msgHtml(m) {
+    var mine = m.from === "admin";
+    var body = "";
+    if (m.file) {
+      var url = "/api/chat/file?id=" + encodeURIComponent(m.file.id);
+      var isImg = /^image\//.test(m.file.mime || "");
+      body += '<a class="adm-file" href="' + url + '" target="_blank" rel="noopener">' +
+        (isImg
+          ? '<img class="adm-file-thumb" src="' + url + '" alt="' + esc(m.file.name) + '">'
+          : '<span class="adm-file-ico">📄</span>') +
+        '<span class="adm-file-name">' + esc(m.file.name) + '</span>' +
+        '<span class="adm-file-size">' + fileSize(m.file.size) + "</span></a>";
+    }
+    if (m.text) body += '<div class="adm-msg-text">' + esc(m.text) + "</div>";
+    return '<div class="adm-msg ' + (mine ? "adm-msg-admin" : "adm-msg-client") + '">' + body +
+      '<div class="adm-msg-ts">' + fmtTs(m.ts) + "</div></div>";
+  }
+
   /* ---------------- tabs ---------------- */
   function switchTab(name) {
     document.querySelectorAll(".adm-tab").forEach(function (b) {
@@ -213,12 +238,7 @@
           (t.contact ? " · " + esc(t.contact) : "") + "</span>" : "");
       var msgs = t.messages || [];
       $("adm-chat-msgs").innerHTML = msgs.length
-        ? msgs.map(function (m) {
-            var mine = m.from === "admin";
-            return '<div class="adm-msg ' + (mine ? "adm-msg-admin" : "adm-msg-client") + '">' +
-              '<div class="adm-msg-text">' + esc(m.text) + "</div>" +
-              '<div class="adm-msg-ts">' + fmtTs(m.ts) + "</div></div>";
-          }).join("")
+        ? msgs.map(msgHtml).join("")
         : '<div class="adm-chat-empty">Повідомлень поки немає — напишіть клієнту першим.</div>';
       $("adm-chat-msgs").scrollTop = $("adm-chat-msgs").scrollHeight;
       loadThreads();
@@ -229,15 +249,49 @@
   $("adm-chat-input").addEventListener("keydown", function (e) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); }
   });
+  var ADM_MAX_FILE = 10 * 1024 * 1024;
+  var ADM_PENDING = null;
+  $("adm-chat-file").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f) return;
+    var pend = $("adm-pending");
+    if (f.size > ADM_MAX_FILE) {
+      pend.textContent = "Файл завеликий (макс 10 МБ).";
+      pend.classList.remove("hidden");
+      setTimeout(function () { if (ADM_PENDING) { pend.textContent = "📎 " + ADM_PENDING.name + " · " + fileSize(ADM_PENDING.size) + " ✕"; } else { pend.classList.add("hidden"); pend.textContent = ""; } }, 4000);
+      return;
+    }
+    var rd = new FileReader();
+    rd.onload = function () {
+      ADM_PENDING = { name: f.name || "file", mime: f.type || "application/octet-stream", size: f.size, data: String(rd.result).split(",")[1] || "" };
+      pend.textContent = "📎 " + ADM_PENDING.name + " · " + fileSize(ADM_PENDING.size) + " ✕";
+      pend.classList.remove("hidden");
+    };
+    rd.readAsDataURL(f);
+  });
+  $("adm-pending").addEventListener("click", function () {
+    ADM_PENDING = null;
+    this.classList.add("hidden");
+    this.textContent = "";
+  });
 
   function sendChat() {
     var inp = $("adm-chat-input");
     var text = inp.value.trim();
-    if (!text || !CUR_THREAD) return;
+    if ((!text && !ADM_PENDING) || !CUR_THREAD) return;
+    var payload = { thread_id: CUR_THREAD, text: text };
+    if (ADM_PENDING) {
+      payload.file = ADM_PENDING;
+      ADM_PENDING = null;
+      var pend = $("adm-pending");
+      pend.classList.add("hidden");
+      pend.textContent = "";
+    }
     inp.value = "";
     api("/api/admin/chat/send", {
       method: "POST",
-      body: JSON.stringify({ thread_id: CUR_THREAD, text: text })
+      body: JSON.stringify(payload)
     }).then(function () { openThread(CUR_THREAD); }).catch(function (e) { flash(e.message); });
   }
 

@@ -359,6 +359,29 @@
 }
 
 .adm-chat-input:focus { border-color: rgba(34, 211, 238, 0.6); }
+.adm-chat-file {
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px; padding: 8px 10px; font-size: 15px; color: #94a3b8;
+  transition: background 0.15s; white-space: nowrap;
+}
+.adm-chat-file:hover { background: rgba(255, 255, 255, 0.12); }
+.adm-pending {
+  margin-top: 8px; font-size: 12px; color: #a5f3fc; cursor: pointer;
+  background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 999px; padding: 5px 12px; display: inline-block;
+}
+.adm-file {
+  display: flex; align-items: center; gap: 8px; text-decoration: none;
+  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 10px; padding: 6px 10px; margin-bottom: 6px; color: #a5f3fc; font-size: 12.5px;
+  max-width: 100%;
+}
+.adm-file:hover { border-color: rgba(34, 211, 238, 0.5); }
+.adm-file-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; }
+.adm-file-ico { font-size: 15px; }
+.adm-file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-file-size { margin-left: auto; color: #8b93b2; font-size: 11px; white-space: nowrap; }
 
 /* denied */
 .adm-denied { display: flex; align-items: center; justify-content: center; min-height: 70vh; }

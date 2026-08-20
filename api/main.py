@@ -34,7 +34,7 @@ from urllib.parse import urlencode
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -112,6 +112,8 @@ _RATE_LIMITS = {
         "/api/projects": 60,
         "/api/admin/": 90,
         "/api/chat/my": 120,
+        "/api/chat/unread": 120,
+        "/api/chat/file": 60,
         "/api/leads": 90,
     },
     "POST": {
@@ -1218,6 +1220,8 @@ def set_project_status(request: Request, item: dict) -> dict:
 # kept in an in-memory ring buffer (lost on restart — acceptable for a demo).
 
 CHATS_FILE = DATA_DIR / "chats.json"
+ATTACH_DIR = DATA_DIR / "attachments"
+MAX_ATTACH_BYTES = 10 * 1024 * 1024
 _chat_lock = threading.Lock()
 ACTIVITY_MAX = 2000
 _activity_buf: deque[dict] = deque(maxlen=ACTIVITY_MAX)
@@ -1335,11 +1339,19 @@ def admin_chats(request: Request) -> dict:
             "status": t.get("status", "open"),
             "updated": t.get("updated"),
             "unread_admin": t.get("unread_admin", 0),
-            "last_message": msgs[-1]["text"][:200] if msgs else "",
+            "last_message": _msg_preview(msgs[-1]) if msgs else "",
             "last_from": msgs[-1]["from"] if msgs else "",
             "count": len(msgs),
         })
     return {"ok": True, "threads": out}
+
+
+def _msg_preview(m: dict) -> str:
+    text = (m.get("text") or "").strip()
+    if text:
+        return text[:200]
+    f = m.get("file") or {}
+    return "[файл: " + (f.get("name") or "?") + "]"
 
 
 @app.get("/api/admin/chat")
@@ -1356,26 +1368,57 @@ def admin_chat_get(request: Request, id: str = "") -> dict:
 
 class ChatSend(BaseModel):
     thread_id: str
-    text: str
+    text: str = ""
+    file: dict | None = None
 
 
 @app.post("/api/admin/chat/send")
 def admin_chat_send(request: Request, msg: ChatSend) -> dict:
     _require_admin(request)
     text = (msg.text or "").strip()[:2000]
-    if not text:
+    if not text and not msg.file:
         raise HTTPException(400, "empty message")
     t = _get_thread(msg.thread_id)
     if not t:
         raise HTTPException(404, "thread not found")
     now = datetime.now(timezone.utc).isoformat()
-    t.setdefault("messages", []).append({"from": "admin", "text": text, "ts": now})
+    mes: dict = {"from": "admin", "text": text, "ts": now}
+    if msg.file:
+        mes["file"] = _store_attachment(t["id"], msg.file)
+    t.setdefault("messages", []).append(mes)
     t["updated"] = now
     t["unread_client"] = t.get("unread_client", 0) + 1
     if t.get("status") == "closed":
         t["status"] = "open"
     _save_thread(t)
     return {"ok": True}
+
+
+@app.get("/api/chat/file")
+def chat_file_download(request: Request, id: str = "") -> FileResponse:
+    """Attachment download. Owner (thread email) or admin only."""
+    session = _read_session(request)
+    if not session:
+        raise HTTPException(401, "auth required")
+    fid = (id or "").strip()
+    if not re.fullmatch(r"[0-9a-f]{16}", fid):
+        raise HTTPException(404, "file not found")
+    email = (session.get("email") or "").lower()
+    for t in _read_chats():
+        for m in t.get("messages", []):
+            f = m.get("file") or {}
+            if f.get("id") == fid:
+                if email not in AUTH_ADMIN_EMAILS and (t.get("email") or "").lower() != email:
+                    raise HTTPException(403, "forbidden")
+                p = ATTACH_DIR / t["id"] / fid
+                if not p.is_file():
+                    raise HTTPException(404, "file not found")
+                return FileResponse(
+                    str(p),
+                    media_type=(f.get("mime") or "application/octet-stream"),
+                    filename=f.get("name") or "file",
+                )
+    raise HTTPException(404, "file not found")
 
 
 class AdminOpenThread(BaseModel):
@@ -1423,6 +1466,27 @@ def admin_chat_open(request: Request, body: AdminOpenThread) -> dict:
 
 
 # ----------------------------------------------- client-to-team chat ----
+@app.get("/api/chat/unread")
+def client_chat_unread(request: Request) -> dict:
+    """Client unread count + whether a thread with messages exists."""
+    session = _read_session(request)
+    if not session:
+        raise HTTPException(401, "auth required")
+    email = (session.get("email") or "").lower()
+    with _lock:
+        rows = json.loads(LEADS_FILE.read_text("utf-8")) if LEADS_FILE.exists() else []
+    lead = next((r for r in rows
+                 if (r.get("email") or _extract_email(r.get("contact")) or "").lower() == email), None)
+    tid = _thread_id_for(email, (lead or {}).get("ts") or "")
+    t = next((x for x in _read_chats() if x.get("id") == tid), None)
+    return {
+        "ok": True,
+        "unread": t.get("unread_client", 0) if t else 0,
+        "has": bool(t and t.get("messages")),
+        "thread_id": t["id"] if t else "",
+    }
+
+
 @app.get("/api/chat/my")
 def client_chat_my(request: Request) -> dict:
     session = _read_session(request)
@@ -1458,7 +1522,37 @@ def client_chat_my(request: Request) -> dict:
 
 
 class ClientChatSend(BaseModel):
-    text: str
+    text: str = ""
+    file: dict | None = None
+
+
+def _sanitize_noun(name: str, fallback: str) -> str:
+    n = re.sub(r"[\x00-\x1f\x7f/\\]+", "_", (name or "").strip())
+    n = n.strip("._ ")
+    return (n[:120] or fallback).strip()[:120]
+
+
+def _store_attachment(thread_id: str, att: dict | None) -> dict:
+    """Persist an uploaded file (base64 in JSON) under data/attachments/<tid>. 10MB cap."""
+    att = att or {}
+    b64 = re.sub(r"\s+", "", (att.get("data") or "").strip())
+    if not b64:
+        raise HTTPException(400, "empty file")
+    try:
+        raw = base64.b64decode(b64, validate=True)
+    except Exception:
+        raise HTTPException(400, "bad file data")
+    if not raw:
+        raise HTTPException(400, "empty file")
+    if len(raw) > MAX_ATTACH_BYTES:
+        raise HTTPException(413, "file too large (max 10 MB)")
+    fid = secrets.token_hex(8)
+    name = _sanitize_noun(att.get("name"), "file")
+    mime = (att.get("mime") or "").strip()[:120] or "application/octet-stream"
+    d = ATTACH_DIR / thread_id
+    d.mkdir(parents=True, exist_ok=True)
+    (d / fid).write_bytes(raw)
+    return {"id": fid, "name": name, "mime": mime, "size": len(raw)}
 
 
 @app.post("/api/chat/my/send")
@@ -1467,7 +1561,7 @@ def client_chat_send(request: Request, msg: ClientChatSend) -> dict:
     if not session:
         raise HTTPException(401, "auth required")
     text = (msg.text or "").strip()[:2000]
-    if not text:
+    if not text and not msg.file:
         raise HTTPException(400, "empty message")
     email = (session.get("email") or "").lower()
     with _lock:
@@ -1492,13 +1586,16 @@ def client_chat_send(request: Request, msg: ClientChatSend) -> dict:
             "messages": [],
         }
     now = datetime.now(timezone.utc).isoformat()
-    t.setdefault("messages", []).append({"from": "client", "text": text, "ts": now})
+    mes: dict = {"from": "client", "text": text, "ts": now}
+    if msg.file:
+        mes["file"] = _store_attachment(tid, msg.file)
+    t.setdefault("messages", []).append(mes)
     t["updated"] = now
     t["unread_admin"] = t.get("unread_admin", 0) + 1
     if t.get("status") == "closed":
         t["status"] = "open"
     _save_thread(t)
-    threading.Thread(target=_tg_notify_chat, args=(t, text), daemon=True).start()
+    threading.Thread(target=_tg_notify_chat, args=(t, text or ("[файл: " + mes["file"]["name"] + "]")), daemon=True).start()
     return {"ok": True, "thread_id": t["id"]}
 
 
