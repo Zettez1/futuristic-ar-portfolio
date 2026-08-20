@@ -265,24 +265,44 @@ def auth_google_callback(request: Request):
             "redirect_uri": AUTH_REDIRECT_URI,
             "grant_type": "authorization_code",
         })
-        tok_req = urllib.request.Request(
-            "https://oauth2.googleapis.com/token",
-            data=token_body.encode(),
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            method="POST",
-        )
-        with urllib.request.urlopen(tok_req, timeout=10) as tr:
-            tok = json.loads(tr.read().decode("utf-8"))
+        tok = None
+        for attempt in range(2):
+            try:
+                tok_req = urllib.request.Request(
+                    "https://oauth2.googleapis.com/token",
+                    data=token_body.encode(),
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(tok_req, timeout=8) as tr:
+                    tok = json.loads(tr.read().decode("utf-8"))
+                break
+            except Exception as e:
+                print(f"[auth] token exchange attempt {attempt + 1} failed: {type(e).__name__}: {e}")
+                if attempt == 0:
+                    time.sleep(0.5)
+        if tok is None:
+            raise HTTPException(502, "token exchange failed after retries")
         t1 = time.time()
         access_token = tok.get("access_token")
         if not access_token:
             raise HTTPException(502, "token exchange failed: " + str(tok)[:300])
-        info_req = urllib.request.Request(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            headers={"Authorization": "Bearer " + access_token},
-        )
-        with urllib.request.urlopen(info_req, timeout=10) as ir:
-            user = json.loads(ir.read().decode("utf-8"))
+        user = None
+        for attempt in range(2):
+            try:
+                info_req = urllib.request.Request(
+                    "https://www.googleapis.com/oauth2/v3/userinfo",
+                    headers={"Authorization": "Bearer " + access_token},
+                )
+                with urllib.request.urlopen(info_req, timeout=8) as ir:
+                    user = json.loads(ir.read().decode("utf-8"))
+                break
+            except Exception as e:
+                print(f"[auth] userinfo attempt {attempt + 1} failed: {type(e).__name__}: {e}")
+                if attempt == 0:
+                    time.sleep(0.5)
+        if user is None:
+            raise HTTPException(502, "userinfo failed after retries")
         t2 = time.time()
         print(f"[auth] callback ok: token_exchange={t1-t0:.2f}s userinfo={t2-t1:.2f}s total={t2-t0:.2f}s")
     except HTTPException:
