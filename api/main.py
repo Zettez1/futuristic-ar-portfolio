@@ -1114,9 +1114,9 @@ def coupon_status(request: Request) -> dict:
 
 
 @app.post("/api/debug/log")
-def debug_log(request: Request) -> dict:
+async def debug_log(request: Request) -> dict:
     try:
-        b = request.json()
+        b = await request.json()
     except Exception:
         b = {}
     print(f"[dbg] {b.get('e', '?')}")
