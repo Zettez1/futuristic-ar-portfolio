@@ -107,6 +107,13 @@
   "Перетягніть для знижки 5%": { en: "Drag for 5% discount", ru: "Перетащите для скидки 5%", sk: "Pretiahnite pre zľavu 5%", pl: "Przeciągnij, aby uzyskać 5% zniżki", de: "Ziehen Sie für 5% Rabatt" },
   "знижку активовано!": { en: "discount activated!", ru: "скидка активирована!", sk: "zľava aktivovaná!", pl: "rabat aktywowany!", de: "Rabatt aktiviert!" },
   "Знижка 5% активована": { en: "5% discount activated", ru: "Скидка 5% активирована", sk: "Zľava 5% aktivovaná", pl: "Rabat 5% aktywowany", de: "5% Rabatt aktiviert" },
+  "Знижка 5% на перший проєкт вже застосована до вашого акаунта": {
+    en: "Your 5% discount on the first project is already applied to your account",
+    ru: "Скидка 5% на первый проект уже применена к вашему аккаунту",
+    sk: "Vaša 5% zľava na prvý projekt je už aplikovaná na váš účet",
+    pl: "Twój 5% rabat na pierwszy projekt jest już przypisany do konta",
+    de: "Ihr 5% Rabatt auf das erste Projekt ist bereits auf Ihrem Konto aktiviert"
+  },
   "Тягніть вниз": { en: "Drag down", ru: "Тяните вниз", sk: "Potiahnite dole", pl: "Przeciągnij w dół", de: "Nach unten ziehen" },
   "Знижка": { en: "Discount", ru: "Скидка", sk: "Zľava", pl: "Rabat", de: "Rabatt" }
   };

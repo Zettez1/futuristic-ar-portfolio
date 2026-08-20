@@ -100,6 +100,11 @@
       ? '<span class="fsd-badge">' + dev + '</span>'
       : "";
     return '<div class="fsd-menu">' +
+      '<div class="fsd-discount">' +
+      '<span class="coupon-badge">-5%</span>' +
+      '<span class="fsd-discount-text">' + T("Знижка 5% активована") + "</span>" +
+      "</div>" +
+      '<div class="fsd-discount-note">' + T("Знижка 5% на перший проєкт вже застосована до вашого акаунта") + "</div>" +
       '<button type="button" class="fsd-item" data-action="projects">' + T("Проекти") + badge + "</button>" +
       '<button type="button" class="fsd-item" data-action="logout">' + T("Вийти") + "</button>" +
       "</div>";
