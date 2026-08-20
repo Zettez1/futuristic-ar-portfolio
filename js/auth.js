@@ -265,7 +265,7 @@ dropZone.addEventListener("click", function (ev) {
   }
 
   function claimCoupon() {
-    dbg("claim-start", { loggedIn: !!state.user, couponClaimed: couponClaimed });
+    dbg("claim-start", { loggedIn: !!state.user, couponClaimed: couponClaimed, pos: couponEl ? couponEl.style.left + "," + couponEl.style.top : "none" });
     fetch("/api/coupon/claim", { method: "POST", credentials: "same-origin" })
       .then(function (r) {
         dbg("claim-resp", { status: r.status });
@@ -586,6 +586,12 @@ dropZone.addEventListener("click", function (ev) {
 
   ensureChip();
   ensureDropZoneBound();
+
+  window.addEventListener("pagehide", function () { dbg("pagehide"); });
+  window.addEventListener("beforeunload", function () { dbg("beforeunload"); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") dbg("vis-hidden");
+  });
 
   fetch("/api/auth/me", { credentials: "same-origin" })
     .then(function (r) { return r.json(); })
