@@ -552,5 +552,5 @@
 
   setInterval(function () {
     if (state.user) refreshChatUnread();
-  }, 20000);
+  }, 5000);
 })();
