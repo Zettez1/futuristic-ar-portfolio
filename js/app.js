@@ -247,6 +247,7 @@ return (
     arObserver.observe(arSection);
   }
   if (mvReady()) renderARGrid();
+  setTimeout(function () { if (!mvReady()) ensureModelViewer(); }, 2000);
 
   /* ---------- lead form ---------- */
   var leadForm = document.getElementById("lead-form");
