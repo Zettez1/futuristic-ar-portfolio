@@ -21,12 +21,3 @@ data/*.json
 Thumbs.db
 # converter build artifacts
 models/tmp_payload.usda
-models/usdz_textures/
-# raw user uploads (keep out of repo)
-models/3dexport_donut_coffeeglb_1680180029.rar
-models/l3TYr4cy-*.glb
-models/x2qSum-*.glb
-models/loft_interior_6_for_free.glb
-models/source/
-models/textures/
-shot.png
