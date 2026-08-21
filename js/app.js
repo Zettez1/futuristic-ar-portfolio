@@ -183,9 +183,6 @@ return (
         '<div class="ar-model-holder" style="position:relative">' +
         '<model-viewer src="' + item.glb + '"' + ios + ' ar ' +
         'ar-modes="webxr scene-viewer quick-look" camera-controls auto-rotate ' +
-        'scale="' + (item.scale || "1 1 1") + '" ' +
-        'shadow-intensity="1.1" shadow-softness="0.4" environment-image="neutral" ' +
-        'environment-intensity="1.5" exposure="1.2" tone-mapping="aces" ' +
         'style="width:100%;height:260px" alt="' + T(item.title) + '">' +
         '</model-viewer>' +
         '</div>' +
