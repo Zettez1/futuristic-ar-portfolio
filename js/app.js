@@ -50,7 +50,7 @@
     {
       title: "Кросівок 1:1",
       desc: "AR-перегляд товару для інтернет-магазину",
-      glb: "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
+      glb: "/models/sneaker.glb?v=14",
       usdz: "/models/sneaker.usdz?v=14",
       note: "кросівки · e-commerce",
       scale: "1 1 1"
