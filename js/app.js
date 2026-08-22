@@ -50,32 +50,32 @@
     {
       title: "Кросівок 1:1",
       desc: "AR-перегляд товару для інтернет-магазину",
-      glb: "/models/sneaker.glb?v=14",
-      usdz: "/models/sneaker.usdz?v=14",
+      glb: "/models/sneaker.glb?v=15",
+      usdz: "/models/sneaker.usdz?v=15",
       note: "кросівки · e-commerce",
       scale: "1 1 1"
     },
     {
       title: "Яблуко для кафе",
       desc: "Фрукт у реальному розмірі, доповнює сервірування столу",
-      glb: "/models/apple.glb?v=18",
-      usdz: "/models/apple.usdz?v=18",
+      glb: "/models/apple.glb?v=19",
+      usdz: "/models/apple.usdz?v=19",
       note: "ресторани · доставка їжі",
       scale: "1 1 1"
     },
     {
       title: "Диван для салону",
       desc: "Меблі в реальному розмірі — підберіть у своїй кімнаті",
-      glb: "/models/sofa.glb?v=18",
-      usdz: "/models/sofa.usdz?v=18",
+      glb: "/models/sofa.glb?v=19",
+      usdz: "/models/sofa.usdz?v=19",
       note: "меблі · салони інтер'єру",
       scale: "1 1 1"
     },
     {
       title: "Чайна пара",
       desc: "Чайна пара в реальному розмірі — для кав'ярень та ресторанів",
-      glb: "/models/tea_set.glb?v=1",
-      usdz: "/models/tea_set.usdz?v=1",
+      glb: "/models/tea_set.glb?v=2",
+      usdz: "/models/tea_set.usdz?v=2",
       note: "кав'ярні · ресторани · HoReCa",
       scale: "1.2 1.2 1.2"
     }
